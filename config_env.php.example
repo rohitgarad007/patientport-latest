@@ -1,0 +1,31 @@
+<?php
+/**
+ * Environment Configuration File
+ * 
+ * This file sets environment variables for the Doc Writo application.
+ * Copy this file to config_env.php and update with your actual API keys.
+ * 
+ * SECURITY WARNING:
+ * - Never commit this file with real API keys to version control
+ * - Ensure this file has proper permissions (644)
+ * - Keep your API keys secure and rotate them regularly
+ */
+
+// Set environment variables
+$_ENV['VITE_API_KEY'] = 'sk-your-openai-api-key-here';
+$_ENV['VITE_API_KEY_DEEPSEEK'] = 'your-deepseek-api-key-here';
+$_ENV['VITE_FIREBASE_API_KEY'] = 'your-firebase-api-key-here';
+$_ENV['VITE_AES_SECRET_KEY'] = 'your-32-character-aes-encryption-key-here';
+
+// Alternative: Use putenv() if $_ENV doesn't work
+/*
+putenv('VITE_API_KEY=sk-your-openai-api-key-here');
+putenv('VITE_API_KEY_DEEPSEEK=your-deepseek-api-key-here');
+putenv('VITE_FIREBASE_API_KEY=your-firebase-api-key-here');
+putenv('VITE_AES_SECRET_KEY=your-32-character-aes-encryption-key-here');
+*/
+
+// Log configuration loading (optional, for debugging)
+// error_log('Environment configuration loaded from config_env.php');
+
+?>

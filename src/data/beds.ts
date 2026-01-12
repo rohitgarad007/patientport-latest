@@ -1,0 +1,223 @@
+export interface Bed {
+  id: string;
+  roomId: string;
+  wardId: string;
+  bedNumber: string;
+  status: "Available" | "Occupied" | "Reserved" | "Cleaning";
+  assignedPatientId: string | null;
+  lastCleanedDate: string;
+  createdAt: string;
+}
+
+export const beds: Bed[] = [
+  // Room 101 beds (General Ward A)
+  {
+    id: "B001",
+    roomId: "R001",
+    wardId: "W001",
+    bedNumber: "101-A",
+    status: "Occupied",
+    assignedPatientId: "P001",
+    lastCleanedDate: "2024-03-15",
+    createdAt: "2024-01-10",
+  },
+  {
+    id: "B002",
+    roomId: "R001",
+    wardId: "W001",
+    bedNumber: "101-B",
+    status: "Available",
+    assignedPatientId: null,
+    lastCleanedDate: "2024-03-16",
+    createdAt: "2024-01-10",
+  },
+  {
+    id: "B003",
+    roomId: "R001",
+    wardId: "W001",
+    bedNumber: "101-C",
+    status: "Occupied",
+    assignedPatientId: "P002",
+    lastCleanedDate: "2024-03-14",
+    createdAt: "2024-01-10",
+  },
+  {
+    id: "B004",
+    roomId: "R001",
+    wardId: "W001",
+    bedNumber: "101-D",
+    status: "Cleaning",
+    assignedPatientId: null,
+    lastCleanedDate: "2024-03-17",
+    createdAt: "2024-01-10",
+  },
+  // Room 102 beds
+  {
+    id: "B005",
+    roomId: "R002",
+    wardId: "W001",
+    bedNumber: "102-A",
+    status: "Available",
+    assignedPatientId: null,
+    lastCleanedDate: "2024-03-16",
+    createdAt: "2024-01-10",
+  },
+  {
+    id: "B006",
+    roomId: "R002",
+    wardId: "W001",
+    bedNumber: "102-B",
+    status: "Available",
+    assignedPatientId: null,
+    lastCleanedDate: "2024-03-16",
+    createdAt: "2024-01-10",
+  },
+  // Room 103 beds
+  {
+    id: "B007",
+    roomId: "R003",
+    wardId: "W001",
+    bedNumber: "103-A",
+    status: "Occupied",
+    assignedPatientId: "P003",
+    lastCleanedDate: "2024-03-13",
+    createdAt: "2024-01-10",
+  },
+  {
+    id: "B008",
+    roomId: "R003",
+    wardId: "W001",
+    bedNumber: "103-B",
+    status: "Reserved",
+    assignedPatientId: null,
+    lastCleanedDate: "2024-03-16",
+    createdAt: "2024-01-10",
+  },
+  // Room 201 beds (Pediatric Ward)
+  {
+    id: "B009",
+    roomId: "R004",
+    wardId: "W002",
+    bedNumber: "201-A",
+    status: "Occupied",
+    assignedPatientId: "P004",
+    lastCleanedDate: "2024-03-15",
+    createdAt: "2024-01-15",
+  },
+  {
+    id: "B010",
+    roomId: "R004",
+    wardId: "W002",
+    bedNumber: "201-B",
+    status: "Occupied",
+    assignedPatientId: "P005",
+    lastCleanedDate: "2024-03-14",
+    createdAt: "2024-01-15",
+  },
+  {
+    id: "B011",
+    roomId: "R004",
+    wardId: "W002",
+    bedNumber: "201-C",
+    status: "Available",
+    assignedPatientId: null,
+    lastCleanedDate: "2024-03-17",
+    createdAt: "2024-01-15",
+  },
+  // Room 202 bed (Private)
+  {
+    id: "B012",
+    roomId: "R005",
+    wardId: "W002",
+    bedNumber: "202-A",
+    status: "Available",
+    assignedPatientId: null,
+    lastCleanedDate: "2024-03-17",
+    createdAt: "2024-01-15",
+  },
+  // Room 301 bed (ICU)
+  {
+    id: "B013",
+    roomId: "R006",
+    wardId: "W003",
+    bedNumber: "301-A",
+    status: "Occupied",
+    assignedPatientId: "P006",
+    lastCleanedDate: "2024-03-15",
+    createdAt: "2024-01-20",
+  },
+  // Room 302 bed (ICU)
+  {
+    id: "B014",
+    roomId: "R007",
+    wardId: "W003",
+    bedNumber: "302-A",
+    status: "Cleaning",
+    assignedPatientId: null,
+    lastCleanedDate: "2024-03-17",
+    createdAt: "2024-01-20",
+  },
+  // Room 203 beds (Maternity)
+  {
+    id: "B015",
+    roomId: "R008",
+    wardId: "W004",
+    bedNumber: "203-A",
+    status: "Occupied",
+    assignedPatientId: "P007",
+    lastCleanedDate: "2024-03-14",
+    createdAt: "2024-02-01",
+  },
+  {
+    id: "B016",
+    roomId: "R008",
+    wardId: "W004",
+    bedNumber: "203-B",
+    status: "Available",
+    assignedPatientId: null,
+    lastCleanedDate: "2024-03-16",
+    createdAt: "2024-02-01",
+  },
+  // Room 204 bed (Private Maternity)
+  {
+    id: "B017",
+    roomId: "R009",
+    wardId: "W004",
+    bedNumber: "204-A",
+    status: "Available",
+    assignedPatientId: null,
+    lastCleanedDate: "2024-03-17",
+    createdAt: "2024-02-01",
+  },
+  // Room 104 beds (Emergency)
+  {
+    id: "B018",
+    roomId: "R010",
+    wardId: "W005",
+    bedNumber: "104-A",
+    status: "Available",
+    assignedPatientId: null,
+    lastCleanedDate: "2024-03-17",
+    createdAt: "2024-02-10",
+  },
+  {
+    id: "B019",
+    roomId: "R010",
+    wardId: "W005",
+    bedNumber: "104-B",
+    status: "Available",
+    assignedPatientId: null,
+    lastCleanedDate: "2024-03-17",
+    createdAt: "2024-02-10",
+  },
+  {
+    id: "B020",
+    roomId: "R010",
+    wardId: "W005",
+    bedNumber: "104-C",
+    status: "Reserved",
+    assignedPatientId: null,
+    lastCleanedDate: "2024-03-16",
+    createdAt: "2024-02-10",
+  },
+];

@@ -1,0 +1,79 @@
+lb_lab_tests;
++----------------+----------------------+------+-----+---------------------+-------------------------------+
+| Field          | Type                 | Null | Key | Default             | Extra                         |
++----------------+----------------------+------+-----+---------------------+-------------------------------+
+| id             | int(10) unsigned     | NO   | PRI | NULL                | auto_increment                |
+| lab_id         | int(10) unsigned     | NO   | MUL | NULL                |                               |
+| master_test_id | int(10) unsigned     | YES  | MUL | NULL                |                               |
+| test_code      | varchar(50)          | NO   |     | NULL                |                               |
+| test_name      | varchar(150)         | NO   |     | NULL                |                               |
+| department     | varchar(100)         | NO   |     | NULL                |                               |
+| sample_type    | varchar(100)         | NO   |     | NULL                |                               |
+| method         | varchar(100)         | YES  |     | NULL                |                               |
+| tat            | varchar(50)          | NO   |     | NULL                |                               |
+| price          | decimal(10,2)        | NO   |     | NULL                |                               |
+| status         | tinyint(1)           | NO   |     | 1                   |                               |
+| isdelete       | tinyint(1)           | NO   |     | 0                   |                               |
+| source         | enum('master','lab') | NO   |     | master              |                               |
+| created_by     | varchar(64)          | YES  |     | NULL                |                               |
+| created_at     | datetime             | NO   |     | current_timestamp() |                               |
+| updated_by     | varchar(64)          | YES  |     | NULL                |                               |
+| updated_at     | datetime             | YES  |     | NULL                | on update current_timestamp() |
++----------------+----------------------+------+-----+---------------------+-------------------------------+
+
+lb_lab_test_advanced;
++-------------------------+------------------------------------+------+-----+---------------------+-------------------------------+
+| Field                   | Type                               | Null | Key | Default             | Extra                         |
++-------------------------+------------------------------------+------+-----+---------------------+-------------------------------+
+| id                      | int(10) unsigned                   | NO   | PRI | NULL                | auto_increment                |
+| lab_test_id             | int(10) unsigned                   | NO   | UNI | NULL                |                               |
+| enable_panic_alerts     | tinyint(1)                         | NO   |     | 0                   |                               |
+| report_display_priority | enum('low','normal','high')        | NO   |     | normal              |                               |
+| result_entry_mode       | enum('manual','auto','instrument') | NO   |     | manual              |                               |
+| created_at              | datetime                           | NO   |     | current_timestamp() |                               |
+| updated_at              | datetime                           | YES  |     | NULL                | on update current_timestamp() |
++-------------------------+------------------------------------+------+-----+---------------------+-------------------------------+
+
+ lb_lab_test_critical_values;
++------------------+------------------+------+-----+---------------------+----------------+
+| Field            | Type             | Null | Key | Default             | Extra          |
++------------------+------------------+------+-----+---------------------+----------------+
+| id               | int(10) unsigned | NO   | PRI | NULL                | auto_increment |
+| lab_parameter_id | int(10) unsigned | NO   | MUL | NULL                |                |
+| critical_low     | decimal(10,3)    | YES  |     | NULL                |                |
+| critical_high    | decimal(10,3)    | YES  |     | NULL                |                |
+| created_at       | datetime         | NO   |     | current_timestamp() |                |
++------------------+------------------+------+-----+---------------------+----------------+
+
+lb_lab_test_parameters;
++---------------------+----------------------------------------------------+------+-----+---------------------+-------------------------------+
+| Field               | Type                                               | Null | Key | Default             | Extra                         |
++---------------------+----------------------------------------------------+------+-----+---------------------+-------------------------------+
+| id                  | int(10) unsigned                                   | NO   | PRI | NULL                | auto_increment                |
+| lab_test_id         | int(10) unsigned                                   | NO   | MUL | NULL                |                               |
+| master_parameter_id | int(10) unsigned                                   | YES  | MUL | NULL                |                               |
+| parameter_name      | varchar(150)                                       | NO   |     | NULL                |                               |
+| unit                | varchar(50)                                        | YES  |     | NULL                |                               |
+| method              | varchar(100)                                       | YES  |     | NULL                |                               |
+| result_type         | enum('numeric','text','positive_negative','range') | NO   |     | NULL                |                               |
+| decimal_precision   | int(11)                                            | YES  |     | 0                   |                               |
+| show_in_report      | tinyint(1)                                         | NO   |     | 1                   |                               |
+| display_order       | int(11)                                            | NO   |     | 0                   |                               |
+| isdelete            | tinyint(1)                                         | NO   |     | 0                   |                               |
+| created_at          | datetime                                           | NO   |     | current_timestamp() |                               |
+| updated_at          | datetime                                           | YES  |     | NULL                | on update current_timestamp() |
++---------------------+----------------------------------------------------+------+-----+---------------------+-------------------------------+
+
+ lb_lab_test_reference_ranges;
++------------------+-------------------------------------+------+-----+---------------------+----------------+
+| Field            | Type                                | Null | Key | Default             | Extra          |
++------------------+-------------------------------------+------+-----+---------------------+----------------+
+| id               | int(10) unsigned                    | NO   | PRI | NULL                | auto_increment |
+| lab_parameter_id | int(10) unsigned                    | NO   | MUL | NULL                |                |
+| gender           | enum('male','female','child','all') | NO   |     | NULL                |                |
+| min_value        | decimal(10,3)                       | YES  |     | NULL                |                |
+| max_value        | decimal(10,3)                       | YES  |     | NULL                |                |
+| age_min          | int(11)                             | YES  |     | NULL                |                |
+| age_max          | int(11)                             | YES  |     | NULL                |                |
+| created_at       | datetime                            | NO   |     | current_timestamp() |                |
++------------------+-------------------------------------+------+-----+---------------------+----------------+

@@ -1,0 +1,46 @@
+[
+  {
+    "id": "dr-sharma",
+    "name": "Dr. Rajesh Sharma",
+    "specialty": "Cardiology",
+    "experience": "15+ years",
+    "qualification": "MBBS, MD, DM (Cardiology)",
+    "image": "/placeholder.svg",
+    "availability": "Mon, Wed, Fri",
+    "rating": 4.9,
+    "reviews": 234
+  },
+  {
+    "id": "dr-patel",
+    "name": "Dr. Priya Patel",
+    "specialty": "Neurology",
+    "experience": "12+ years",
+    "qualification": "MBBS, MD, DM (Neurology)",
+    "image": "/placeholder.svg",
+    "availability": "Tue, Thu, Sat",
+    "rating": 4.8,
+    "reviews": 189
+  },
+  {
+    "id": "dr-kumar",
+    "name": "Dr. Anil Kumar",
+    "specialty": "Pediatrics",
+    "experience": "18+ years",
+    "qualification": "MBBS, MD (Pediatrics)",
+    "image": "/placeholder.svg",
+    "availability": "Mon-Sat",
+    "rating": 4.9,
+    "reviews": 312
+  },
+  {
+    "id": "dr-singh",
+    "name": "Dr. Anjali Singh",
+    "specialty": "Orthopedics",
+    "experience": "10+ years",
+    "qualification": "MBBS, MS (Orthopedics)",
+    "image": "/placeholder.svg",
+    "availability": "Mon, Wed, Fri",
+    "rating": 4.7,
+    "reviews": 156
+  }
+]

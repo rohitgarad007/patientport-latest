@@ -1,0 +1,86 @@
+{
+  "greeting": {
+    "message": "Hello! 👋 I'm your virtual hospital assistant. How can I help you today?",
+    "quickReplies": [
+      "Book Appointment",
+      "Find a Doctor",
+      "Emergency Help",
+      "Hospital Info",
+      "Register as Patient"
+    ]
+  },
+  "appointmentFlow": {
+    "steps": [
+      {
+        "id": "name",
+        "question": "Great! Let's book your appointment. May I have your name?",
+        "type": "text"
+      },
+      {
+        "id": "phone",
+        "question": "Thank you, {name}! What's your contact number?",
+        "type": "phone"
+      },
+      {
+        "id": "department",
+        "question": "Which department would you like to visit?",
+        "type": "department",
+        "options": ["Cardiology", "Neurology", "Pediatrics", "Orthopedics", "Oncology", "General"]
+      },
+      {
+        "id": "doctor",
+        "question": "Would you like to see a specific doctor?",
+        "type": "doctor"
+      },
+      {
+        "id": "date",
+        "question": "When would you prefer your appointment?",
+        "type": "date"
+      },
+      {
+        "id": "time",
+        "question": "What time works best for you?",
+        "type": "time",
+        "slots": ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM", "04:00 PM"]
+      },
+      {
+        "id": "confirm",
+        "question": "Perfect! Let me confirm your appointment:\n\n📅 Date: {date}\n⏰ Time: {time}\n👨‍⚕️ Doctor: {doctor}\n🏥 Department: {department}\n\nShall I confirm this booking?",
+        "type": "confirm"
+      }
+    ],
+    "confirmation": "✅ Your appointment is confirmed!\n\n**Booking ID:** APT-{random}\n**Patient:** {name}\n**Phone:** {phone}\n**Date:** {date}\n**Time:** {time}\n\nYou'll receive a confirmation SMS shortly. Is there anything else I can help you with?"
+  },
+  "findDoctorFlow": {
+    "question": "Which specialty are you looking for?",
+    "options": ["Cardiology", "Neurology", "Pediatrics", "Orthopedics", "Oncology", "General Medicine"],
+    "response": "Here are our top doctors in {specialty}:"
+  },
+  "emergencyFlow": {
+    "message": "🚨 **EMERGENCY SERVICES**\n\n📞 Emergency Hotline: **1800-XXX-XXXX**\n🚑 Ambulance: **102**\n\n📍 Our 24/7 Emergency Department is ready to help.\n\n**Location:** [View on Maps](#)\n\nWould you like me to connect you with emergency services?",
+    "quickReplies": ["Call Emergency", "Get Directions", "Talk to Doctor"]
+  },
+  "hospitalInfo": {
+    "topics": {
+      "visiting_hours": "🕐 **Visiting Hours**\n\n• General Ward: 4:00 PM - 7:00 PM\n• ICU: 11:00 AM - 12:00 PM, 5:00 PM - 6:00 PM\n• Private Rooms: 10:00 AM - 8:00 PM\n\nPlease carry a valid ID for entry.",
+      "insurance": "💳 **Insurance Partners**\n\nWe accept:\n• All major health insurance providers\n• Cashless treatment facility\n• TPA services available\n\nFor claims assistance, contact our insurance desk.",
+      "online_consultation": "💻 **Online Consultation**\n\nYes! We offer:\n• Video consultations\n• Chat with doctors\n• E-prescriptions\n• Follow-up appointments\n\nWould you like to book an online consultation?",
+      "lab_tests": "🔬 **Lab Services**\n\nWe offer:\n• Blood tests\n• Radiology (X-Ray, CT, MRI)\n• Pathology\n• Home collection available\n\nReports available online within 24-48 hours."
+    },
+    "quickReplies": ["Visiting Hours", "Insurance Info", "Online Consultation", "Lab Tests"]
+  },
+  "feedback": {
+    "message": "We value your feedback! Please share your thoughts or concerns, and we'll get back to you shortly.",
+    "thankYou": "Thank you for your feedback! 🙏 Our team will review it and respond if needed. Is there anything else I can help you with?"
+  },
+  "registerPatientFlow": {
+    "steps": [
+      { "id": "name", "question": "Let’s get you registered. What’s your full name?", "type": "text" },
+      { "id": "phone", "question": "Thanks, {name}. What’s your mobile number?", "type": "phone" },
+      { "id": "gender", "question": "What’s your gender? (Male/Female/Other)", "type": "text" },
+      { "id": "dob", "question": "Your date of birth? (YYYY-MM-DD)", "type": "date" },
+      { "id": "confirm", "question": "Please confirm your details:\n\n👤 Name: {name}\n📱 Phone: {phone}\n⚧ Gender: {gender}\n🎂 DOB: {dob}\n\nProceed to register?", "type": "confirm" }
+    ],
+    "confirmation": "✅ You’re registered!\n\n**Patient ID:** {patient_uid}\n**Name:** {name}\n**Phone:** {phone}\n\nYou can now book appointments or ask for services."
+  }
+}

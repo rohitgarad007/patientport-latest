@@ -1,0 +1,44 @@
+[
+  {
+    "id": "cardiology",
+    "name": "Cardiology",
+    "icon": "Heart",
+    "description": "Comprehensive heart care with state-of-the-art facilities and expert cardiologists.",
+    "services": ["ECG", "Echo", "Angiography", "Heart Surgery"]
+  },
+  {
+    "id": "neurology",
+    "name": "Neurology",
+    "icon": "Brain",
+    "description": "Advanced neurological care for brain and nervous system disorders.",
+    "services": ["MRI", "CT Scan", "EEG", "Neurosurgery"]
+  },
+  {
+    "id": "pediatrics",
+    "name": "Pediatrics",
+    "icon": "Baby",
+    "description": "Specialized care for infants, children, and adolescents with compassion.",
+    "services": ["Vaccination", "Growth Monitoring", "Pediatric Surgery", "Emergency Care"]
+  },
+  {
+    "id": "orthopedics",
+    "name": "Orthopedics",
+    "icon": "Bone",
+    "description": "Expert treatment for bone, joint, and musculoskeletal conditions.",
+    "services": ["Joint Replacement", "Fracture Care", "Sports Medicine", "Physiotherapy"]
+  },
+  {
+    "id": "oncology",
+    "name": "Oncology",
+    "icon": "Activity",
+    "description": "Comprehensive cancer care with advanced treatment options.",
+    "services": ["Chemotherapy", "Radiation", "Surgical Oncology", "Palliative Care"]
+  },
+  {
+    "id": "emergency",
+    "name": "Emergency",
+    "icon": "Ambulance",
+    "description": "24/7 emergency services with rapid response and critical care.",
+    "services": ["Trauma Care", "ICU", "Ambulance Service", "Critical Care"]
+  }
+]

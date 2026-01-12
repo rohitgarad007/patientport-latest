@@ -1,0 +1,775 @@
+ ms_activity_log;
++-----------------+---------------------------------------------------------------------------+------+-----+---------------------+----------------+
+| Field           | Type                                                                      | Null | Key | Default             | Extra          |
++-----------------+---------------------------------------------------------------------------+------+-----+---------------------+----------------+
+| id              | int(11)                                                                   | NO   | PRI | NULL                | auto_increment |
+| loguid          | varchar(150)                                                              | NO   |     | NULL                |                |
+| role            | enum('staff','doctor','admin','system')                                   | YES  |     | staff               |                |
+| hosuid          | varchar(150)                                                              | YES  |     | NULL                |                |
+| action_type     | enum('CREATE','UPDATE','DELETE','FETCH','LOGIN','LOGOUT','ERROR','OTHER') | YES  |     | OTHER               |                |
+| api_name        | varchar(255)                                                              | YES  |     | NULL                |                |
+| description     | text                                                                      | YES  |     | NULL                |                |
+| request_payload | longtext                                                                  | YES  |     | NULL                |                |
+| ip_address      | varchar(45)                                                               | YES  |     | NULL                |                |
+| user_agent      | varchar(255)                                                              | YES  |     | NULL                |                |
+| created_at      | timestamp                                                                 | NO   |     | current_timestamp() |                |
++-----------------+---------------------------------------------------------------------------+------+-----+---------------------+----------------+
+
+ms_admin_attempts;
++---------------+-----------+------+-----+---------------------+-------------------------------+
+| Field         | Type      | Null | Key | Default             | Extra                         |
++---------------+-----------+------+-----+---------------------+-------------------------------+
+| id            | int(11)   | NO   |     | NULL                |                               |
+| admin_id      | int(11)   | NO   |     | NULL                |                               |
+| attempt_date  | date      | NO   |     | NULL                |                               |
+| attempt_count | int(11)   | NO   |     | NULL                |                               |
+| created_at    | timestamp | NO   |     | current_timestamp() | on update current_timestamp() |
++---------------+-----------+------+-----+---------------------+-------------------------------+
+
+ms_admin_info;
++-------------------+--------------+------+-----+---------+----------------+
+| Field             | Type         | Null | Key | Default | Extra          |
++-------------------+--------------+------+-----+---------+----------------+
+| id                | int(11)      | NO   | PRI | NULL    | auto_increment |
+| muid              | varchar(50)  | NO   |     | NULL    |                |
+| name              | varchar(150) | NO   |     | NULL    |                |
+| admin_id          | int(5)       | NO   |     | NULL    |                |
+| email             | varchar(150) | NO   |     | NULL    |                |
+| password          | varchar(150) | NO   |     | NULL    |                |
+| wstatus           | int(2)       | NO   |     | NULL    |                |
+| role              | varchar(100) | NO   |     | NULL    |                |
+| avaliable_balance | varchar(50)  | NO   |     | NULL    |                |
+| access_token      | text         | NO   |     | NULL    |                |
+| secret_key        | int(5)       | NO   |     | NULL    |                |
++-------------------+--------------+------+-----+---------+----------------+
+
+ ms_bed_allocation_history;
++----------------------+--------------+------+-----+---------------------+-------------------------------+
+| Field                | Type         | Null | Key | Default             | Extra                         |
++----------------------+--------------+------+-----+---------------------+-------------------------------+
+| id                   | int(11)      | NO   | PRI | NULL                | auto_increment                |
+| admission_id         | int(11)      | NO   |     | NULL                |                               |
+| patient_id           | int(11)      | NO   |     | NULL                |                               |
+| hospital_id          | int(11)      | NO   |     | NULL                |                               |
+| ward_id              | int(11)      | NO   |     | NULL                |                               |
+| room_id              | int(11)      | NO   |     | NULL                |                               |
+| bed_id               | int(11)      | NO   |     | NULL                |                               |
+| doctor_id            | int(11)      | NO   |     | NULL                |                               |
+| activity_type        | varchar(150) | NO   |     | NULL                |                               |
+| current_status       | int(11)      | NO   |     | NULL                |                               |
+| priority             | varchar(150) | NO   |     | NULL                |                               |
+| from_bed_id          | int(11)      | NO   |     | NULL                |                               |
+| to_bed_id            | int(11)      | NO   |     | NULL                |                               |
+| to_ward_id           | int(11)      | NO   |     | NULL                |                               |
+| to_room_id           | int(11)      | NO   |     | NULL                |                               |
+| from_date            | datetime     | NO   |     | NULL                |                               |
+| to_date              | datetime     | YES  |     | NULL                |                               |
+| medical_notes        | text         | YES  |     | NULL                |                               |
+| permission_status    | int(2)       | NO   |     | NULL                |                               |
+| permission_change_by | int(11)      | NO   |     | NULL                |                               |
+| created_by           | int(11)      | NO   |     | NULL                |                               |
+| updated_by           | int(11)      | YES  |     | NULL                |                               |
+| created_at           | timestamp    | NO   |     | current_timestamp() |                               |
+| updated_at           | timestamp    | NO   |     | current_timestamp() | on update current_timestamp() |
++----------------------+--------------+------+-----+---------------------+-------------------------------+
+
+ms_city;
++------------+---------------+------+-----+---------+----------------+
+| Field      | Type          | Null | Key | Default | Extra          |
++------------+---------------+------+-----+---------+----------------+
+| cityId     | int(11)       | NO   | PRI | NULL    | auto_increment |
+| cityName   | varchar(250)  | NO   |     | NULL    |                |
+| cityCode   | varchar(5)    | NO   |     | NULL    |                |
+| pincode    | varchar(10)   | NO   |     | NULL    |                |
+| phoneCode  | varchar(10)   | NO   |     | NULL    |                |
+| districtId | int(11)       | NO   |     | NULL    |                |
+| stateId    | int(11)       | NO   |     | NULL    |                |
+| lat        | decimal(11,8) | NO   |     | NULL    |                |
+| lng        | double(11,8)  | NO   |     | NULL    |                |
++------------+---------------+------+-----+---------+----------------+
+
+ ms_doctors;
++-------------------+--------------+------+-----+---------------------+-------------------------------+
+| Field             | Type         | Null | Key | Default             | Extra                         |
++-------------------+--------------+------+-----+---------------------+-------------------------------+
+| id                | int(11)      | NO   | PRI | NULL                | auto_increment                |
+| docuid            | varchar(150) | NO   |     | NULL                |                               |
+| name              | varchar(150) | NO   |     | NULL                |                               |
+| email             | varchar(150) | NO   |     | NULL                |                               |
+| password          | varchar(150) | NO   |     | NULL                |                               |
+| phone             | varchar(20)  | NO   |     | NULL                |                               |
+| specialization_id | int(11)      | NO   |     | NULL                |                               |
+| experience_year   | varchar(15)  | NO   |     | NULL                |                               |
+| experience_month  | varchar(15)  | NO   |     | NULL                |                               |
+| hosuid            | varchar(150) | NO   |     | NULL                |                               |
+| hospital_id       | int(11)      | NO   |     | NULL                |                               |
+| consultation_fee  | varchar(100) | NO   |     | NULL                |                               |
+| status            | int(2)       | NO   |     | NULL                |                               |
+| isdelete          | int(2)       | NO   |     | NULL                |                               |
+| created_by        | varchar(150) | NO   |     | NULL                |                               |
+| updated_by        | varchar(150) | NO   |     | NULL                |                               |
+| created_at        | timestamp    | NO   |     | current_timestamp() |                               |
+| updated_at        | timestamp    | NO   |     | current_timestamp() | on update current_timestamp() |
++-------------------+--------------+------+-----+---------------------+-------------------------------+
+
+ms_doctors_access;
++------------------------+--------------+------+-----+---------------------+-------------------------------+
+| Field                  | Type         | Null | Key | Default             | Extra                         |
++------------------------+--------------+------+-----+---------------------+-------------------------------+
+| id                     | int(11)      | NO   | PRI | NULL                | auto_increment                |
+| docuid                 | varchar(150) | NO   |     | NULL                |                               |
+| patient_list           | int(2)       | NO   |     | NULL                |                               |
+| view_patients          | int(2)       | NO   |     | NULL                |                               |
+| add_patients           | int(2)       | NO   |     | NULL                |                               |
+| edit_patients          | int(2)       | NO   |     | NULL                |                               |
+| view_medical_history   | int(2)       | NO   |     | NULL                |                               |
+| write_prescriptions    | int(2)       | NO   |     | NULL                |                               |
+| view_lab_results       | int(2)       | NO   |     | NULL                |                               |
+| request_lab_tests      | int(2)       | NO   |     | NULL                |                               |
+| manage_vitals          | int(2)       | NO   |     | NULL                |                               |
+| appointment_list       | int(2)       | NO   |     | NULL                |                               |
+| book_appointment       | int(2)       | NO   |     | NULL                |                               |
+| reschedule_appointment | int(2)       | NO   |     | NULL                |                               |
+| cancel_appointment     | int(2)       | NO   |     | NULL                |                               |
+| icu_access             | int(2)       | NO   |     | NULL                |                               |
+| assign_rooms           | int(2)       | NO   |     | NULL                |                               |
+| bad_request_approved   | int(2)       | NO   |     | NULL                |                               |
+| monitor_beds           | int(2)       | NO   |     | NULL                |                               |
+| emergency_access       | int(2)       | NO   |     | NULL                |                               |
+| view_inventory         | int(2)       | NO   |     | NULL                |                               |
+| dispense_medication    | int(2)       | NO   |     | NULL                |                               |
+| manage_controlled      | int(2)       | NO   |     | NULL                |                               |
+| reorder_stock          | int(2)       | NO   |     | NULL                |                               |
+| perform_lab_tests      | int(2)       | NO   |     | NULL                |                               |
+| manage_lab_equipment   | int(2)       | NO   |     | NULL                |                               |
+| lab_safety             | int(2)       | NO   |     | NULL                |                               |
+| view_billing           | int(2)       | NO   |     | NULL                |                               |
+| process_payments       | int(2)       | NO   |     | NULL                |                               |
+| apply_discounts        | int(2)       | NO   |     | NULL                |                               |
+| insurance_claims       | int(2)       | NO   |     | NULL                |                               |
+| financial_reports      | int(2)       | NO   |     | NULL                |                               |
+| manage_users           | int(2)       | NO   |     | NULL                |                               |
+| assign_roles           | int(2)       | NO   |     | NULL                |                               |
+| system_monitoring      | int(2)       | NO   |     | NULL                |                               |
+| emergency_override     | int(2)       | NO   |     | NULL                |                               |
+| view_staff_profiles    | int(2)       | NO   |     | NULL                |                               |
+| manage_shifts          | int(2)       | NO   |     | NULL                |                               |
+| performance_reviews    | int(2)       | NO   |     | NULL                |                               |
+| created_by             | varchar(150) | NO   |     | NULL                |                               |
+| updated_by             | varchar(150) | NO   |     | NULL                |                               |
+| created_at             | timestamp    | NO   |     | current_timestamp() |                               |
+| updated_at             | timestamp    | NO   |     | current_timestamp() | on update current_timestamp() |
++------------------------+--------------+------+-----+---------------------+-------------------------------+
+
+ ms_doctor_event_schedules;
++--------------+--------------+------+-----+---------------------+-------------------------------+
+| Field        | Type         | Null | Key | Default             | Extra                         |
++--------------+--------------+------+-----+---------------------+-------------------------------+
+| id           | int(11)      | NO   | PRI | NULL                | auto_increment                |
+| docuid       | varchar(150) | NO   |     | NULL                |                               |
+| date         | date         | NO   |     | NULL                |                               |
+| is_available | int(2)       | NO   |     | NULL                |                               |
+| created_by   | varchar(150) | NO   |     | NULL                |                               |
+| updated_by   | varchar(150) | NO   |     | NULL                |                               |
+| created_at   | timestamp    | NO   |     | current_timestamp() |                               |
+| updated_at   | timestamp    | NO   |     | current_timestamp() | on update current_timestamp() |
++--------------+--------------+------+-----+---------------------+-------------------------------+
+
+ms_doctor_event_slots;
++------------------+--------------+------+-----+---------------------+-------------------------------+
+| Field            | Type         | Null | Key | Default             | Extra                         |
++------------------+--------------+------+-----+---------------------+-------------------------------+
+| id               | int(11)      | NO   | PRI | NULL                | auto_increment                |
+| event_id         | int(11)      | NO   |     | NULL                |                               |
+| title            | text         | NO   |     | NULL                |                               |
+| type             | varchar(150) | NO   |     | NULL                |                               |
+| start_time       | time         | NO   |     | NULL                |                               |
+| end_time         | time         | NO   |     | NULL                |                               |
+| max_appointments | int(11)      | NO   |     | NULL                |                               |
+| notes            | text         | NO   |     | NULL                |                               |
+| created_by       | varchar(150) | NO   |     | NULL                |                               |
+| updated_by       | varchar(150) | NO   |     | NULL                |                               |
+| created_at       | timestamp    | NO   |     | current_timestamp() |                               |
+| updated_at       | timestamp    | NO   |     | current_timestamp() | on update current_timestamp() |
++------------------+--------------+------+-----+---------------------+-------------------------------+
+
+ ms_doctor_schedules;
++--------------+-------------------------------------------------+------+-----+---------------------+-------------------------------+
+| Field        | Type                                            | Null | Key | Default             | Extra                         |
++--------------+-------------------------------------------------+------+-----+---------------------+-------------------------------+
+| id           | int(11)                                         | NO   | PRI | NULL                | auto_increment                |
+| docuid       | varchar(150)                                    | NO   |     | NULL                |                               |
+| repeat_type  | enum('Daily','Weekly','Custom Days')            | YES  |     | Weekly              |                               |
+| weekday      | enum('Mon','Tue','Wed','Thu','Fri','Sat','Sun') | NO   |     | NULL                |                               |
+| is_available | tinyint(1)                                      | YES  |     | 1                   |                               |
+| created_by   | varchar(150)                                    | YES  |     | NULL                |                               |
+| updated_by   | varchar(150)                                    | YES  |     | NULL                |                               |
+| created_at   | timestamp                                       | NO   |     | current_timestamp() |                               |
+| updated_at   | timestamp                                       | NO   |     | current_timestamp() | on update current_timestamp() |
++--------------+-------------------------------------------------+------+-----+---------------------+-------------------------------+
+
+ ms_doctor_specializations;
++---------------------+--------------+------+-----+---------------------+-------------------------------+
+| Field               | Type         | Null | Key | Default             | Extra                         |
++---------------------+--------------+------+-----+---------------------+-------------------------------+
+| id                  | int(11)      | NO   | PRI | NULL                | auto_increment                |
+| specialization_name | varchar(255) | NO   |     | NULL                |                               |
+| description         | text         | YES  |     | NULL                |                               |
+| created_at          | timestamp    | NO   |     | current_timestamp() |                               |
+| updated_at          | timestamp    | NO   |     | current_timestamp() | on update current_timestamp() |
++---------------------+--------------+------+-----+---------------------+-------------------------------+
+
+ms_doctor_time_slots;
++------------------+--------------+------+-----+---------------------+-------------------------------+
+| Field            | Type         | Null | Key | Default             | Extra                         |
++------------------+--------------+------+-----+---------------------+-------------------------------+
+| id               | int(11)      | NO   | PRI | NULL                | auto_increment                |
+| schedule_id      | int(11)      | NO   |     | NULL                |                               |
+| title            | varchar(150) | YES  |     | Custom              |                               |
+| type             | varchar(150) | NO   |     | NULL                |                               |
+| start_time       | time         | NO   |     | NULL                |                               |
+| end_time         | time         | NO   |     | NULL                |                               |
+| max_appointments | int(11)      | YES  |     | 0                   |                               |
+| notes            | text         | NO   |     | NULL                |                               |
+| created_by       | varchar(150) | YES  |     | NULL                |                               |
+| updated_by       | varchar(150) | YES  |     | NULL                |                               |
+| created_at       | timestamp    | NO   |     | current_timestamp() |                               |
+| updated_at       | timestamp    | NO   |     | current_timestamp() | on update current_timestamp() |
++------------------+--------------+------+-----+---------------------+-------------------------------+
+
+ms_hospitals;
++---------------------+-------------------------------------------------------+------+-----+---------------------+-------------------------------+
+| Field               | Type                                                  | Null | Key | Default             | Extra                         |
++---------------------+-------------------------------------------------------+------+-----+---------------------+-------------------------------+
+| id                  | int(11)                                               | NO   | PRI | NULL                | auto_increment                |
+| hosuid              | varchar(150)                                          | NO   |     | NULL                |                               |
+| name                | varchar(255)                                          | NO   |     | NULL                |                               |
+| registration_number | varchar(100)                                          | NO   |     | NULL                |                               |
+| email               | varchar(100)                                          | NO   |     | NULL                |                               |
+| password            | varchar(150)                                          | NO   |     | NULL                |                               |
+| phone               | varchar(20)                                           | NO   |     | NULL                |                               |
+| alternate_phone     | varchar(20)                                           | NO   |     | NULL                |                               |
+| address             | text                                                  | NO   |     | NULL                |                               |
+| city                | varchar(100)                                          | NO   |     | NULL                |                               |
+| state               | varchar(100)                                          | NO   |     | NULL                |                               |
+| country             | varchar(100)                                          | NO   |     | India               |                               |
+| pincode             | varchar(20)                                           | NO   |     | NULL                |                               |
+| type                | enum('private','government','trust','clinic','other') | NO   |     | private             |                               |
+| logo_url            | varchar(500)                                          | NO   |     | NULL                |                               |
+| website_url         | varchar(255)                                          | NO   |     | NULL                |                               |
+| status              | int(2)                                                | NO   |     | NULL                |                               |
+| doctorsCount        | int(11)                                               | NO   |     | NULL                |                               |
+| staffCount          | int(11)                                               | NO   |     | NULL                |                               |
+| isdelete            | int(2)                                                | NO   |     | NULL                |                               |
+| created_by          | varchar(150)                                          | NO   |     | NULL                |                               |
+| updated_by          | varchar(150)                                          | NO   |     | NULL                |                               |
+| created_at          | timestamp                                             | NO   |     | current_timestamp() |                               |
+| updated_at          | timestamp                                             | NO   |     | current_timestamp() | on update current_timestamp() |
++---------------------+-------------------------------------------------------+------+-----+---------------------+-------------------------------+
+
+ ms_hospitals_amenity;
++------------+--------------+------+-----+---------------------+-------------------------------+
+| Field      | Type         | Null | Key | Default             | Extra                         |
++------------+--------------+------+-----+---------------------+-------------------------------+
+| id         | int(11)      | NO   | PRI | NULL                | auto_increment                |
+| amenityuid | varchar(150) | NO   |     | NULL                |                               |
+| hosuid     | varchar(150) | NO   |     | NULL                |                               |
+| name       | text         | NO   |     | NULL                |                               |
+| icon       | varchar(150) | NO   |     | NULL                |                               |
+| status     | int(2)       | NO   |     | NULL                |                               |
+| isdelete   | int(2)       | NO   |     | NULL                |                               |
+| created_by | varchar(150) | NO   |     | NULL                |                               |
+| updated_by | varchar(150) | NO   |     | NULL                |                               |
+| created_at | timestamp    | NO   |     | current_timestamp() |                               |
+| updated_at | timestamp    | NO   |     | current_timestamp() | on update current_timestamp() |
++------------+--------------+------+-----+---------------------+-------------------------------+
+
+ms_hospitals_category;
++-------------+--------------+------+-----+---------------------+-------------------------------+
+| Field       | Type         | Null | Key | Default             | Extra                         |
++-------------+--------------+------+-----+---------------------+-------------------------------+
+| id          | int(11)      | NO   | PRI | NULL                | auto_increment                |
+| categoryuid | varchar(150) | NO   |     | NULL                |                               |
+| hospital_id | int(11)      | NO   |     | NULL                |                               |
+| name        | varchar(150) | NO   |     | NULL                |                               |
+| description | text         | YES  |     | NULL                |                               |
+| status      | int(2)       | NO   |     | 1                   |                               |
+| isdelete    | int(2)       | NO   |     | 0                   |                               |
+| created_by  | int(11)      | NO   |     | NULL                |                               |
+| updated_by  | int(11)      | NO   |     | NULL                |                               |
+| created_at  | timestamp    | NO   |     | current_timestamp() |                               |
+| updated_at  | timestamp    | NO   |     | current_timestamp() | on update current_timestamp() |
++-------------+--------------+------+-----+---------------------+-------------------------------+
+
+ms_hospitals_department;
++------------+--------------+------+-----+---------------------+-------------------------------+
+| Field      | Type         | Null | Key | Default             | Extra                         |
++------------+--------------+------+-----+---------------------+-------------------------------+
+| id         | int(11)      | NO   | PRI | NULL                | auto_increment                |
+| deptuid    | varchar(150) | NO   |     | NULL                |                               |
+| hosuid     | varchar(150) | NO   |     | NULL                |                               |
+| name       | varchar(350) | NO   |     | NULL                |                               |
+| status     | int(2)       | NO   |     | NULL                |                               |
+| isdelete   | int(2)       | NO   |     | NULL                |                               |
+| created_by | varchar(150) | NO   |     | NULL                |                               |
+| updated_by | varchar(150) | NO   |     | NULL                |                               |
+| created_at | timestamp    | NO   |     | current_timestamp() |                               |
+| updated_at | timestamp    | NO   |     | current_timestamp() | on update current_timestamp() |
++------------+--------------+------+-----+---------------------+-------------------------------+
+
+ms_hospitals_event_type;
++-------------+--------------+------+-----+---------------------+-------------------------------+
+| Field       | Type         | Null | Key | Default             | Extra                         |
++-------------+--------------+------+-----+---------------------+-------------------------------+
+| id          | int(11)      | NO   | PRI | NULL                | auto_increment                |
+| eventuid    | varchar(150) | NO   |     | NULL                |                               |
+| hosuid      | varchar(150) | NO   |     | NULL                |                               |
+| name        | varchar(150) | NO   |     | NULL                |                               |
+| color       | varchar(25)  | NO   |     | NULL                |                               |
+| description | text         | NO   |     | NULL                |                               |
+| status      | int(2)       | NO   |     | NULL                |                               |
+| isdelete    | int(2)       | NO   |     | NULL                |                               |
+| created_by  | varchar(150) | NO   |     | NULL                |                               |
+| updated_by  | varchar(150) | NO   |     | NULL                |                               |
+| created_at  | timestamp    | NO   |     | current_timestamp() |                               |
+| updated_at  | timestamp    | NO   |     | current_timestamp() | on update current_timestamp() |
++-------------+--------------+------+-----+---------------------+-------------------------------+
+
+ms_hospitals_manufacturer;
++-----------------+--------------+------+-----+---------------------+-------------------------------+
+| Field           | Type         | Null | Key | Default             | Extra                         |
++-----------------+--------------+------+-----+---------------------+-------------------------------+
+| id              | int(11)      | NO   | PRI | NULL                | auto_increment                |
+| manufactureruid | varchar(150) | NO   |     | NULL                |                               |
+| hospital_id     | int(11)      | NO   |     | NULL                |                               |
+| name            | varchar(150) | NO   |     | NULL                |                               |
+| contact_person  | varchar(150) | NO   |     | NULL                |                               |
+| address         | text         | YES  |     | NULL                |                               |
+| phone           | varchar(50)  | NO   |     | NULL                |                               |
+| email           | varchar(150) | NO   |     | NULL                |                               |
+| license_no      | varchar(150) | YES  |     | NULL                |                               |
+| status          | int(2)       | NO   |     | 1                   |                               |
+| isdelete        | int(2)       | NO   |     | 0                   |                               |
+| created_by      | int(11)      | NO   |     | NULL                |                               |
+| updated_by      | int(11)      | NO   |     | NULL                |                               |
+| created_at      | timestamp    | NO   |     | current_timestamp() |                               |
+| updated_at      | timestamp    | NO   |     | current_timestamp() | on update current_timestamp() |
++-----------------+--------------+------+-----+---------------------+-------------------------------+
+
+ms_hospitals_patient_activity_type;
++-------------+--------------+------+-----+---------------------+-------------------------------+
+| Field       | Type         | Null | Key | Default             | Extra                         |
++-------------+--------------+------+-----+---------------------+-------------------------------+
+| id          | int(11)      | NO   | PRI | NULL                | auto_increment                |
+| activityuid | varchar(150) | NO   |     | NULL                |                               |
+| hosuid      | varchar(150) | NO   |     | NULL                |                               |
+| hospital_id | int(11)      | NO   |     | NULL                |                               |
+| title       | text         | NO   |     | NULL                |                               |
+| category    | varchar(100) | YES  |     | NULL                |                               |
+| color_code  | varchar(20)  | YES  |     | NULL                |                               |
+| description | text         | YES  |     | NULL                |                               |
+| status      | int(2)       | NO   |     | 1                   |                               |
+| isdelete    | int(2)       | NO   |     | 0                   |                               |
+| created_by  | varchar(150) | NO   |     | NULL                |                               |
+| updated_by  | varchar(150) | YES  |     | NULL                |                               |
+| created_at  | timestamp    | NO   |     | current_timestamp() |                               |
+| updated_at  | timestamp    | NO   |     | current_timestamp() | on update current_timestamp() |
++-------------+--------------+------+-----+---------------------+-------------------------------+
+
+ms_hospitals_patient_status;
++-------------+--------------+------+-----+---------------------+-------------------------------+
+| Field       | Type         | Null | Key | Default             | Extra                         |
++-------------+--------------+------+-----+---------------------+-------------------------------+
+| id          | int(11)      | NO   | PRI | NULL                | auto_increment                |
+| statusuid   | varchar(150) | NO   |     | NULL                |                               |
+| hosuid      | varchar(150) | NO   |     | NULL                |                               |
+| hospital_id | int(11)      | NO   |     | NULL                |                               |
+| title       | text         | NO   |     | NULL                |                               |
+| category    | varchar(100) | YES  |     | NULL                |                               |
+| color_code  | varchar(20)  | YES  |     | NULL                |                               |
+| description | text         | YES  |     | NULL                |                               |
+| status      | int(2)       | NO   |     | 1                   |                               |
+| isdelete    | int(2)       | NO   |     | 0                   |                               |
+| created_by  | varchar(150) | NO   |     | NULL                |                               |
+| updated_by  | varchar(150) | YES  |     | NULL                |                               |
+| created_at  | timestamp    | NO   |     | current_timestamp() |                               |
+| updated_at  | timestamp    | NO   |     | current_timestamp() | on update current_timestamp() |
++-------------+--------------+------+-----+---------------------+-------------------------------+
+
+ms_hospitals_role;
++------------+--------------+------+-----+---------------------+-------------------------------+
+| Field      | Type         | Null | Key | Default             | Extra                         |
++------------+--------------+------+-----+---------------------+-------------------------------+
+| id         | int(11)      | NO   | PRI | NULL                | auto_increment                |
+| roleuid    | varchar(150) | NO   |     | NULL                |                               |
+| deptuid    | varchar(150) | NO   |     | NULL                |                               |
+| hosuid     | varchar(150) | NO   |     | NULL                |                               |
+| name       | varchar(350) | NO   |     | NULL                |                               |
+| status     | int(2)       | NO   |     | NULL                |                               |
+| isdelete   | int(2)       | NO   |     | NULL                |                               |
+| created_by | varchar(150) | NO   |     | NULL                |                               |
+| updated_by | varchar(150) | NO   |     | NULL                |                               |
+| created_at | timestamp    | NO   |     | current_timestamp() |                               |
+| updated_at | timestamp    | NO   |     | current_timestamp() | on update current_timestamp() |
++------------+--------------+------+-----+---------------------+-------------------------------+
+
+
+ms_hospitals_rooms;
++-------------+--------------+------+-----+---------------------+-------------------------------+
+| Field       | Type         | Null | Key | Default             | Extra                         |
++-------------+--------------+------+-----+---------------------+-------------------------------+
+| id          | int(11)      | NO   | PRI | NULL                | auto_increment                |
+| roomuid     | varchar(150) | NO   |     | NULL                |                               |
+| warduid     | varchar(150) | NO   |     | NULL                |                               |
+| ward_id     | int(11)      | NO   |     | NULL                |                               |
+| hosuid      | varchar(150) | NO   |     | NULL                |                               |
+| hospital_id | int(11)      | NO   |     | NULL                |                               |
+| title       | varchar(150) | NO   |     | NULL                |                               |
+| room_type   | varchar(150) | NO   |     | NULL                |                               |
+| bed_count   | int(11)      | NO   |     | NULL                |                               |
+| amenities   | text         | NO   |     | NULL                |                               |
+| status      | int(2)       | NO   |     | NULL                |                               |
+| isdelete    | int(2)       | NO   |     | NULL                |                               |
+| created_by  | varchar(150) | NO   |     | NULL                |                               |
+| updated_by  | varchar(150) | NO   |     | NULL                |                               |
+| created_at  | timestamp    | NO   |     | current_timestamp() |                               |
+| updated_at  | timestamp    | NO   |     | current_timestamp() | on update current_timestamp() |
++-------------+--------------+------+-----+---------------------+-------------------------------+
+
+ ms_hospitals_rooms_bed;
++---------------------+--------------+------+-----+---------------------+-------------------------------+
+| Field               | Type         | Null | Key | Default             | Extra                         |
++---------------------+--------------+------+-----+---------------------+-------------------------------+
+| id                  | int(11)      | NO   | PRI | NULL                | auto_increment                |
+| beduid              | varchar(150) | NO   |     | NULL                |                               |
+| ward_id             | int(11)      | NO   |     | NULL                |                               |
+| room_id             | int(11)      | NO   |     | NULL                |                               |
+| hospital_id         | int(11)      | NO   |     | NULL                |                               |
+| title               | varchar(350) | NO   |     | NULL                |                               |
+| status              | int(2)       | NO   |     | NULL                |                               |
+| assigned_patient_id | int(11)      | NO   |     | NULL                |                               |
+| admission_id        | int(11)      | NO   |     | NULL                |                               |
+| isdelete            | int(2)       | NO   |     | NULL                |                               |
+| created_by          | varchar(150) | NO   |     | NULL                |                               |
+| updated_by          | varchar(150) | NO   |     | NULL                |                               |
+| created_at          | timestamp    | NO   |     | current_timestamp() |                               |
+| updated_at          | timestamp    | NO   |     | current_timestamp() | on update current_timestamp() |
++---------------------+--------------+------+-----+---------------------+-------------------------------+
+
+ ms_hospitals_room_type;
++-------------+--------------+------+-----+---------------------+-------------------------------+
+| Field       | Type         | Null | Key | Default             | Extra                         |
++-------------+--------------+------+-----+---------------------+-------------------------------+
+| id          | int(11)      | NO   | PRI | NULL                | auto_increment                |
+| roomtypeuid | varchar(150) | NO   |     | NULL                |                               |
+| hosuid      | varchar(150) | NO   |     | NULL                |                               |
+| title       | text         | NO   |     | NULL                |                               |
+| status      | int(2)       | NO   |     | NULL                |                               |
+| isdelete    | int(2)       | NO   |     | NULL                |                               |
+| created_by  | varchar(150) | NO   |     | NULL                |                               |
+| updated_by  | varchar(150) | NO   |     | NULL                |                               |
+| created_at  | timestamp    | NO   |     | current_timestamp() |                               |
+| updated_at  | timestamp    | NO   |     | current_timestamp() | on update current_timestamp() |
++-------------+--------------+------+-----+---------------------+-------------------------------+
+
+ms_hospitals_shift_time;
++------------+--------------+------+-----+---------------------+-------------------------------+
+| Field      | Type         | Null | Key | Default             | Extra                         |
++------------+--------------+------+-----+---------------------+-------------------------------+
+| id         | int(11)      | NO   | PRI | NULL                | auto_increment                |
+| shiftuid   | varchar(150) | NO   |     | NULL                |                               |
+| hosuid     | varchar(150) | NO   |     | NULL                |                               |
+| shift_name | varchar(150) | NO   |     | NULL                |                               |
+| start_time | time         | NO   |     | NULL                |                               |
+| end_time   | time         | NO   |     | NULL                |                               |
+| status     | int(2)       | NO   |     | NULL                |                               |
+| isdelete   | int(2)       | NO   |     | NULL                |                               |
+| created_by | varchar(150) | NO   |     | NULL                |                               |
+| updated_by | varchar(150) | NO   |     | NULL                |                               |
+| created_at | timestamp    | NO   |     | current_timestamp() |                               |
+| updated_at | timestamp    | NO   |     | current_timestamp() | on update current_timestamp() |
++------------+--------------+------+-----+---------------------+-------------------------------+
+
+ms_hospitals_specialization;
++-------------+--------------+------+-----+---------------------+-------------------------------+
+| Field       | Type         | Null | Key | Default             | Extra                         |
++-------------+--------------+------+-----+---------------------+-------------------------------+
+| id          | int(11)      | NO   | PRI | NULL                | auto_increment                |
+| speuid      | varchar(150) | NO   |     | NULL                |                               |
+| hosuid      | varchar(150) | NO   |     | NULL                |                               |
+| name        | varchar(150) | NO   |     | NULL                |                               |
+| description | text         | NO   |     | NULL                |                               |
+| status      | int(2)       | NO   |     | NULL                |                               |
+| isdelete    | int(2)       | NO   |     | NULL                |                               |
+| created_by  | varchar(150) | NO   |     | NULL                |                               |
+| updated_by  | varchar(150) | NO   |     | NULL                |                               |
+| created_at  | timestamp    | NO   |     | current_timestamp() |                               |
+| updated_at  | timestamp    | NO   |     | current_timestamp() | on update current_timestamp() |
++-------------+--------------+------+-----+---------------------+-------------------------------+
+
+ms_hospitals_subcategory;
++----------------+--------------+------+-----+---------------------+-------------------------------+
+| Field          | Type         | Null | Key | Default             | Extra                         |
++----------------+--------------+------+-----+---------------------+-------------------------------+
+| id             | int(11)      | NO   | PRI | NULL                | auto_increment                |
+| subcategoryuid | varchar(150) | NO   |     | NULL                |                               |
+| hospital_id    | int(11)      | NO   |     | NULL                |                               |
+| category_id    | int(11)      | NO   |     | NULL                |                               |
+| name           | varchar(150) | NO   |     | NULL                |                               |
+| description    | text         | YES  |     | NULL                |                               |
+| status         | int(2)       | NO   |     | 1                   |                               |
+| isdelete       | int(2)       | NO   |     | 0                   |                               |
+| created_by     | int(11)      | NO   |     | NULL                |                               |
+| updated_by     | int(11)      | NO   |     | NULL                |                               |
+| created_at     | timestamp    | NO   |     | current_timestamp() |                               |
+| updated_at     | timestamp    | NO   |     | current_timestamp() | on update current_timestamp() |
++----------------+--------------+------+-----+---------------------+-------------------------------+
+
+ms_hospitals_tax;
++-------------+--------------+------+-----+---------------------+-------------------------------+
+| Field       | Type         | Null | Key | Default             | Extra                         |
++-------------+--------------+------+-----+---------------------+-------------------------------+
+| id          | int(11)      | NO   | PRI | NULL                | auto_increment                |
+| taxuid      | varchar(150) | NO   |     | NULL                |                               |
+| hospital_id | int(11)      | NO   |     | NULL                |                               |
+| name        | varchar(150) | NO   |     | NULL                |                               |
+| percentage  | decimal(5,2) | NO   |     | NULL                |                               |
+| type        | varchar(50)  | NO   |     | NULL                |                               |
+| region      | varchar(150) | YES  |     | NULL                |                               |
+| status      | int(2)       | NO   |     | 1                   |                               |
+| isdelete    | int(2)       | NO   |     | 0                   |                               |
+| created_by  | int(11)      | NO   |     | NULL                |                               |
+| updated_by  | int(11)      | NO   |     | NULL                |                               |
+| created_at  | timestamp    | NO   |     | current_timestamp() |                               |
+| updated_at  | timestamp    | NO   |     | current_timestamp() | on update current_timestamp() |
++-------------+--------------+------+-----+---------------------+-------------------------------+
+
+ms_hospitals_unitofmeasure;
++-----------------+---------------+------+-----+---------------------+-------------------------------+
+| Field           | Type          | Null | Key | Default             | Extra                         |
++-----------------+---------------+------+-----+---------------------+-------------------------------+
+| id              | int(11)       | NO   | PRI | NULL                | auto_increment                |
+| uomuid          | varchar(150)  | NO   |     | NULL                |                               |
+| hospital_id     | int(11)       | NO   |     | NULL                |                               |
+| name            | varchar(150)  | NO   |     | NULL                |                               |
+| symbol          | varchar(50)   | NO   |     | NULL                |                               |
+| conversion_rate | decimal(10,2) | NO   |     | 1.00                |                               |
+| status          | int(2)        | NO   |     | 1                   |                               |
+| isdelete        | int(2)        | NO   |     | 0                   |                               |
+| created_by      | int(11)       | NO   |     | NULL                |                               |
+| updated_by      | int(11)       | NO   |     | NULL                |                               |
+| created_at      | timestamp     | NO   |     | current_timestamp() |                               |
+| updated_at      | timestamp     | NO   |     | current_timestamp() | on update current_timestamp() |
++-----------------+---------------+------+-----+---------------------+-------------------------------+
+
+
+ms_hospitals_ward;
++-------------+--------------+------+-----+---------------------+-------------------------------+
+| Field       | Type         | Null | Key | Default             | Extra                         |
++-------------+--------------+------+-----+---------------------+-------------------------------+
+| id          | int(11)      | NO   | PRI | NULL                | auto_increment                |
+| warduid     | varchar(150) | NO   |     | NULL                |                               |
+| hosuid      | varchar(150) | NO   |     | NULL                |                               |
+| hospital_id | int(11)      | NO   |     | NULL                |                               |
+| title       | varchar(150) | NO   |     | NULL                |                               |
+| ward_type   | varchar(150) | NO   |     | NULL                |                               |
+| floor_no    | varchar(150) | NO   |     | NULL                |                               |
+| status      | int(2)       | NO   |     | 1                   |                               |
+| isdelete    | int(2)       | NO   |     | 0                   |                               |
+| created_by  | varchar(150) | NO   |     | NULL                |                               |
+| updated_by  | varchar(150) | NO   |     | NULL                |                               |
+| created_at  | timestamp    | NO   |     | current_timestamp() |                               |
+| updated_at  | timestamp    | NO   |     | current_timestamp() | on update current_timestamp() |
++-------------+--------------+------+-----+---------------------+-------------------------------+
+
+ms_hospitals_ward_type;
++-------------+--------------+------+-----+---------------------+-------------------------------+
+| Field       | Type         | Null | Key | Default             | Extra                         |
++-------------+--------------+------+-----+---------------------+-------------------------------+
+| id          | int(11)      | NO   | PRI | NULL                | auto_increment                |
+| wardtypeuid | varchar(150) | NO   |     | NULL                |                               |
+| hosuid      | varchar(150) | NO   |     | NULL                |                               |
+| title       | text         | NO   |     | NULL                |                               |
+| status      | int(2)       | NO   |     | NULL                |                               |
+| isdelete    | int(2)       | NO   |     | NULL                |                               |
+| created_by  | varchar(150) | NO   |     | NULL                |                               |
+| updated_by  | varchar(150) | NO   |     | NULL                |                               |
+| created_at  | timestamp    | NO   |     | current_timestamp() |                               |
+| updated_at  | timestamp    | NO   |     | current_timestamp() | on update current_timestamp() |
++-------------+--------------+------+-----+---------------------+-------------------------------+
+
+ms_patient;
++-------------------+--------------+------+-----+---------------------+-------------------------------+
+| Field             | Type         | Null | Key | Default             | Extra                         |
++-------------------+--------------+------+-----+---------------------+-------------------------------+
+| id                | int(11)      | NO   | PRI | NULL                | auto_increment                |
+| patient_uid       | varchar(150) | NO   |     | NULL                |                               |
+| fname             | varchar(50)  | NO   |     | NULL                |                               |
+| lname             | varchar(50)  | NO   |     | NULL                |                               |
+| email             | varchar(150) | NO   |     | NULL                |                               |
+| password          | varchar(150) | NO   |     | NULL                |                               |
+| phone             | varchar(15)  | NO   |     | NULL                |                               |
+| dob               | date         | NO   |     | NULL                |                               |
+| gender            | varchar(25)  | NO   |     | NULL                |                               |
+| blood_group       | varchar(15)  | NO   |     | NULL                |                               |
+| emergency_contact | varchar(15)  | NO   |     | NULL                |                               |
+| address           | blob         | NO   |     | NULL                |                               |
+| hosuid            | varchar(150) | NO   |     | NULL                |                               |
+| hospital_id       | int(11)      | NO   |     | NULL                |                               |
+| status            | int(2)       | NO   |     | NULL                |                               |
+| isdelete          | int(2)       | NO   |     | NULL                |                               |
+| created_by        | varchar(150) | NO   |     | NULL                |                               |
+| updated_by        | varchar(150) | NO   |     | NULL                |                               |
+| created_at        | timestamp    | NO   |     | current_timestamp() |                               |
+| updated_at        | timestamp    | NO   |     | current_timestamp() | on update current_timestamp() |
++-------------------+--------------+------+-----+---------------------+-------------------------------+
+
+ ms_patient_bed_admission;
++-------------------------+--------------+------+-----+---------------------+-------------------------------+
+| Field                   | Type         | Null | Key | Default             | Extra                         |
++-------------------------+--------------+------+-----+---------------------+-------------------------------+
+| id                      | int(11)      | NO   | PRI | NULL                | auto_increment                |
+| patient_id              | int(11)      | NO   |     | NULL                |                               |
+| hospital_id             | int(11)      | NO   |     | NULL                |                               |
+| ward_id                 | int(11)      | NO   |     | NULL                |                               |
+| room_id                 | int(11)      | NO   |     | NULL                |                               |
+| bed_id                  | int(11)      | NO   |     | NULL                |                               |
+| doctor_id               | int(11)      | NO   |     | NULL                |                               |
+| admit_date              | datetime     | NO   |     | NULL                |                               |
+| admission_status        | varchar(150) | NO   |     | NULL                |                               |
+| expected_discharge_date | datetime     | YES  |     | NULL                |                               |
+| discharge_date          | datetime     | YES  |     | NULL                |                               |
+| activity_type           | varchar(150) | NO   |     | NULL                |                               |
+| current_status          | varchar(150) | NO   |     | NULL                |                               |
+| priority                | varchar(150) | NO   |     | NULL                |                               |
+| medical_notes           | text         | YES  |     | NULL                |                               |
+| permission_status       | int(2)       | NO   |     | NULL                |                               |
+| permission_change_by    | int(11)      | NO   |     | NULL                |                               |
+| created_by              | int(11)      | NO   |     | NULL                |                               |
+| updated_by              | int(11)      | YES  |     | NULL                |                               |
+| created_at              | timestamp    | NO   |     | current_timestamp() |                               |
+| updated_at              | timestamp    | NO   |     | current_timestamp() | on update current_timestamp() |
++-------------------------+--------------+------+-----+---------------------+-------------------------------+
+
+
+ ms_staff;
++-------------------+--------------+------+-----+---------------------+-------------------------------+
+| Field             | Type         | Null | Key | Default             | Extra                         |
++-------------------+--------------+------+-----+---------------------+-------------------------------+
+| id                | int(11)      | NO   | PRI | NULL                | auto_increment                |
+| staff_uid         | varchar(150) | NO   |     | NULL                |                               |
+| name              | varchar(150) | NO   |     | NULL                |                               |
+| email             | varchar(150) | NO   |     | NULL                |                               |
+| password          | varchar(150) | NO   |     | NULL                |                               |
+| phone             | varchar(20)  | NO   |     | NULL                |                               |
+| role              | varchar(150) | NO   |     | NULL                |                               |
+| department        | varchar(150) | NO   |     | NULL                |                               |
+| hosuid            | varchar(150) | NO   |     | NULL                |                               |
+| hospital_id       | int(11)      | NO   |     | NULL                |                               |
+| shift             | varchar(50)  | YES  |     | NULL                |                               |
+| experience_years  | int(3)       | YES  |     | 0                   |                               |
+| experience_months | int(3)       | YES  |     | 0                   |                               |
+| status            | tinyint(1)   | YES  |     | 1                   |                               |
+| isdelete          | tinyint(1)   | YES  |     | 0                   |                               |
+| created_by        | varchar(150) | YES  |     | NULL                |                               |
+| updated_by        | varchar(150) | YES  |     | NULL                |                               |
+| created_at        | timestamp    | NO   |     | current_timestamp() |                               |
+| updated_at        | timestamp    | NO   |     | current_timestamp() | on update current_timestamp() |
++-------------------+--------------+------+-----+---------------------+-------------------------------+
+
+ ms_staff_access;
++------------------------+--------------+------+-----+---------------------+-------------------------------+
+| Field                  | Type         | Null | Key | Default             | Extra                         |
++------------------------+--------------+------+-----+---------------------+-------------------------------+
+| id                     | int(11)      | NO   | PRI | NULL                | auto_increment                |
+| staff_uid              | varchar(150) | NO   |     | NULL                |                               |
+| patient_list           | int(2)       | NO   |     | NULL                |                               |
+| view_patients          | int(2)       | NO   |     | NULL                |                               |
+| add_patients           | int(2)       | NO   |     | NULL                |                               |
+| edit_patients          | int(2)       | NO   |     | NULL                |                               |
+| view_medical_history   | int(2)       | NO   |     | NULL                |                               |
+| created_by             | varchar(150) | NO   |     | NULL                |                               |
+| updated_by             | varchar(150) | NO   |     | NULL                |                               |
+| created_at             | timestamp    | NO   |     | current_timestamp() |                               |
+| updated_at             | timestamp    | NO   |     | current_timestamp() | on update current_timestamp() |
+| write_prescriptions    | int(2)       | NO   |     | 0                   |                               |
+| view_lab_results       | int(2)       | NO   |     | 0                   |                               |
+| request_lab_tests      | int(2)       | NO   |     | 0                   |                               |
+| manage_vitals          | int(2)       | NO   |     | 0                   |                               |
+| appointment_list       | int(2)       | NO   |     | NULL                |                               |
+| book_appointment       | int(2)       | NO   |     | 0                   |                               |
+| master_scheduler       | int(2)       | NO   |     | NULL                |                               |
+| doctor_calendar        | int(2)       | NO   |     | NULL                |                               |
+| reschedule_appointment | int(2)       | NO   |     | 0                   |                               |
+| cancel_appointment     | int(2)       | NO   |     | 0                   |                               |
+| icu_access             | int(2)       | NO   |     | 0                   |                               |
+| assign_rooms           | int(2)       | NO   |     | 0                   |                               |
+| bad_request_approved   | int(2)       | NO   |     | NULL                |                               |
+| monitor_beds           | int(2)       | NO   |     | 0                   |                               |
+| emergency_access       | int(2)       | NO   |     | 0                   |                               |
+| view_inventory         | int(2)       | NO   |     | 0                   |                               |
+| dispense_medication    | int(2)       | NO   |     | 0                   |                               |
+| manage_controlled      | int(2)       | NO   |     | 0                   |                               |
+| reorder_stock          | int(2)       | NO   |     | 0                   |                               |
+| perform_lab_tests      | int(2)       | NO   |     | 0                   |                               |
+| manage_lab_equipment   | int(2)       | NO   |     | 0                   |                               |
+| lab_safety             | int(2)       | NO   |     | 0                   |                               |
+| view_billing           | int(2)       | NO   |     | 0                   |                               |
+| process_payments       | int(2)       | NO   |     | 0                   |                               |
+| apply_discounts        | int(2)       | NO   |     | 0                   |                               |
+| insurance_claims       | int(2)       | NO   |     | 0                   |                               |
+| financial_reports      | int(2)       | NO   |     | 0                   |                               |
+| manage_users           | int(2)       | NO   |     | 0                   |                               |
+| assign_roles           | int(2)       | NO   |     | 0                   |                               |
+| system_monitoring      | int(2)       | NO   |     | 0                   |                               |
+| emergency_override     | int(2)       | NO   |     | 0                   |                               |
+| view_staff_profiles    | int(2)       | NO   |     | 0                   |                               |
+| manage_shifts          | int(2)       | NO   |     | 0                   |                               |
+| performance_reviews    | int(2)       | NO   |     | 0                   |                               |
++------------------------+--------------+------+-----+---------------------+-------------------------------+
+
+ ms_staff_department;
++-----------------------+--------------+------+-----+---------+----------------+
+| Field                 | Type         | Null | Key | Default | Extra          |
++-----------------------+--------------+------+-----+---------+----------------+
+| departmentId          | int(11)      | NO   | PRI | NULL    | auto_increment |
+| departmentName        | varchar(150) | NO   |     | NULL    |                |
+| departmentDescription | varchar(255) | YES  |     | NULL    |                |
+| status                | tinyint(1)   | YES  |     | 1       |                |
++-----------------------+--------------+------+-----+---------+----------------+
+
+ms_staff_role;
++-----------------+--------------+------+-----+---------+----------------+
+| Field           | Type         | Null | Key | Default | Extra          |
++-----------------+--------------+------+-----+---------+----------------+
+| roleId          | int(11)      | NO   | PRI | NULL    | auto_increment |
+| roleName        | varchar(150) | NO   |     | NULL    |                |
+| roleDescription | varchar(255) | YES  |     | NULL    |                |
+| status          | tinyint(1)   | YES  |     | 1       |                |
++-----------------+--------------+------+-----+---------+----------------+
+
+ms_state;
++-------------+---------------+------+-----+---------+----------------+
+| Field       | Type          | Null | Key | Default | Extra          |
++-------------+---------------+------+-----+---------+----------------+
+| stateId     | int(11)       | NO   | PRI | NULL    | auto_increment |
+| stateName   | varchar(250)  | NO   |     | NULL    |                |
+| stateCode   | varchar(10)   | NO   |     | NULL    |                |
+| shortCode   | varchar(5)    | NO   |     | NULL    |                |
+| pincode     | int(10)       | NO   |     | NULL    |                |
+| countryId   | int(11)       | NO   |     | NULL    |                |
+| countryName | varchar(150)  | NO   |     | NULL    |                |
+| lat         | double(11,8)  | NO   |     | NULL    |                |
+| lng         | decimal(11,8) | NO   |     | NULL    |                |
++-------------+---------------+------+-----+---------+----------------+
+
+ ms_user_attempts;
++---------------+--------------+------+-----+---------------------+-------------------------------+
+| Field         | Type         | Null | Key | Default             | Extra                         |
++---------------+--------------+------+-----+---------------------+-------------------------------+
+| id            | int(11)      | NO   | PRI | NULL                | auto_increment                |
+| userUid       | varchar(150) | NO   |     | NULL                |                               |
+| attempt_date  | int(11)      | NO   |     | NULL                |                               |
+| attempt_count | int(11)      | NO   |     | NULL                |                               |
+| created_at    | timestamp    | NO   |     | current_timestamp() | on update current_timestamp() |
++---------------+--------------+------+-----+---------------------+-------------------------------+
