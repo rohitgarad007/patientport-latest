@@ -52,6 +52,34 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { fetchAllOrders, collectSample, fetchMasterLabTests, fetchCollectedSamples, updateLabOrderStatus } from '@/services/LaboratoryService';
+import { formatDistanceToNow } from "date-fns";
+
+const formatTimeAgo = (dateString: string) => {
+  if (!dateString) return "";
+  try {
+    const parts = dateString.split(/[- :]/);
+    if (parts.length >= 3) {
+      const year = parseInt(parts[0]);
+      const month = parseInt(parts[1]) - 1;
+      const day = parseInt(parts[2]);
+      const hour = parseInt(parts[3] || '0');
+      const minute = parseInt(parts[4] || '0');
+      const second = parseInt(parts[5] || '0');
+      
+      const date = new Date(year, month, day, hour, minute, second);
+      
+      if (!isNaN(date.getTime())) {
+         return formatDistanceToNow(date, { addSuffix: true });
+      }
+    }
+
+    const date = new Date(dateString.replace(" ", "T")); 
+    if (isNaN(date.getTime())) return dateString;
+    return formatDistanceToNow(date, { addSuffix: true });
+  } catch (e) {
+    return dateString;
+  }
+};
 
 export default function LaboratoryOrders() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -273,6 +301,7 @@ export default function LaboratoryOrders() {
                           <div>
                             <p className="font-medium">{order.patient.name}</p>
                             <p className="text-xs text-muted-foreground">{order.patient.age}y / {order.patient.gender} • {order.patient.phone}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">{formatTimeAgo(order.createdAt)}</p>
                           </div>
                         </td>
                         <td className="px-4 py-3 hidden lg:table-cell">
@@ -868,6 +897,7 @@ function SampleTracking({ orders, onPrintBarcode }: { orders: any[]; onPrintBarc
                 type: r.sample_type || 'N/A',
                 test: testName,
                 status: r.status || 'Collected',
+                collectedAt: r.created_at || order.createdAt,
                 barcode: r.id ? `SMP${String(r.id).padStart(4,'0')}${(testName || '').replace(/\s+/g,'').toUpperCase()}` : `${order.orderId}-${r.test_id}`
               });
             }
@@ -911,6 +941,7 @@ function SampleTracking({ orders, onPrintBarcode }: { orders: any[]; onPrintBarc
                   </td>
                   <td className="px-4 py-3">
                     <StatusBadge status={sample.status} />
+                    <p className="text-xs text-muted-foreground mt-0.5">{formatTimeAgo(sample.collectedAt)}</p>
                   </td>
                   <td className="px-4 py-3">
                     <code className="text-xs bg-muted px-2 py-1 rounded">{sample.barcode}</code>
@@ -1181,6 +1212,7 @@ function SampleCollection({ orders, onRefresh }: { orders: any[], onRefresh: () 
                         <p className="text-sm text-muted-foreground">
                           {order.patient.age}y / {order.patient.gender} • {order.patient.phone}
                         </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{formatTimeAgo(order.createdAt)}</p>
                       </div>
                     </div>
                     <div className="text-right">

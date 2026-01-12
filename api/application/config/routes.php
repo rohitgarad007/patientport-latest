@@ -107,6 +107,9 @@ $route['lb_mark_seen'] = 'LaboratoriesController/mark_notifications_seen';
 $route['lb_unseen_queue'] = 'LaboratoriesController/get_unseen_queue_notifications';
 $route['lb_mark_queue_seen'] = 'LaboratoriesController/mark_queue_seen';
 
+$route['lb_unseen_processing'] = 'LaboratoriesController/get_unseen_processing_notifications';
+$route['lb_mark_processing_seen'] = 'LaboratoriesController/mark_processing_seen';
+
 
 
 // Laboratory Operational Routes

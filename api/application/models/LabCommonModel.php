@@ -859,10 +859,14 @@ class LabCommonModel extends CI_Model{
         return $this->db->update('lb_collected_samples', $data);
     }
 
-    public function updateLabOrderStatus($orderId, $status, $labid) {
+    public function updateLabOrderStatus($orderId, $status, $labid, $additional_data = []) {
         $this->db->where('id', $orderId);
         $this->db->where('lab_id', $labid);
-        return $this->db->update('lb_lab_orders', ['status' => $status, 'updated_at' => date('Y-m-d H:i:s')]);
+        $data = ['status' => $status, 'updated_at' => date('Y-m-d H:i:s')];
+        if (!empty($additional_data)) {
+            $data = array_merge($data, $additional_data);
+        }
+        return $this->db->update('lb_lab_orders', $data);
     }
 
     // --- Draft / Result Entry Methods ---
@@ -988,5 +992,24 @@ class LabCommonModel extends CI_Model{
         $this->db->where('lab_id', $labid);
         $this->db->where_in('id', $orderIds);
         return $this->db->update('lb_lab_orders', ['is_seen' => 1]);
+    }
+
+    public function get_unseen_processing_notifications($labid) {
+        $this->db->select('lo.id as order_id, lo.order_number, lo.created_at, lo.status, mp.fname, mp.lname, mp.id as patient_id');
+        $this->db->from('lb_lab_orders lo');
+        $this->db->join('ms_patient_treatment_info mt', 'mt.id = lo.treatment_id', 'left');
+        $this->db->join('ms_patient mp', 'mp.id = mt.patient_id', 'left');
+        $this->db->where('lo.lab_id', $labid);
+        $this->db->where('lo.is_processing_seen', 0);
+        $this->db->where('lo.status', 'Validation Pending');
+        $this->db->order_by('lo.created_at', 'DESC');
+        return $this->db->get()->result_array();
+    }
+
+    public function mark_processing_seen($labid, $orderIds) {
+        if (empty($orderIds)) return false;
+        $this->db->where('lab_id', $labid);
+        $this->db->where_in('id', $orderIds);
+        return $this->db->update('lb_lab_orders', ['is_processing_seen' => 1]);
     }
 }

@@ -43,6 +43,7 @@ import {
 import { fetchCompletedReports, fetchReportDetails, uploadGeneratedReport } from '@/services/LaboratoryService';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { formatDistanceToNow } from "date-fns";
 
 export default function LaboratoryReports() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -50,6 +51,33 @@ export default function LaboratoryReports() {
   const [selectedReport, setSelectedReport] = useState<string | null>(null);
   const [showShareDialog, setShowShareDialog] = useState<string | null>(null);
   const [orders, setOrders] = useState<any[]>([]);
+
+  const formatTimeAgo = (dateString: string) => {
+    if (!dateString) return "";
+    try {
+      const parts = dateString.split(/[- :]/);
+      if (parts.length >= 3) {
+        const year = parseInt(parts[0]);
+        const month = parseInt(parts[1]) - 1;
+        const day = parseInt(parts[2]);
+        const hour = parseInt(parts[3] || '0');
+        const minute = parseInt(parts[4] || '0');
+        const second = parseInt(parts[5] || '0');
+        
+        const date = new Date(year, month, day, hour, minute, second);
+        
+        if (!isNaN(date.getTime())) {
+           return formatDistanceToNow(date, { addSuffix: true });
+        }
+      }
+
+      const date = new Date(dateString.replace(" ", "T")); 
+      if (isNaN(date.getTime())) return dateString;
+      return formatDistanceToNow(date, { addSuffix: true });
+    } catch (e) {
+      return dateString;
+    }
+  };
 
   // Derived state to fix ReferenceError
   const completedOrders = orders;
@@ -341,6 +369,7 @@ export default function LaboratoryReports() {
                       <div>
                         <p className="font-medium">{order.fname} {order.lname}</p>
                         <p className="text-xs text-muted-foreground">{order.gender} / {order.dob}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{formatTimeAgo(order.created_at)}</p>
                       </div>
                     </td>
                     <td className="px-4 py-3 hidden lg:table-cell">
@@ -359,9 +388,14 @@ export default function LaboratoryReports() {
                       <StatusBadge status={order.order_status} />
                     </td>
                     <td className="px-4 py-3 hidden md:table-cell text-sm text-muted-foreground">
-                      {order.created_at 
-                        ? new Date(order.created_at).toLocaleDateString()
-                        : '—'}
+                      <div>
+                        {order.created_at 
+                          ? new Date(order.created_at).toLocaleDateString()
+                          : '—'}
+                      </div>
+                      <div className="text-xs mt-0.5">
+                         {formatTimeAgo(order.created_at)}
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-1">

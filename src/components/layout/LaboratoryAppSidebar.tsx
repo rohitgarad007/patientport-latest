@@ -2,7 +2,8 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 import { useEffect, useState } from "react";
 import { PaIcons } from "@/components/icons/PaIcons";
-import { getUnseenOrders, markOrdersSeen, getUnseenQueue, markQueueSeen } from "../../services/labNotificationService";
+import { formatDistanceToNow } from "date-fns";
+import { getUnseenOrders, markOrdersSeen, getUnseenQueue, markQueueSeen, getUnseenProcessing, markProcessingSeen } from "../../services/labNotificationService";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,12 +21,6 @@ import { Button } from "@/components/ui/button";
 
 // Static Data for Notifications
 const notificationData = {
-  processing: [
-    { title: "Lab Report Processing", sub: "Blood test for Patient #P-1234", time: "5 mins ago", icon: PaIcons.clock, color: "bg-blue-100 text-blue-600" },
-    { title: "Prescription Verification", sub: "Dr. Mehta prescription review", time: "10 mins ago", icon: PaIcons.approveIcon, color: "bg-yellow-100 text-yellow-600" },
-    { title: "Insurance Claim", sub: "Claim #INS-2024-089 verification", time: "30 mins ago", icon: PaIcons.approve3Icon, color: "bg-green-100 text-green-600" },
-    { title: "Discharge Process", sub: "Patient #P-5678 discharge papers", time: "45 mins ago", icon: PaIcons.dischargeIcon, color: "bg-gray-100 text-gray-600" },
-  ],
   queue: [
     { title: "OPD Queue - Cardiology", sub: "12 patients waiting", time: "Now", count: 12, color: "bg-blue-100 text-blue-600" },
     { title: "Pharmacy Queue", sub: "8 prescriptions pending", time: "Now", count: 8, color: "bg-blue-100 text-blue-600" },
@@ -108,6 +103,40 @@ export function LaboratoryAppSidebar() {
   const [unseenQueue, setUnseenQueue] = useState<any[]>([]);
   const [unseenQueueCount, setUnseenQueueCount] = useState(0);
 
+  const [unseenProcessing, setUnseenProcessing] = useState<any[]>([]);
+  const [unseenProcessingCount, setUnseenProcessingCount] = useState(0);
+
+  const formatTimeAgo = (dateString: string) => {
+    if (!dateString) return "";
+    try {
+      // Robust parsing for SQL datetime format YYYY-MM-DD HH:MM:SS
+      // This handles cross-browser compatibility issues (Safari/Firefox)
+      const parts = dateString.split(/[- :]/);
+      if (parts.length >= 3) {
+        const year = parseInt(parts[0]);
+        const month = parseInt(parts[1]) - 1;
+        const day = parseInt(parts[2]);
+        const hour = parseInt(parts[3] || '0');
+        const minute = parseInt(parts[4] || '0');
+        const second = parseInt(parts[5] || '0');
+        
+        const date = new Date(year, month, day, hour, minute, second);
+        
+        if (!isNaN(date.getTime())) {
+           return formatDistanceToNow(date, { addSuffix: true });
+        }
+      }
+
+      // Fallback to standard parsing
+      const date = new Date(dateString.replace(" ", "T")); 
+      if (isNaN(date.getTime())) return dateString;
+      return formatDistanceToNow(date, { addSuffix: true });
+    } catch (e) {
+      console.error("Error formatting time:", e);
+      return dateString;
+    }
+  };
+
   const fetchUnseenOrders = async () => {
     try {
       const orders = await getUnseenOrders();
@@ -115,7 +144,7 @@ export function LaboratoryAppSidebar() {
         id: o.order_id,
         title: `New Order #${o.order_number || o.order_id}`,
         sub: `Patient: ${o.fname} ${o.lname}`,
-        time: o.created_at,
+        time: formatTimeAgo(o.created_at),
         icon: PaIcons.PurchaseIcon,
         color: "bg-blue-100 text-blue-600"
       }));
@@ -126,6 +155,25 @@ export function LaboratoryAppSidebar() {
     }
   };
 
+  const fetchUnseenProcessing = async () => {
+    try {
+      const orders = await getUnseenProcessing();
+      const formatted = orders.map((o: any) => ({
+        id: o.order_id,
+        title: `Processing Order #${o.order_number || o.order_id}`,
+        sub: `Patient: ${o.fname} ${o.lname} (${o.status})`,
+        time: formatTimeAgo(o.created_at),
+        status: o.status,
+        icon: PaIcons.settings2Icon,
+        color: "bg-purple-100 text-purple-600"
+      }));
+      setUnseenProcessing(formatted);
+      setUnseenProcessingCount(formatted.length);
+    } catch (error) {
+      console.error("Failed to fetch unseen processing", error);
+    }
+  };
+
   const fetchUnseenQueue = async () => {
     try {
       const orders = await getUnseenQueue();
@@ -133,7 +181,7 @@ export function LaboratoryAppSidebar() {
         id: o.id,
         title: `Queue Item #${o.order_number || o.id}`,
         sub: `Patient: ${o.fname} ${o.lname} (${o.status})`,
-        time: o.created_at,
+        time: formatTimeAgo(o.created_at),
         status: o.status,
         icon: PaIcons.patients,
         color: "bg-yellow-100 text-yellow-600"
@@ -195,12 +243,26 @@ export function LaboratoryAppSidebar() {
     }
   };
 
+  const handleProcessingItemClick = async (notification: any) => {
+    if (!notification.id) return;
+    try {
+      await markProcessingSeen([notification.id]);
+      setUnseenProcessing((prev) => prev.filter((o) => o.id !== notification.id));
+      setUnseenProcessingCount((prev) => Math.max(0, prev - 1));
+      navigate("/laboratory-processing");
+    } catch (error) {
+      console.error("Failed to mark processing item seen", error);
+    }
+  };
+
   useEffect(() => {
     fetchUnseenOrders();
     fetchUnseenQueue();
+    fetchUnseenProcessing();
     const interval = setInterval(() => {
       fetchUnseenOrders();
       fetchUnseenQueue();
+      fetchUnseenProcessing();
     }, 60000);
     return () => clearInterval(interval);
   }, []);
@@ -256,8 +318,10 @@ export function LaboratoryAppSidebar() {
       title: "Processing",
       type: "notification",
       icon: PaIcons.settings2Icon,
-      badge: 4,
-      data: notificationData.processing,
+      badge: unseenProcessingCount,
+      data: unseenProcessing,
+      onItemClick: handleProcessingItemClick,
+      onViewAll: () => navigate("/laboratory-processing"),
     },
     {
       title: "Queue",

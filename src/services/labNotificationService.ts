@@ -67,6 +67,49 @@ export const markOrdersSeen = async (orderIds: string[]) => {
   return await res.json();
 };
 
+export const getUnseenProcessing = async () => {
+  const { apiUrl, headers } = await getAuthHeaders();
+  const aesKey = await configService.getAesSecretKey();
+
+  const res = await fetch(`${apiUrl}/lb_unseen_processing`, {
+    method: "GET",
+    headers,
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch processing notifications");
+  }
+
+  const response = await res.json();
+
+  if (response.success && response.data) {
+    const decrypted = decryptAESFromPHP(response.data, aesKey);
+    if (decrypted) {
+      return JSON.parse(decrypted);
+    }
+  }
+  return [];
+};
+
+export const markProcessingSeen = async (orderIds: string[]) => {
+  const { apiUrl, headers } = await getAuthHeaders();
+  const aesKey = await configService.getAesSecretKey();
+
+  const payload = encryptAESForPHP(JSON.stringify({ orderIds }), aesKey);
+
+  const res = await fetch(`${apiUrl}/lb_mark_processing_seen`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ encrypted_payload: payload }),
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to mark processing seen");
+  }
+
+  return await res.json();
+};
+
 export const getUnseenQueue = async () => {
   const { apiUrl, headers } = await getAuthHeaders();
   const aesKey = await configService.getAesSecretKey();

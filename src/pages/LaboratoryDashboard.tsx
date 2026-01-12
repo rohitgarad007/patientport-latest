@@ -18,6 +18,7 @@ import { orders } from '@/data/dummyData';
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { fetchRecentOrders, fetchDashboardStats } from '@/services/LaboratoryService';
+import { formatDistanceToNow } from "date-fns";
 
 export default function Dashboard() {
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
@@ -33,6 +34,35 @@ export default function Dashboard() {
     tat: { average: '0 hrs', breached: 0 }
   });
 
+  const formatTimeAgo = (dateString: string) => {
+    if (!dateString) return "";
+    try {
+      // Robust parsing for SQL datetime format YYYY-MM-DD HH:MM:SS
+      const parts = dateString.split(/[- :]/);
+      if (parts.length >= 3) {
+        const year = parseInt(parts[0]);
+        const month = parseInt(parts[1]) - 1;
+        const day = parseInt(parts[2]);
+        const hour = parseInt(parts[3] || '0');
+        const minute = parseInt(parts[4] || '0');
+        const second = parseInt(parts[5] || '0');
+        
+        const date = new Date(year, month, day, hour, minute, second);
+        
+        if (!isNaN(date.getTime())) {
+           return formatDistanceToNow(date, { addSuffix: true });
+        }
+      }
+
+      // Fallback
+      const date = new Date(dateString.replace(" ", "T")); 
+      if (isNaN(date.getTime())) return dateString;
+      return formatDistanceToNow(date, { addSuffix: true });
+    } catch (e) {
+      return dateString;
+    }
+  };
+
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -40,7 +70,7 @@ export default function Dashboard() {
         const ordersData = await fetchRecentOrders();
         const mappedOrders = ordersData.map((item: any) => ({
           id: item.treatment_id,
-          orderId: item.appointment_id || item.treatment_id,
+          orderId: item.order_number || item.appointment_id || item.treatment_id,
           patient: {
             name: `${item.fname || ''} ${item.lname || ''}`.trim() || 'Unknown',
             age: item.dob ? Math.floor((new Date().getTime() - new Date(item.dob).getTime()) / 31557600000) : 'N/A',
@@ -48,7 +78,8 @@ export default function Dashboard() {
           },
           tests: item.tests || [], 
           priority: 'Normal', 
-          status: item.treatment_status || 'Ordered'
+          status: item.order_status || 'Ordered',
+          createdAt: item.created_at
         }));
         setRecentOrders(mappedOrders);
 
@@ -174,7 +205,11 @@ export default function Dashboard() {
                       <td className="px-4 py-3">
                         <div>
                           <p className="font-medium">{order.patient.name}</p>
-                          <p className="text-xs text-muted-foreground">{order.patient.age}y / {order.patient.gender}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {order.patient.age}y / {order.patient.gender}
+                            <span className="mx-1">•</span>
+                            {formatTimeAgo(order.createdAt)}
+                          </p>
                         </div>
                       </td>
                       <td className="px-4 py-3">
