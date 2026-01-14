@@ -385,7 +385,7 @@ class LabCommonModel extends CI_Model{
 
     public function get_recent_orders_by_lab($labid, $limit = 5) {
         // Query from lb_lab_orders as the master table
-        $this->db->select('lo.id as order_id, lo.treatment_id, lo.appointment_id, lo.status as order_status, lo.created_at, lo.order_number, mp.fname, mp.lname, mp.gender, mp.dob, mp.email, mp.phone');
+        $this->db->select('lo.id as order_id, lo.treatment_id, lo.appointment_id, lo.status as order_status, lo.created_at, lo.order_number, lo.total_amount, lo.paid_amount, lo.payment_status, mp.fname, mp.lname, mp.gender, mp.dob, mp.email, mp.phone');
         $this->db->from('lb_lab_orders lo');
         $this->db->join('ms_patient_treatment_info mt', 'mt.id = lo.treatment_id', 'left');
         $this->db->join('ms_patient mp', 'mp.id = mt.patient_id', 'left');
@@ -426,7 +426,7 @@ class LabCommonModel extends CI_Model{
     }
 
     public function get_orders_by_status($labid, $statuses) {
-        $this->db->select('lo.id as order_id, lo.treatment_id, lo.appointment_id, lo.status as order_status, lo.created_at, lo.order_number, mp.fname, mp.lname, mp.gender, mp.dob, mp.email, mp.phone, lo.order_comment');
+        $this->db->select('lo.id as order_id, lo.treatment_id, lo.appointment_id, lo.status as order_status, lo.created_at, lo.order_number, lo.total_amount, lo.paid_amount, lo.payment_status, mp.fname, mp.lname, mp.gender, mp.dob, mp.email, mp.phone, lo.order_comment');
         $this->db->from('lb_lab_orders lo');
         $this->db->join('ms_patient_treatment_info mt', 'mt.id = lo.treatment_id', 'left');
         $this->db->join('ms_patient mp', 'mp.id = mt.patient_id', 'left');
@@ -482,32 +482,183 @@ class LabCommonModel extends CI_Model{
         $yesterdayOrders = $this->db->count_all_results('lb_lab_orders');
 
         // Pending Samples 
-        // Statuses that imply pending action before processing
         $this->db->where('lab_id', $labid);
         $this->db->where_in('status', ['Registered', 'Sample Collected']);
         $pendingSamples = $this->db->count_all_results('lb_lab_orders');
 
         // Processing Tests
         $this->db->where('lab_id', $labid);
-        $this->db->where_in('status', ['Sample Received', 'Processing', 'Analyzed', 'Validation Pending']);
+        $this->db->where_in('status', ['Sample Received', 'Processing', 'Analyzed']);
         $processingTests = $this->db->count_all_results('lb_lab_orders');
-
-        // Completed/Dispatched
+        
+        // Pending Validation
         $this->db->where('lab_id', $labid);
-        $this->db->where_in('status', ['Result Entered', 'Results Entered', 'Validated', 'Report Generated', 'Dispatched']);
+        $this->db->where('status', 'Validation Pending');
+        $pendingValidation = $this->db->count_all_results('lb_lab_orders');
+
+        // Completed Today
+        $this->db->where('lab_id', $labid);
+        $this->db->where_in('status', ['Report Generated', 'Dispatched']);
+        $this->db->like('updated_at', $today);
+        $completedToday = $this->db->count_all_results('lb_lab_orders');
+
+        // Completed Total (for reference)
+        $this->db->where('lab_id', $labid);
+        $this->db->where_in('status', ['Report Generated', 'Dispatched']);
         $completedOrders = $this->db->count_all_results('lb_lab_orders');
 
-        // Critical Alerts (Placeholder logic - requires actual critical value tracking)
-        // For now, returning 0 or a dummy count based on a flag if it existed
-        $criticalAlerts = 0; 
+        // Revenue - Today
+        // Assuming lb_lab_order_payments table exists, use it. If not, fallback to orders.
+        // Checking if table exists safely? simpler to just use orders table for now as it has paid_amount.
+        // But paid_amount in orders table is cumulative.
+        // Let's try to sum from payments table first, if it fails (unlikely as I created it), catch error?
+        // Actually, I created lb_lab_order_payments.
+        
+        $revenueToday = 0;
+        if ($this->db->table_exists('lb_lab_order_payments')) {
+            $this->db->select_sum('amount');
+            $this->db->where('lab_id', $labid);
+            $this->db->like('payment_date', $today);
+            $query = $this->db->get('lb_lab_order_payments');
+            $revenueToday = $query->row()->amount ?? 0;
+        } else {
+             // Fallback to orders paid_amount updated today (less accurate)
+             $this->db->select_sum('paid_amount');
+             $this->db->where('lab_id', $labid);
+             $this->db->like('updated_at', $today);
+             $query = $this->db->get('lb_lab_orders');
+             $revenueToday = $query->row()->paid_amount ?? 0;
+        }
+
+        // Revenue - Pending (Total outstanding)
+        $this->db->select_sum('total_amount');
+        $this->db->where('lab_id', $labid);
+        $this->db->where('payment_status !=', 'Paid');
+        $qTotal = $this->db->get('lb_lab_orders');
+        $totalPendingBase = $qTotal->row()->total_amount ?? 0;
+
+        $this->db->select_sum('paid_amount');
+        $this->db->where('lab_id', $labid);
+        $this->db->where('payment_status !=', 'Paid');
+        $qPaid = $this->db->get('lb_lab_orders');
+        $paidPendingBase = $qPaid->row()->paid_amount ?? 0;
+        
+        $revenuePending = $totalPendingBase - $paidPendingBase;
+
+
+        // Critical Alerts
+        // Count distinct orders with flagged results updated today (excluding Normal)
+        $this->db->select('count(DISTINCT d.order_id) as critical_count');
+        $this->db->from('lb_lab_test_drafts d');
+        $this->db->join('lb_lab_orders o', 'o.id = d.order_id');
+        $this->db->where('o.lab_id', $labid);
+        $this->db->group_start();
+        $this->db->where('d.flag !=', 'Normal');
+        $this->db->where('d.flag !=', '');
+        $this->db->where('d.flag IS NOT NULL');
+        $this->db->group_end();
+        $this->db->like('d.updated_at', $today);
+        $qCritical = $this->db->get();
+        $criticalAlerts = $qCritical->row()->critical_count ?? 0;
+
+        // TAT (Average for orders completed today)
+        $this->db->select('id, created_at, updated_at');
+        $this->db->where('lab_id', $labid);
+        $this->db->where_in('status', ['Report Generated', 'Dispatched']);
+        $this->db->like('updated_at', $today);
+        $completedOrdersList = $this->db->get('lb_lab_orders')->result_array();
+        
+        $totalHours = 0;
+        $count = 0;
+        $tatBreached = 0;
+
+        // Get TATs for these orders
+        $orderIds = array_column($completedOrdersList, 'id');
+        $orderMaxTats = [];
+        
+        if (!empty($orderIds)) {
+             $this->db->select('lpt.lab_order_id, lt.tat');
+             $this->db->from('lb_patient_test_tracking lpt');
+             $this->db->join('lb_lab_tests lt', 'lt.id = lpt.treatment_test_id');
+             $this->db->where_in('lpt.lab_order_id', $orderIds);
+             $tests = $this->db->get()->result_array();
+             
+             foreach ($tests as $t) {
+                 $val = floatval($t['tat']);
+                 $hours = 0;
+                 if (stripos($t['tat'], 'minute') !== false) $hours = $val / 60;
+                 elseif (stripos($t['tat'], 'hour') !== false) $hours = $val;
+                 elseif (stripos($t['tat'], 'day') !== false) $hours = $val * 24;
+                 
+                 if (!isset($orderMaxTats[$t['lab_order_id']]) || $hours > $orderMaxTats[$t['lab_order_id']]) {
+                     $orderMaxTats[$t['lab_order_id']] = $hours;
+                 }
+             }
+        }
+
+        foreach ($completedOrdersList as $order) {
+            $start = strtotime($order['created_at']);
+            $end = strtotime($order['updated_at']);
+            if ($end > $start) {
+                $hours = ($end - $start) / 3600;
+                $totalHours += $hours;
+                $count++;
+                
+                // Check breach
+                if (isset($orderMaxTats[$order['id']]) && $orderMaxTats[$order['id']] > 0) {
+                    if ($hours > $orderMaxTats[$order['id']]) {
+                        $tatBreached++;
+                    }
+                }
+            }
+        }
+        $tatAvg = $count > 0 ? round($totalHours / $count, 1) . ' hrs' : '0 hrs';
+
+        // Workflow Pipeline Counts
+        $workflow = [
+            'Ordered' => 0,
+            'Sample Collected' => 0,
+            'Received in Lab' => 0,
+            'Processing' => 0,
+            'Validation Pending' => 0,
+            'Approved' => 0
+        ];
+        
+        $this->db->select('status, count(*) as count');
+        $this->db->where('lab_id', $labid);
+        $this->db->group_by('status');
+        $statusCounts = $this->db->get('lb_lab_orders')->result_array();
+        
+        foreach ($statusCounts as $row) {
+            $s = $row['status'];
+            $c = $row['count'];
+            
+            if ($s == 'Registered' || $s == 'Ordered') $workflow['Ordered'] += $c;
+            elseif ($s == 'Sample Collected' || $s == 'Collected') $workflow['Sample Collected'] += $c;
+            elseif ($s == 'Received in Lab' || $s == 'Sample Received') $workflow['Received in Lab'] += $c;
+            elseif ($s == 'Processing' || $s == 'Analyzed') $workflow['Processing'] += $c;
+            elseif ($s == 'Validation Pending' || $s == 'Report Generated') $workflow['Validation Pending'] += $c;
+            elseif ($s == 'Dispatched' || $s == 'Approved') $workflow['Approved'] += $c;
+        }
 
         return [
             'todayOrders' => $todayOrders,
             'yesterdayOrders' => $yesterdayOrders,
             'pendingSamples' => $pendingSamples,
             'processingTests' => $processingTests,
+            'pendingValidation' => $pendingValidation,
+            'completedToday' => $completedToday,
             'completedOrders' => $completedOrders,
-            'criticalAlerts' => $criticalAlerts
+            'criticalAlerts' => $criticalAlerts,
+            'revenue' => [
+                'today' => $revenueToday,
+                'pending' => $revenuePending
+            ],
+            'tat' => [
+                'average' => $tatAvg,
+                'breached' => $tatBreached
+            ],
+            'workflow' => $workflow
         ];
     }
 
@@ -746,7 +897,7 @@ class LabCommonModel extends CI_Model{
 
     public function get_report_details($order_id, $labid) {
         // 1. Get Order Info
-        $this->db->select('lo.id as order_id, lo.order_number, lo.status as order_status, lo.created_at, lo.updated_at, lo.treatment_id, 
+        $this->db->select('lo.id as order_id, lo.order_number, lo.status as order_status, lo.created_at, lo.updated_at, lo.treatment_id, lo.total_amount, lo.paid_amount, lo.payment_status,
                            mp.id as patient_id, mp.fname, mp.lname, mp.gender, mp.dob, mp.email, mp.phone, 
                            doc.name as doc_name');
         $this->db->from('lb_lab_orders lo');

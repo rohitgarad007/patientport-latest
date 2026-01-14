@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef, type RefObject } from 'react';
 import { 
   Search, 
   Filter, 
@@ -42,9 +42,12 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { invoices, Invoice } from '@/data/dummyData';
+import { Invoice } from '@/data/dummyData';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import { fetchBillingData } from '@/services/LabPaymentService';
 
 export default function LaboratoryBilling() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -53,17 +56,43 @@ export default function LaboratoryBilling() {
   const [showPaymentDialog, setShowPaymentDialog] = useState<Invoice | null>(null);
   const [showRefundDialog, setShowRefundDialog] = useState<Invoice | null>(null);
 
-  const pendingAmount = invoices.reduce((sum, inv) => sum + inv.balance, 0);
-  const collectedToday = invoices.filter(inv => inv.status === 'Paid').reduce((sum, inv) => sum + inv.paidAmount, 0);
-  const totalRevenue = invoices.reduce((sum, inv) => sum + inv.paidAmount, 0);
-
-  const filteredInvoices = invoices.filter(inv => {
-    const matchesSearch = 
-      inv.invoiceNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      inv.patientName.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || inv.status.toLowerCase() === statusFilter;
-    return matchesSearch && matchesStatus;
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [stats, setStats] = useState({
+    collectedToday: 0,
+    totalRevenue: 0,
+    pendingAmount: 0,
+    refunds: 0
   });
+  const [isLoading, setIsLoading] = useState(true);
+  const invoicePrintRef = useRef<HTMLDivElement | null>(null);
+
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      const data = await fetchBillingData(1, 100, searchQuery, statusFilter);
+      if (data) {
+        setInvoices(data.invoices || []);
+        if (data.stats) {
+            setStats({
+                collectedToday: Number(data.stats.collectedToday),
+                totalRevenue: Number(data.stats.totalRevenue),
+                pendingAmount: Number(data.stats.pendingAmount),
+                refunds: Number(data.stats.refunds)
+            });
+        }
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to load billing data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(loadData, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery, statusFilter]);
 
   const handleExport = () => {
     toast.success('Export started', {
@@ -71,10 +100,46 @@ export default function LaboratoryBilling() {
     });
   };
 
-  const handlePrintInvoice = (invoiceNumber: string) => {
-    toast.success('Sending to printer', {
-      description: `Invoice ${invoiceNumber} sent to printer`
-    });
+  const handlePrintInvoice = async (invoiceNumber: string) => {
+    const element = invoicePrintRef.current;
+    if (!element) {
+      toast.error('Unable to print invoice');
+      return;
+    }
+    try {
+      const canvas = await html2canvas(element, {
+        scale: 1,
+        backgroundColor: '#ffffff',
+        useCORS: true,
+      });
+      const imgData = canvas.toDataURL('image/jpeg', 0.6);
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 10;
+      const maxWidth = pageWidth - margin * 2;
+      const maxHeight = pageHeight - margin * 2;
+      let imgWidth = maxWidth;
+      let imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      if (imgHeight > maxHeight) {
+        const scaleFactor = maxHeight / imgHeight;
+        imgWidth = imgWidth * scaleFactor;
+        imgHeight = imgHeight * scaleFactor;
+      }
+
+      const x = (pageWidth - imgWidth) / 2;
+      const y = (pageHeight - imgHeight) / 2;
+
+      pdf.addImage(imgData, 'JPEG', x, y, imgWidth, imgHeight, undefined, 'FAST');
+      pdf.save(`${invoiceNumber || 'invoice'}.pdf`);
+      toast.success('Invoice downloaded', {
+        description: `Invoice ${invoiceNumber} saved as PDF`,
+      });
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to print invoice');
+    }
   };
 
   const handleDownloadInvoice = (invoiceNumber: string) => {
@@ -92,26 +157,30 @@ export default function LaboratoryBilling() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <DataCard 
             title="Today's Collection" 
-            value={`₹${collectedToday.toLocaleString()}`}
+            value={`₹${stats.collectedToday.toLocaleString()}`}
             icon={Banknote}
             variant="success"
+            loading={isLoading}
           />
           <DataCard 
             title="Pending Payments" 
-            value={`₹${pendingAmount.toLocaleString()}`}
+            value={`₹${stats.pendingAmount.toLocaleString()}`}
             icon={CreditCard}
             variant="warning"
+            loading={isLoading}
           />
           <DataCard 
             title="Total Revenue" 
-            value={`₹${totalRevenue.toLocaleString()}`}
+            value={`₹${stats.totalRevenue.toLocaleString()}`}
             icon={Receipt}
+            loading={isLoading}
           />
           <DataCard 
             title="Refunds" 
-            value="₹0"
+            value={`₹${stats.refunds.toLocaleString()}`}
             icon={RefreshCw}
             variant="default"
+            loading={isLoading}
           />
         </div>
 
@@ -170,13 +239,18 @@ export default function LaboratoryBilling() {
                       <th className="text-left px-4 py-3">Items</th>
                       <th className="text-right px-4 py-3">Total</th>
                       <th className="text-right px-4 py-3">Paid</th>
-                      <th className="text-right px-4 py-3">Balance</th>
+                      <th className="text-right px-4 py-3">Pending</th>
                       <th className="text-left px-4 py-3">Status</th>
                       <th className="text-left px-4 py-3">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredInvoices.map(invoice => (
+                    {isLoading ? (
+                        <tr><td colSpan={9} className="text-center py-4">Loading...</td></tr>
+                    ) : invoices.length === 0 ? (
+                        <tr><td colSpan={9} className="text-center py-4">No invoices found</td></tr>
+                    ) : (
+                        invoices.map(invoice => (
                       <tr key={invoice.id} className="data-table-row">
                         <td className="px-4 py-3">
                           <span className="font-mono text-sm text-primary font-medium">{invoice.invoiceNumber}</span>
@@ -187,24 +261,22 @@ export default function LaboratoryBilling() {
                         <td className="px-4 py-3 font-medium">{invoice.patientName}</td>
                         <td className="px-4 py-3">
                           <div className="flex flex-wrap gap-1">
-                            {invoice.items.slice(0, 2).map((item, idx) => (
+                            {invoice.items && invoice.items.slice(0, 2).map((item, idx) => (
                               <span key={idx} className="text-xs bg-muted px-2 py-0.5 rounded">
                                 {item.testName.split(' ').map(w => w[0]).join('')}
                               </span>
                             ))}
-                            {invoice.items.length > 2 && (
+                            {invoice.items && invoice.items.length > 2 && (
                               <span className="text-xs text-muted-foreground">+{invoice.items.length - 2}</span>
                             )}
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-right font-mono font-medium">₹{invoice.total.toLocaleString()}</td>
-                        <td className="px-4 py-3 text-right font-mono text-success">₹{invoice.paidAmount.toLocaleString()}</td>
+                        <td className="px-4 py-3 text-right font-mono font-medium">₹{Number(invoice.total).toLocaleString()}</td>
+                        <td className="px-4 py-3 text-right font-mono text-success">₹{Number(invoice.paidAmount).toLocaleString()}</td>
                         <td className="px-4 py-3 text-right font-mono">
-                          {invoice.balance > 0 ? (
-                            <span className="text-warning">₹{invoice.balance.toLocaleString()}</span>
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
-                          )}
+                          <span className={invoice.balance > 0 ? "text-warning" : "text-muted-foreground"}>
+                            ₹{Number(invoice.balance).toLocaleString()}
+                          </span>
                         </td>
                         <td className="px-4 py-3">
                           <StatusBadge status={invoice.status} />
@@ -253,7 +325,7 @@ export default function LaboratoryBilling() {
                           </div>
                         </td>
                       </tr>
-                    ))}
+                    )))}
                   </tbody>
                 </table>
               </div>
@@ -261,7 +333,7 @@ export default function LaboratoryBilling() {
           </TabsContent>
 
           <TabsContent value="payments" className="mt-4">
-            <PaymentHistory />
+            <PaymentHistory invoices={invoices} />
           </TabsContent>
 
           <TabsContent value="refunds" className="mt-4">
@@ -286,7 +358,13 @@ export default function LaboratoryBilling() {
               </div>
             </div>
           </DialogHeader>
-          {selectedInvoice && <InvoicePreview invoiceId={selectedInvoice} />}
+          {selectedInvoice && (
+            <InvoicePreview
+              invoiceId={selectedInvoice}
+              invoices={invoices}
+              printRef={invoicePrintRef}
+            />
+          )}
         </DialogContent>
       </Dialog>
 
@@ -299,7 +377,10 @@ export default function LaboratoryBilling() {
           {showPaymentDialog && (
             <PaymentForm 
               invoice={showPaymentDialog} 
-              onClose={() => setShowPaymentDialog(null)} 
+              onClose={() => {
+                  setShowPaymentDialog(null);
+                  loadData(); // Refresh data after payment
+              }} 
             />
           )}
         </DialogContent>
@@ -314,7 +395,10 @@ export default function LaboratoryBilling() {
           {showRefundDialog && (
             <RefundForm 
               invoice={showRefundDialog} 
-              onClose={() => setShowRefundDialog(null)} 
+              onClose={() => {
+                  setShowRefundDialog(null);
+                  loadData(); // Refresh data after refund
+              }} 
             />
           )}
         </DialogContent>
@@ -323,9 +407,9 @@ export default function LaboratoryBilling() {
   );
 }
 
-function PaymentHistory() {
+function PaymentHistory({ invoices }: { invoices: Invoice[] }) {
   const allPayments = invoices.flatMap(inv => 
-    inv.payments.map(p => ({ ...p, invoiceNumber: inv.invoiceNumber, patientName: inv.patientName }))
+    (inv.payments || []).map(p => ({ ...p, invoiceNumber: inv.invoiceNumber, patientName: inv.patientName }))
   );
 
   return (
@@ -344,7 +428,10 @@ function PaymentHistory() {
             </tr>
           </thead>
           <tbody>
-            {allPayments.map(payment => (
+            {allPayments.length === 0 ? (
+                 <tr><td colSpan={7} className="text-center py-4">No payment history</td></tr>
+            ) : (
+            allPayments.map(payment => (
               <tr key={payment.id} className="data-table-row">
                 <td className="px-4 py-3 font-mono text-sm">{payment.id}</td>
                 <td className="px-4 py-3 font-mono text-sm text-primary">{payment.invoiceNumber}</td>
@@ -359,13 +446,13 @@ function PaymentHistory() {
                     <span>{payment.mode}</span>
                   </div>
                 </td>
-                <td className="px-4 py-3 text-right font-mono font-medium text-success">₹{payment.amount.toLocaleString()}</td>
+                <td className="px-4 py-3 text-right font-mono font-medium text-success">₹{Number(payment.amount).toLocaleString()}</td>
                 <td className="px-4 py-3 font-mono text-sm text-muted-foreground">{payment.reference || '—'}</td>
                 <td className="px-4 py-3 text-sm text-muted-foreground">
                   {new Date(payment.receivedAt).toLocaleString()}
                 </td>
               </tr>
-            ))}
+            )))}
           </tbody>
         </table>
       </div>
@@ -375,9 +462,7 @@ function PaymentHistory() {
 
 function RefundsList() {
   // Mock refunds data
-  const refunds = [
-    { id: 'REF001', invoiceNumber: 'INV-2024-00005', patientName: 'Alice Brown', amount: 500, reason: 'Test cancelled', status: 'Processed', date: '2024-01-14' },
-  ];
+  const refunds: any[] = [];
 
   if (refunds.length === 0) {
     return (
@@ -425,12 +510,20 @@ function RefundsList() {
   );
 }
 
-function InvoicePreview({ invoiceId }: { invoiceId: string }) {
+function InvoicePreview({
+  invoiceId,
+  invoices,
+  printRef,
+}: {
+  invoiceId: string;
+  invoices: Invoice[];
+  printRef: RefObject<HTMLDivElement>;
+}) {
   const invoice = invoices.find(inv => inv.id === invoiceId);
   if (!invoice) return null;
 
   return (
-    <div className="p-6 space-y-6">
+    <div ref={printRef} className="p-6 space-y-6">
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
@@ -506,16 +599,22 @@ function InvoicePreview({ invoiceId }: { invoiceId: string }) {
           <span className="text-success">Paid</span>
           <span className="font-mono text-success">₹{invoice.paidAmount}</span>
         </div>
-        {invoice.balance > 0 && (
-          <div className="flex justify-between text-sm font-medium">
-            <span className="text-warning">Balance Due</span>
-            <span className="font-mono text-warning">₹{invoice.balance}</span>
-          </div>
-        )}
+        <div className="flex justify-between text-sm font-medium">
+          <span className={invoice.balance > 0 ? "text-warning" : "text-muted-foreground"}>
+            Pending Amount
+          </span>
+          <span
+            className={
+              invoice.balance > 0 ? "font-mono text-warning" : "font-mono text-muted-foreground"
+            }
+          >
+            ₹{invoice.balance}
+          </span>
+        </div>
       </div>
 
       {/* Payment History */}
-      {invoice.payments.length > 0 && (
+      {invoice.payments && invoice.payments.length > 0 && (
         <div>
           <h3 className="font-medium mb-2">Payment History</h3>
           <div className="space-y-2">
@@ -568,7 +667,7 @@ function PaymentForm({ invoice, onClose }: { invoice: Invoice; onClose: () => vo
           <span className="font-mono">{invoice.invoiceNumber}</span>
         </div>
         <div className="flex justify-between text-sm mt-1">
-          <span className="text-muted-foreground">Balance Due</span>
+          <span className="text-muted-foreground">Pending Amount</span>
           <span className="font-mono font-semibold text-warning">₹{invoice.balance}</span>
         </div>
       </div>

@@ -306,6 +306,199 @@ class HSPatientController  extends CI_Controller {
         }
     }
 
+    private function ensurePatientInfoShareTable() {
+        $sql = "CREATE TABLE IF NOT EXISTS `ms_hospitals_patient_info_share` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `hospital_id` INT NULL,
+            `hosuid` VARCHAR(64) NULL,
+            `patient_id` INT NOT NULL,
+            `fname` VARCHAR(80) NULL,
+            `lname` VARCHAR(80) NULL,
+            `email` VARCHAR(128) NULL,
+            `phone` VARCHAR(32) NULL,
+            `dob` DATE NULL,
+            `gender` VARCHAR(16) NULL,
+            `blood_group` VARCHAR(16) NULL,
+            `address` TEXT NULL,
+            `share_to` VARCHAR(128) NULL,
+            `status` TINYINT DEFAULT 1,
+            `isdelete` TINYINT DEFAULT 0,
+            `created_by` VARCHAR(64) NULL,
+            `created_at` DATETIME NULL,
+            `updated_at` DATETIME NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+        $this->db->query($sql);
+    }
+
+    public function hs_patient_info_share_create() {
+        $userToken = $this->input->get_request_header('Authorization');
+        $splitToken = explode(" ", $userToken);
+        $token = isset($splitToken[1]) ? $splitToken[1] : '';
+        try {
+            $token = verifyAuthToken($token);
+            if (!$token) throw new Exception("Unauthorized");
+            $tokenData = is_string($token) ? json_decode($token, true) : $token;
+            $hrole = $tokenData['role'] ?? null;
+            $loguid = $tokenData['loguid'] ?? null;
+            if (!$loguid || $hrole !== "hospital_admin") {
+                echo json_encode(["success"=>false,"message"=>"Invalid user token or insufficient privileges"]);
+                return;
+            }
+
+            $raw = json_decode(file_get_contents("php://input"), true);
+            if (!$raw || !is_array($raw)) {
+                echo json_encode(["success"=>false,"message"=>"Invalid payload"]);
+                return;
+            }
+
+            $AES_KEY = "RohitGaradHos@173414";
+            $patientIdEnc = $raw['patient_id'] ?? '';
+            $shareToEnc = $raw['share_to'] ?? '';
+            $fields = isset($raw['fields']) && is_array($raw['fields']) ? $raw['fields'] : [];
+
+            $patientId = intval($this->decrypt_aes_from_js($patientIdEnc, $AES_KEY));
+            $shareTo = trim($this->decrypt_aes_from_js($shareToEnc, $AES_KEY));
+
+            if ($patientId <= 0) {
+                echo json_encode(["success"=>false,"message"=>"Invalid patient"]);
+                return;
+            }
+            if ($shareTo === '') {
+                echo json_encode(["success"=>false,"message"=>"Share recipient required"]);
+                return;
+            }
+
+            $this->ensurePatientInfoShareTable();
+
+            $this->db->where("id", $patientId);
+            $this->db->where("hosuid", $loguid);
+            $p = $this->db->get("ms_patient")->row_array();
+            if (!$p) {
+                echo json_encode(["success"=>false,"message"=>"Patient not found"]);
+                return;
+            }
+
+            $insert = [
+                "hospital_id" => null,
+                "hosuid" => $loguid,
+                "patient_id" => $patientId,
+                "fname" => in_array("fname", $fields) ? ($p['fname'] ?? '') : null,
+                "lname" => in_array("lname", $fields) ? ($p['lname'] ?? '') : null,
+                "email" => in_array("email", $fields) ? ($p['email'] ?? '') : null,
+                "phone" => in_array("phone", $fields) ? ($p['phone'] ?? '') : null,
+                "dob" => in_array("dob", $fields) ? ($p['dob'] ?? null) : null,
+                "gender" => in_array("gender", $fields) ? ($p['gender'] ?? null) : null,
+                "blood_group" => in_array("blood_group", $fields) ? ($p['blood_group'] ?? null) : null,
+                "address" => in_array("address", $fields) ? ($p['address'] ?? null) : null,
+                "share_to" => $shareTo,
+                "status" => 1,
+                "isdelete" => 0,
+                "created_by" => $loguid,
+                "created_at" => date('Y-m-d H:i:s'),
+                "updated_at" => date('Y-m-d H:i:s')
+            ];
+
+            $this->db->insert("ms_hospitals_patient_info_share", $insert);
+            echo json_encode(["success"=>true,"message"=>"Shared"]);
+        } catch (Exception $e) {
+            echo json_encode(["success"=>false,"message"=>"Authorization failed: " . $e->getMessage()]);
+        }
+    }
+
+    public function hs_patient_info_share_list() {
+        $userToken = $this->input->get_request_header('Authorization');
+        $splitToken = explode(" ", $userToken);
+        $token = isset($splitToken[1]) ? $splitToken[1] : '';
+        try {
+            $token = verifyAuthToken($token);
+            if (!$token) throw new Exception("Unauthorized");
+            $tokenData = is_string($token) ? json_decode($token, true) : $token;
+            $hrole = $tokenData['role'] ?? null;
+            $loguid = $tokenData['loguid'] ?? null;
+            if (!$loguid || $hrole !== "hospital_admin") {
+                echo json_encode(["success"=>false,"message"=>"Invalid user token or insufficient privileges"]);
+                return;
+            }
+
+            $AES_KEY = "RohitGaradHos@173414";
+            $this->ensurePatientInfoShareTable();
+
+            $raw = json_decode(file_get_contents("php://input"), true);
+            $limit = isset($raw['limit']) ? (int)$raw['limit'] : 10;
+            $page = isset($raw['page']) ? (int)$raw['page'] : 1;
+            $offset = ($page - 1) * $limit;
+
+            $this->db->from("ms_hospitals_patient_info_share");
+            $this->db->where("hosuid", $loguid);
+            $this->db->where("isdelete", 0);
+            $this->db->order_by("created_at", "DESC");
+            $this->db->limit($limit, $offset);
+            $rows = $this->db->get()->result_array();
+
+            $list = [];
+            foreach ($rows as $r) {
+                $list[] = [
+                    "id" => $r['id'],
+                    "patient_id" => $r['patient_id'],
+                    "name" => trim(($r['fname'] ?? '') . ' ' . ($r['lname'] ?? '')),
+                    "email" => $r['email'] ?? '',
+                    "phone" => $r['phone'] ?? '',
+                    "dob" => $r['dob'] ?? '',
+                    "gender" => $r['gender'] ?? '',
+                    "blood_group" => $r['blood_group'] ?? '',
+                    "address" => $r['address'] ?? '',
+                    "share_to" => $r['share_to'] ?? '',
+                    "status" => intval($r['status'] ?? 0),
+                    "created_at" => $r['created_at'] ?? ''
+                ];
+            }
+
+            $encryptedData = $this->encrypt_aes_for_js(json_encode($list), $AES_KEY);
+            echo json_encode(["success"=>true,"data"=>$encryptedData]);
+        } catch (Exception $e) {
+            echo json_encode(["success"=>false,"message"=>"Authorization failed: " . $e->getMessage()]);
+        }
+    }
+
+    public function hs_patient_info_share_revoke() {
+        $userToken = $this->input->get_request_header('Authorization');
+        $splitToken = explode(" ", $userToken);
+        $token = isset($splitToken[1]) ? $splitToken[1] : '';
+        try {
+            $token = verifyAuthToken($token);
+            if (!$token) throw new Exception("Unauthorized");
+            $tokenData = is_string($token) ? json_decode($token, true) : $token;
+            $hrole = $tokenData['role'] ?? null;
+            $loguid = $tokenData['loguid'] ?? null;
+            if (!$loguid || $hrole !== "hospital_admin") {
+                echo json_encode(["success"=>false,"message"=>"Invalid user token or insufficient privileges"]);
+                return;
+            }
+
+            $raw = json_decode(file_get_contents("php://input"), true);
+            if (!$raw || !is_array($raw)) {
+                echo json_encode(["success"=>false,"message"=>"Invalid payload"]);
+                return;
+            }
+            $AES_KEY = "RohitGaradHos@173414";
+            $idEnc = $raw['id'] ?? '';
+            $id = intval($this->decrypt_aes_from_js($idEnc, $AES_KEY));
+            if ($id <= 0) {
+                echo json_encode(["success"=>false,"message"=>"Invalid share id"]);
+                return;
+            }
+
+            $this->db->where("id", $id);
+            $this->db->where("hosuid", $loguid);
+            $this->db->update("ms_hospitals_patient_info_share", [
+                "status" => 0,
+                "updated_at" => date('Y-m-d H:i:s')
+            ]);
+            echo json_encode(["success"=>true,"message"=>"Revoked"]);
+        } catch (Exception $e) {
+            echo json_encode(["success"=>false,"message"=>"Authorization failed: " . $e->getMessage()]);
+        }
+    }
 
     public function UpdatePatientInformation() {
         $userToken = $this->input->get_request_header('Authorization');

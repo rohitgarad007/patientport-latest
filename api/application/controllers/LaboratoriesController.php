@@ -105,6 +105,7 @@ class LaboratoriesController extends CI_Controller {
             echo json_encode([
                 "success" => true,
                 "data"    => $encryptedData,
+                "Rowdata"    => $list['data'],
                 "total"   => $totalRows,
                 "page"    => $page,
                 "limit"   => $limitValue

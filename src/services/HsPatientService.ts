@@ -181,3 +181,56 @@ export const getTreatment = async (id: string) => {
   }
   return json;
 };
+
+export const fetchPatientShares = async (page = 1, limit = 10) => {
+  const { apiUrl, headers } = await getAuthHeaders();
+  const AES_KEY = await configService.getAesSecretKey();
+  const res = await fetch(`${apiUrl}hs_patient_info_share_list`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ page, limit }),
+  });
+  if (!res.ok) throw new Error("Failed to fetch shared patient info");
+  const json = await res.json();
+  if (json.success && json.data) {
+    const decrypted = decryptAESFromPHP(json.data, AES_KEY);
+    return { ...json, data: decrypted ? JSON.parse(decrypted) : [] };
+  }
+  return { ...json, data: [] };
+};
+
+export interface CreatePatientSharePayload {
+  patient_id: string;
+  share_to: string;
+  fields: string[];
+}
+
+export const createPatientShare = async (payload: CreatePatientSharePayload) => {
+  const { apiUrl, headers } = await getAuthHeaders();
+  const AES_KEY = await configService.getAesSecretKey();
+  const body = {
+    patient_id: CryptoJS.AES.encrypt(String(payload.patient_id), AES_KEY).toString(),
+    share_to: CryptoJS.AES.encrypt(String(payload.share_to), AES_KEY).toString(),
+    fields: payload.fields,
+  };
+  const res = await fetch(`${apiUrl}hs_patient_info_share_create`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error("Failed to create patient info share");
+  return res.json();
+};
+
+export const revokePatientShare = async (id: string) => {
+  const { apiUrl, headers } = await getAuthHeaders();
+  const AES_KEY = await configService.getAesSecretKey();
+  const body = { id: CryptoJS.AES.encrypt(String(id), AES_KEY).toString() };
+  const res = await fetch(`${apiUrl}hs_patient_info_share_revoke`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error("Failed to revoke patient info share");
+  return res.json();
+};

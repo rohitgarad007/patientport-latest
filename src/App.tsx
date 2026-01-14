@@ -97,6 +97,7 @@ import HospitalInventoryAddMedicine from "./pages/inventory/HospitalInventoryAdd
 import HospitalInventoryAddBatch from "./pages/inventory/HospitalInventoryAddBatch";
 import HSMedicalPage from "./pages/medical/HSMedicalPage";
 import HSMedicalRequests from "./pages/medical/HSMedicalRequests";
+import HospitalSharePatientInfo from "./pages/HospitalSharePatientInfo";
 import HSMedicalCreateRequest from "./pages/medical/HSMedicalCreateRequest";
 import HSMedicalRequestsApprovals from "./pages/medical/HSMedicalRequestsApprovals";
 import HSMedicalReceiptVerification from "./pages/medical/HSMedicalReceiptVerification";
@@ -314,6 +315,7 @@ const App = () => {
               <Route path="/hs-medical-inv-request-approved" element={<HospitalLayout><HSMedicalApprovedRequests /></HospitalLayout>} />
               <Route path="/hs-medical-inv-request-declined" element={<HospitalLayout><HSMedicalDeclinedRequests /></HospitalLayout>} />
               <Route path="//hs-medical-inv-receipt-verification" element={<HospitalLayout><HSMedicalReceiptVerification /></HospitalLayout>} />
+              <Route path="/hs-share-patient-info" element={<HospitalLayout><HospitalSharePatientInfo /></HospitalLayout>} />
 
 
 

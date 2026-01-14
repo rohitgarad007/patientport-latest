@@ -112,6 +112,19 @@ $route['lb_mark_processing_seen'] = 'LaboratoriesController/mark_processing_seen
 
 
 
+// Lab Packages Routes
+$route['lab_packages_list'] = 'LabPackagesController/listPackages';
+$route['lab_packages_add'] = 'LabPackagesController/addPackage';
+$route['lab_packages_update'] = 'LabPackagesController/updatePackage';
+$route['lab_packages_delete'] = 'LabPackagesController/deletePackage';
+$route['lab_packages_get'] = 'LabPackagesController/getPackage';
+
+// Lab Payments Routes
+$route['lb_payment_history'] = 'LabPaymentsController/getPayments';
+$route['lb_add_payment'] = 'LabPaymentsController/addPayment';
+$route['lb_billing_data'] = 'LabPaymentsController/getBillingData';
+
+
 // Laboratory Operational Routes
 $route['laboratories_lab_test_list'] = 'LaboratoriesController/MasterLabTestList';
 $route['laboratories_recent_orders'] = 'LaboratoriesController/get_recent_orders';
@@ -630,3 +643,11 @@ $route['hs_hospital_laboratory_preferred_list'] = 'HSHospitalLaboratoryControlle
 $route['hs_hospital_laboratory_available_list'] = 'HSHospitalLaboratoryController/GetAvailableLaboratories';
 $route['hs_hospital_laboratory_add']            = 'HSHospitalLaboratoryController/AddPreferredLaboratory';
 $route['hs_hospital_laboratory_remove']         = 'HSHospitalLaboratoryController/RemovePreferredLaboratory';
+
+// Lab Packages Routes
+$route['lab_packages_list'] = 'LabPackagesController/listPackages';
+$route['lab_packages_add'] = 'LabPackagesController/addPackage';
+$route['lab_packages_update'] = 'LabPackagesController/updatePackage';
+$route['lab_packages_delete'] = 'LabPackagesController/deletePackage';
+$route['lab_packages_get'] = 'LabPackagesController/getPackage';
+

@@ -65,6 +65,7 @@ const menuItems = [
       { title: "Role Access", url: "/hs-role-access", icon: PaIcons.roleAccessIcon },
       { title: "OTP Access", url: "/hs-employee-opt-access", icon: PaIcons.otpIcon },
       { title: "Laboratory Pryority", url: "/hs-laboratory-pryority", icon: PaIcons.laboratoryIcon },
+      { title: "Share Patient Info", url: "/hs-share-patient-info", icon: PaIcons.patientEditIcon },
     ],
   },
   {

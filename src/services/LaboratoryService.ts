@@ -354,3 +354,63 @@ export const fetchReportDetails = async (orderId: string) => {
   }
   return null;
 };
+
+// Package Management
+export const fetchPackages = async () => {
+  const { apiUrl, headers } = await getAuthHeaders();
+  const res = await fetch(`${apiUrl}lab_packages_list`, {
+    method: "GET",
+    headers,
+  });
+  if (!res.ok) throw new Error("Failed to fetch packages");
+  const json = await res.json();
+  if (json.success && json.data) {
+    const AES_KEY = await configService.getAesSecretKey();
+    const decrypted = decryptAESFromPHP(json.data, AES_KEY);
+    return decrypted ? JSON.parse(decrypted) : [];
+  }
+  return [];
+};
+
+export const addPackage = async (data: any) => {
+  const { apiUrl, headers } = await getAuthHeaders();
+  const AES_KEY = await configService.getAesSecretKey();
+  const encryptedPayload = CryptoJS.AES.encrypt(JSON.stringify(data), AES_KEY).toString();
+
+  const res = await fetch(`${apiUrl}lab_packages_add`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ encrypted_payload: encryptedPayload }),
+  });
+  if (!res.ok) throw new Error("Failed to add package");
+  return res.json();
+};
+
+export const updatePackage = async (id: string, data: any) => {
+  const { apiUrl, headers } = await getAuthHeaders();
+  const AES_KEY = await configService.getAesSecretKey();
+  const payload = { ...data, id };
+  const encryptedPayload = CryptoJS.AES.encrypt(JSON.stringify(payload), AES_KEY).toString();
+
+  const res = await fetch(`${apiUrl}lab_packages_update`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ encrypted_payload: encryptedPayload }),
+  });
+  if (!res.ok) throw new Error("Failed to update package");
+  return res.json();
+};
+
+export const deletePackage = async (id: string) => {
+  const { apiUrl, headers } = await getAuthHeaders();
+  const AES_KEY = await configService.getAesSecretKey();
+  const encryptedPayload = CryptoJS.AES.encrypt(JSON.stringify({ id }), AES_KEY).toString();
+
+  const res = await fetch(`${apiUrl}lab_packages_delete`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ encrypted_payload: encryptedPayload }),
+  });
+  if (!res.ok) throw new Error("Failed to delete package");
+  return res.json();
+};

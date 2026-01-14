@@ -52,6 +52,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { fetchAllOrders, collectSample, fetchMasterLabTests, fetchCollectedSamples, updateLabOrderStatus } from '@/services/LaboratoryService';
+import { fetchPaymentHistory, addPayment } from '@/services/LabPaymentService';
 import { formatDistanceToNow } from "date-fns";
 
 const formatTimeAgo = (dateString: string) => {
@@ -90,6 +91,8 @@ export default function LaboratoryOrders() {
   const [selectedBarcode, setSelectedBarcode] = useState<{ orderId: string; sampleId: string; patientName: string; testName: string } | null>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [labTests, setLabTests] = useState<any[]>([]);
+  const [selectedPaymentOrder, setSelectedPaymentOrder] = useState<any | null>(null);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   const loadOrders = async () => {
     try {
@@ -116,8 +119,9 @@ export default function LaboratoryOrders() {
         status: item.order_status || item.treatment_status || 'Ordered',
         timestamp: item.created_at,
         createdAt: item.created_at,
-        totalAmount: 0,
-        paymentStatus: 'Pending'
+        totalAmount: parseFloat(item.total_amount) || 0,
+        paidAmount: parseFloat(item.paid_amount) || 0,
+        paymentStatus: item.payment_status || 'Pending'
       }));
       setOrders(mapped);
     } catch (err) {
@@ -351,6 +355,12 @@ export default function LaboratoryOrders() {
                               <DropdownMenuItem>
                                 <Printer className="h-4 w-4 mr-2" /> Print Order
                               </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {
+                                setSelectedPaymentOrder(order);
+                                setIsPaymentModalOpen(true);
+                              }}>
+                                <FileText className="h-4 w-4 mr-2" /> Payments
+                              </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={() => handleResample(order.orderId)}>
                                 <RefreshCw className="h-4 w-4 mr-2" /> Re-sample
@@ -387,6 +397,24 @@ export default function LaboratoryOrders() {
           </DialogHeader>
           {selectedOrderId && orders.find(o => o.id === selectedOrderId) && (
             <OrderDetails order={orders.find(o => o.id === selectedOrderId)} />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Payment Modal */}
+      <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Payment History</DialogTitle>
+          </DialogHeader>
+          {selectedPaymentOrder && (
+            <PaymentModal 
+              order={selectedPaymentOrder} 
+              onClose={() => {
+                setIsPaymentModalOpen(false);
+                loadOrders(); // Refresh to show updated paid amount
+              }} 
+            />
           )}
         </DialogContent>
       </Dialog>
@@ -437,6 +465,154 @@ export default function LaboratoryOrders() {
           )}
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+function PaymentModal({ order, onClose }: { order: any; onClose: () => void }) {
+  const [history, setHistory] = useState<any[]>([]);
+  const [amount, setAmount] = useState('');
+  const [method, setMethod] = useState('Cash');
+  const [ref, setRef] = useState('');
+  const [notes, setNotes] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const loadHistory = async () => {
+    try {
+      const data = await fetchPaymentHistory(order.labOrderId);
+      setHistory(data);
+    } catch (err) {
+      console.error("Failed to load payment history", err);
+    }
+  };
+
+  useEffect(() => {
+    loadHistory();
+  }, [order.labOrderId]);
+
+  const handleAddPayment = async () => {
+    if (!amount || parseFloat(amount) <= 0) {
+      toast.error("Please enter a valid amount");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await addPayment(order.labOrderId, parseFloat(amount), method, ref, notes);
+      if (res.success) {
+        toast.success("Payment added successfully");
+        setAmount('');
+        setRef('');
+        setNotes('');
+        loadHistory();
+      } else {
+        toast.error(res.message || "Failed to add payment");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Error adding payment");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const balance = order.totalAmount - order.paidAmount;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center bg-muted/30 p-4 rounded-lg">
+        <div>
+           <p className="text-sm text-muted-foreground">Order ID</p>
+           <p className="font-mono font-medium">{order.orderId}</p>
+        </div>
+        <div className="text-right">
+           <p className="text-sm text-muted-foreground">Total Amount</p>
+           <p className="text-xl font-bold">₹{order.totalAmount}</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-green-50 p-3 rounded border border-green-100">
+           <p className="text-xs text-green-600 mb-1">Total Paid</p>
+           <p className="text-lg font-bold text-green-700">₹{order.paidAmount}</p>
+        </div>
+        <div className="bg-red-50 p-3 rounded border border-red-100">
+           <p className="text-xs text-red-600 mb-1">Balance Due</p>
+           <p className="text-lg font-bold text-red-700">₹{balance}</p>
+        </div>
+      </div>
+
+      <div className="space-y-4 border-t pt-4">
+        <h4 className="font-medium">Add New Payment</h4>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Amount</label>
+            <Input 
+              type="number" 
+              placeholder="Enter amount" 
+              value={amount} 
+              onChange={(e) => setAmount(e.target.value)} 
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Payment Method</label>
+            <Select value={method} onValueChange={setMethod}>
+               <SelectTrigger>
+                 <SelectValue />
+               </SelectTrigger>
+               <SelectContent>
+                 <SelectItem value="Cash">Cash</SelectItem>
+                 <SelectItem value="Card">Card</SelectItem>
+                 <SelectItem value="UPI">UPI</SelectItem>
+                 <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
+               </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="space-y-2">
+           <label className="text-sm font-medium">Transaction Ref (Optional)</label>
+           <Input 
+             placeholder="Check No / Transaction ID" 
+             value={ref} 
+             onChange={(e) => setRef(e.target.value)} 
+           />
+        </div>
+        <div className="space-y-2">
+           <label className="text-sm font-medium">Notes</label>
+           <Input 
+             placeholder="Additional notes" 
+             value={notes} 
+             onChange={(e) => setNotes(e.target.value)} 
+           />
+        </div>
+        <Button className="w-full" onClick={handleAddPayment} disabled={loading}>
+          {loading ? "Processing..." : "Add Payment"}
+        </Button>
+      </div>
+
+      <div className="space-y-3 border-t pt-4">
+        <h4 className="font-medium">Payment History</h4>
+        {history.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">No payments recorded</p>
+        ) : (
+          <div className="space-y-2 max-h-40 overflow-y-auto">
+             {history.map((pay: any) => (
+               <div key={pay.id} className="flex justify-between items-center p-2 bg-muted/20 rounded text-sm">
+                  <div>
+                    <p className="font-medium">₹{pay.amount} <span className="text-xs text-muted-foreground">({pay.payment_method})</span></p>
+                    <p className="text-xs text-muted-foreground">{new Date(pay.payment_date).toLocaleString()}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-muted-foreground">{pay.transaction_ref}</p>
+                  </div>
+               </div>
+             ))}
+          </div>
+        )}
+      </div>
+      
+      <div className="flex justify-end pt-2">
+         <Button variant="outline" onClick={onClose}>Close</Button>
+      </div>
     </div>
   );
 }

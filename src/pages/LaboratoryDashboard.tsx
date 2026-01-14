@@ -14,7 +14,6 @@ import {
 import { DataCard } from '@/components/ui/data-card';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
-import { orders } from '@/data/dummyData';
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { fetchRecentOrders, fetchDashboardStats } from '@/services/LaboratoryService';
@@ -31,7 +30,15 @@ export default function Dashboard() {
     pendingValidation: 0,
     completedToday: 0,
     revenue: { today: 0, pending: 0 },
-    tat: { average: '0 hrs', breached: 0 }
+    tat: { average: '0 hrs', breached: 0 },
+    workflow: {
+      'Ordered': 0,
+      'Sample Collected': 0,
+      'Received in Lab': 0,
+      'Processing': 0,
+      'Validation Pending': 0,
+      'Approved': 0
+    }
   });
 
   const formatTimeAgo = (dateString: string) => {
@@ -91,7 +98,8 @@ export default function Dashboard() {
             ...statsData,
             // Ensure nested objects are preserved or defaulted if not in statsData
             revenue: statsData.revenue || prev.revenue,
-            tat: statsData.tat || prev.tat
+            tat: statsData.tat || prev.tat,
+            workflow: statsData.workflow || prev.workflow
           }));
         }
       } catch (err) {
@@ -242,12 +250,12 @@ export default function Dashboard() {
             <h2 className="font-semibold mb-4">Workflow Pipeline</h2>
             <div className="space-y-3">
               {[
-                { label: 'Ordered', count: 8, color: 'bg-muted' },
-                { label: 'Sample Collected', count: 12, color: 'bg-info' },
-                { label: 'Received in Lab', count: 15, color: 'bg-info' },
-                { label: 'Processing', count: 23, color: 'bg-processing' },
-                { label: 'Validation Pending', count: 12, color: 'bg-warning' },
-                { label: 'Approved', count: 34, color: 'bg-success' },
+                { label: 'Ordered', count: stats.workflow?.['Ordered'] || 0, color: 'bg-muted' },
+                { label: 'Sample Collected', count: stats.workflow?.['Sample Collected'] || 0, color: 'bg-info' },
+                { label: 'Received in Lab', count: stats.workflow?.['Received in Lab'] || 0, color: 'bg-info' },
+                { label: 'Processing', count: stats.workflow?.['Processing'] || 0, color: 'bg-processing' },
+                { label: 'Validation Pending', count: stats.workflow?.['Validation Pending'] || 0, color: 'bg-warning' },
+                { label: 'Approved', count: stats.workflow?.['Approved'] || 0, color: 'bg-success' },
               ].map((stage) => (
                 <div key={stage.label} className="flex items-center gap-3">
                   <div className={`h-2 w-2 rounded-full ${stage.color}`} />
