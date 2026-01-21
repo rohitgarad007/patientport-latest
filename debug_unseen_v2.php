@@ -35,7 +35,7 @@ if ($result && $result->num_rows > 0) {
 }
 
 // 3. Check Log File
-$logFile = 'c:/xampp/htdocs/patientport-liveApp/api/application/logs/lab_notifications.log';
+$logFile = 'c:/xampp/htdocs/patientport-latest/api/application/logs/lab_notifications.log';
 echo "\n--- Log File Content ---\n";
 if (file_exists($logFile)) {
     echo file_get_contents($logFile);

@@ -836,6 +836,9 @@ class LabCommonModel extends CI_Model{
 
     public function get_completed_reports($labid) {
         $this->db->select('lo.id as order_id, lo.treatment_id, lo.appointment_id, lo.status as order_status, lo.created_at, lo.order_number, mp.fname, mp.lname, mp.gender, mp.dob, mp.email, mp.phone, doc.name as doc_name');
+        $this->db->select('(SELECT is_viewlab_report FROM ms_patient_treatment_lab_reports WHERE treatment_id = lo.treatment_id ORDER BY id DESC LIMIT 1) as is_viewlab_report');
+        $this->db->select('(SELECT file_url FROM ms_patient_treatment_lab_reports WHERE treatment_id = lo.treatment_id ORDER BY id DESC LIMIT 1) as file_url');
+        $this->db->select('(SELECT file_type FROM ms_patient_treatment_lab_reports WHERE treatment_id = lo.treatment_id ORDER BY id DESC LIMIT 1) as file_type');
         $this->db->from('lb_lab_orders lo');
         $this->db->join('ms_patient_treatment_info mt', 'mt.id = lo.treatment_id', 'left');
         $this->db->join('ms_patient mp', 'mp.id = mt.patient_id', 'left');
@@ -865,6 +868,13 @@ class LabCommonModel extends CI_Model{
 
         if (!empty($orders)) {
             foreach ($orders as &$order) {
+                // Attach view visibility (aggregate across reports by treatment)
+                $this->db->select('MAX(is_viewlab_report) as is_viewlab_report');
+                $this->db->from('ms_patient_treatment_lab_reports');
+                $this->db->where('treatment_id', $order['treatment_id']);
+                $visRow = $this->db->get()->row_array();
+                $order['is_viewlab_report'] = isset($visRow['is_viewlab_report']) ? intval($visRow['is_viewlab_report']) : 0;
+
                 $this->db->select('lt.id, lt.test_name as testName, lpt.status, mtlt.urgency, lt.id as lab_test_id, lt.sample_type, lt.method, lt.tat, lt.test_code');
                 $this->db->from('lb_patient_test_tracking lpt');
                 $this->db->join('lb_lab_tests lt', 'lt.id = lpt.treatment_test_id', 'left');
@@ -1162,5 +1172,24 @@ class LabCommonModel extends CI_Model{
         $this->db->where('lab_id', $labid);
         $this->db->where_in('id', $orderIds);
         return $this->db->update('lb_lab_orders', ['is_processing_seen' => 1]);
+    }
+
+    public function get_unseen_completed_notifications($labid) {
+        $this->db->select('lo.id as order_id, lo.order_number, lo.created_at, lo.status, mp.fname, mp.lname, mp.id as patient_id');
+        $this->db->from('lb_lab_orders lo');
+        $this->db->join('ms_patient_treatment_info mt', 'mt.id = lo.treatment_id', 'left');
+        $this->db->join('ms_patient mp', 'mp.id = mt.patient_id', 'left');
+        $this->db->where('lo.lab_id', $labid);
+        $this->db->where('lo.is_completed_seen', 0);
+        $this->db->where_in('lo.status', ['Report Generated', 'Dispatched', 'Approved']);
+        $this->db->order_by('lo.updated_at', 'DESC');
+        return $this->db->get()->result_array();
+    }
+
+    public function mark_completed_seen($labid, $orderIds) {
+        if (empty($orderIds)) return false;
+        $this->db->where('lab_id', $labid);
+        $this->db->where_in('id', $orderIds);
+        return $this->db->update('lb_lab_orders', ['is_completed_seen' => 1]);
     }
 }

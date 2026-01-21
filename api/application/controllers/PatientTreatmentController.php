@@ -216,6 +216,57 @@ class PatientTreatmentController extends CI_Controller {
         echo json_encode(['success' => true, 'data' => $encryptedResponse, 'rowData' => $response]);
     }
 
+    public function get_lab_report_view() {
+        $userData = $this->_authenticate();
+
+        $raw = file_get_contents("php://input");
+        $requestData = json_decode($raw, true);
+
+        $data = [];
+        if (isset($requestData['payload'])) {
+            try {
+                $decryptedJson = $this->decrypt_aes_from_js($requestData['payload'], $this->AES_KEY);
+                $data = json_decode($decryptedJson, true);
+            } catch (Exception $e) {
+                echo json_encode(['success' => false, 'message' => 'Decryption failed']);
+                return;
+            }
+        } else {
+            $data = $requestData;
+        }
+
+        $treatment_id = $data['treatment_id'] ?? null;
+        if (!$treatment_id) {
+            echo json_encode(['success' => false, 'message' => 'Treatment ID required']);
+            return;
+        }
+
+        $this->load->model('LabCommonModel');
+
+        $this->db->select('id, lab_id');
+        $this->db->from('lb_lab_orders');
+        $this->db->where('treatment_id', $treatment_id);
+        $this->db->order_by('updated_at', 'DESC');
+        $this->db->limit(1);
+        $orderRow = $this->db->get()->row_array();
+
+        if (!$orderRow) {
+            $response = ['success' => false, 'message' => 'No lab order found for treatment'];
+        } else {
+            $orderId = $orderRow['id'];
+            $labid = $orderRow['lab_id'];
+            $details = $this->LabCommonModel->get_report_details($orderId, $labid);
+            if ($details) {
+                $response = ['success' => true, 'data' => $details];
+            } else {
+                $response = ['success' => false, 'message' => 'No report details found'];
+            }
+        }
+
+        $encryptedResponse = $this->encrypt_aes_for_js(json_encode($response), $this->AES_KEY);
+        echo json_encode(['success' => true, 'data' => $encryptedResponse]);
+    }
+
     public function upload_report() {
         $userData = $this->_authenticate();
         

@@ -98,6 +98,9 @@ $route['master_laboratories_active_list']			= 'SALaboratoriesController/GetActiv
 
 
 $route['laboratories_collect_sample'] = 'LaboratoriesController/collectSample';
+$route['laboratories_save_draft'] = 'LaboratoriesController/saveDraft';
+$route['laboratories_get_drafts'] = 'LaboratoriesController/getDrafts';
+$route['laboratories_submit_validation'] = 'LaboratoriesController/submitValidation';
 
 
 // New Notification Routes
@@ -109,6 +112,9 @@ $route['lb_mark_queue_seen'] = 'LaboratoriesController/mark_queue_seen';
 
 $route['lb_unseen_processing'] = 'LaboratoriesController/get_unseen_processing_notifications';
 $route['lb_mark_processing_seen'] = 'LaboratoriesController/mark_processing_seen';
+
+$route['lb_unseen_completed'] = 'LaboratoriesController/get_unseen_completed_notifications';
+$route['lb_mark_completed_seen'] = 'LaboratoriesController/mark_completed_seen';
 
 
 
@@ -134,6 +140,7 @@ $route['laboratories_upload_report'] = 'LaboratoriesController/uploadReport';
 $route['laboratories_processing_queue'] = 'LaboratoriesController/GetProcessingQueue';
 $route['laboratories_validation_queue'] = 'LaboratoriesController/GetValidationQueue';
 $route['laboratories_reports_completed'] = 'LaboratoriesController/GetCompletedReports';
+$route['laboratories_toggle_report_visibility'] = 'LaboratoriesController/ToggleReportVisibility';
 
 
 $route['laboratories_report_details'] = 'LaboratoriesController/GetReportDetails';
@@ -334,6 +341,8 @@ $route['hs_inventory_vendor_add']						= 'HSHospitalsController/AddInventoryVend
 $route['hs_inventory_vendor_update']					= 'HSHospitalsController/UpdateInventoryVendorInfo';
 $route['hs_inventory_vendor_delete']					= 'HSHospitalsController/DeleteInventoryVendorInfo';
 
+$route['patient_treatment_lab_report']                  = 'PatientTreatmentController/get_lab_report_view';
+
 $route['hs_inventory_purchase_list']					= 'HSHospitalsController/getInventoryPurchaseList';
 $route['hs_inventory_purchase_add']						= 'HSHospitalsController/AddInventoryPurchaseInfo';
 $route['hs_inventory_purchase_update']					= 'HSHospitalsController/UpdateInventoryPurchaseInfo';
@@ -408,6 +417,12 @@ $route['hs_patients_visit_history'] = 'HSPatientController/getPatientVisitHistor
 $route['hs_patients_treatment_details'] = 'HSPatientController/getTreatment';
 $route['ms_patients_change_status']		 = 'HSPatientController/changePatientStatus';
 $route['hs_patients_change_status']		 = 'HSPatientController/DeletePatientInformation';
+
+$route['hs_patient_info_share_create']      = 'HSPatientController/hs_patient_info_share_create';
+$route['hs_patient_info_share_list']        = 'HSPatientController/hs_patient_info_share_list';
+$route['hs_patient_info_share_revoke']      = 'HSPatientController/hs_patient_info_share_revoke';
+$route['hs_patient_info_content_get']       = 'HSPatientController/hs_patient_info_content_get';
+$route['hs_patient_info_content_update']    = 'HSPatientController/hs_patient_info_content_update';
 
 // ------------------------------
 // Hospital Medical Stores Routes
@@ -616,6 +631,7 @@ $route['hs_treatment_procedure_delete']             = 'MasterTreatmentController
 
 $route['patient_treatment_save'] = 'PatientTreatmentController/save_treatment';
 $route['patient_treatment_get'] = 'PatientTreatmentController/get_treatment';
+$route['patient_treatment_lab_report'] = 'PatientTreatmentController/get_lab_report_view';
 $route['patient_treatment_upload_report'] = 'PatientTreatmentController/upload_report';
 $route['patient_treatment_delete_report'] = 'PatientTreatmentController/delete_report';
 
@@ -650,4 +666,3 @@ $route['lab_packages_add'] = 'LabPackagesController/addPackage';
 $route['lab_packages_update'] = 'LabPackagesController/updatePackage';
 $route['lab_packages_delete'] = 'LabPackagesController/deletePackage';
 $route['lab_packages_get'] = 'LabPackagesController/getPackage';
-

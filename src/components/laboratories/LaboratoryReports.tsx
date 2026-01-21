@@ -15,6 +15,7 @@ import {
   Copy,
   ExternalLink,
   Stethoscope,
+  Image as ImageIcon,
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { StatusBadge } from '@/components/ui/status-badge';
@@ -40,7 +41,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { fetchCompletedReports, fetchReportDetails, uploadGeneratedReport } from '@/services/LaboratoryService';
+import { fetchCompletedReports, toggleReportVisibility, fetchReportDetails } from '@/services/LaboratoryService';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from "date-fns";
@@ -221,35 +222,20 @@ export default function LaboratoryReports() {
       return doc;
   };
 
-  const handleGenerateReport = async (orderId: string) => {
-    toast.info("Generating report...", { description: "Please wait while we generate and upload the report." });
+  const handleToggleVisibility = async (order: any) => {
+    const treatmentId = String(order.treatment_id);
+    const nextVisible = !(order.is_viewlab_report === 1);
     try {
-      const details = await fetchReportDetails(orderId);
-      if (!details) throw new Error("Could not fetch report details");
-
-      const doc = generateReportPDF(details);
-      const pdfBlob = doc.output('blob');
-      
-      // Upload
-      const formData = new FormData();
-      formData.append('report_file', pdfBlob, `Report_${details.order_number}.pdf`);
-      formData.append('patient_id', details.patient_id);
-      formData.append('treatment_id', details.treatment_id);
-      
-      const testIds = details.tests.map((t: any) => String(t.lab_test_id)).filter(Boolean);
-      formData.append('covered_tests', JSON.stringify(testIds));
-      formData.append('lab_test_id', testIds.join(','));
-
-      const uploadRes = await uploadGeneratedReport(formData);
-      if (uploadRes.success) {
-        toast.success("Report generated and uploaded successfully!");
-      } else {
-        throw new Error(uploadRes.message || "Upload failed");
-      }
-
-    } catch (error: any) {
-      console.error(error);
-      toast.error("Failed to generate/upload report", { description: error.message });
+      const res = await toggleReportVisibility(treatmentId, nextVisible);
+      if (!res.success) throw new Error(res.message || "Failed to update");
+      setOrders(prev => prev.map(o => 
+        o.order_id === order.order_id 
+          ? { ...o, is_viewlab_report: nextVisible ? 1 : 0 } 
+          : o
+      ));
+      toast.success(nextVisible ? "Report visible to patient" : "Report hidden from patient");
+    } catch (e: any) {
+      toast.error(e.message || "Failed to toggle visibility");
     }
   };
 
@@ -410,9 +396,9 @@ export default function LaboratoryReports() {
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="h-8 w-8 text-blue-600"
-                          onClick={() => handleGenerateReport(order.order_id)}
-                          title="Generate & Upload Report"
+                          className={`h-8 w-8 ${order.is_viewlab_report === 1 ? 'text-green-600' : 'text-red-600'}`}
+                          onClick={() => handleToggleVisibility(order)}
+                          title={order.is_viewlab_report === 1 ? "Hide Report (Patient)" : "Show Report (Patient)"}
                         >
                           <Stethoscope className="h-4 w-4" />
                         </Button>
@@ -476,7 +462,19 @@ export default function LaboratoryReports() {
           </DialogHeader>
           {selectedReport && (() => {
             const order = orders.find(o => String(o.order_id) === selectedReport);
-            return order ? <ReportPreview order={order} /> : null;
+            if (!order) return null;
+            
+            // Check is_viewlab_report flag
+            // 1 = Database Report (ReportPreview)
+            // 0 = Uploaded File (FileReportPreview)
+            if (order.is_viewlab_report === 1) {
+              return <ReportPreview order={order} />;
+            } else if (order.file_url) {
+               return <FileReportPreview order={order} />;
+            } else {
+               // Fallback to database report if no file is available
+               return <ReportPreview order={order} />;
+            }
           })()}
         </DialogContent>
       </Dialog>
@@ -722,6 +720,40 @@ function ReportPreview({ order }: { order: any }) {
           This is a computer-generated report. Results should be correlated clinically.
         </p>
       </div>
+    </div>
+  );
+}
+
+function FileReportPreview({ order }: { order: any }) {
+  const fileType = order.file_type || (order.file_url?.includes('.pdf') ? 'pdf' : 'image');
+
+  return (
+    <div className="flex-1 bg-muted/50 rounded-lg border w-full h-[80vh] overflow-hidden flex flex-col">
+       {fileType === "image" || fileType?.includes("image") ? (
+        <div className="flex-1 overflow-y-auto p-4 flex items-start justify-center">
+          <img
+            src={order.file_url}
+            alt="Report"
+            className="w-full h-auto object-contain max-w-none shadow-sm"
+          />
+        </div>
+      ) : fileType === "pdf" || fileType?.includes("pdf") ? (
+        <iframe
+          src={order.file_url}
+          className="w-full h-full"
+          title="Report"
+        />
+      ) : (
+        <div className="flex-1 flex items-center justify-center p-8">
+          <div className="text-center">
+            <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-2" />
+            <p className="text-muted-foreground">Preview not available for this file type</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Click download to view the full report
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -330,6 +330,28 @@ class HSPatientController  extends CI_Controller {
         $this->db->query($sql);
     }
 
+    private function ensurePatientInfoContentTable() {
+        $sql = "CREATE TABLE IF NOT EXISTS `ms_patient_info_content` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `hospital_id` INT NULL,
+            `hosuid` VARCHAR(64) NULL,
+            `name_status` TINYINT DEFAULT 1,
+            `email_status` TINYINT DEFAULT 1,
+            `phone_status` TINYINT DEFAULT 1,
+            `dob_status` TINYINT DEFAULT 1,
+            `gender_status` TINYINT DEFAULT 1,
+            `blood_group_status` TINYINT DEFAULT 1,
+            `address_status` TINYINT DEFAULT 1,
+            `status` TINYINT DEFAULT 1,
+            `isdelete` TINYINT DEFAULT 0,
+            `created_by` VARCHAR(64) NULL,
+            `created_at` DATETIME NULL,
+            `updated_by` VARCHAR(64) NULL,
+            `updated_at` DATETIME NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+        $this->db->query($sql);
+    }
+
     public function hs_patient_info_share_create() {
         $userToken = $this->input->get_request_header('Authorization');
         $splitToken = explode(" ", $userToken);
@@ -497,6 +519,168 @@ class HSPatientController  extends CI_Controller {
             echo json_encode(["success"=>true,"message"=>"Revoked"]);
         } catch (Exception $e) {
             echo json_encode(["success"=>false,"message"=>"Authorization failed: " . $e->getMessage()]);
+        }
+    }
+
+    public function hs_patient_info_content_get() {
+        $userToken = $this->input->get_request_header('Authorization');
+        $splitToken = explode(" ", $userToken);
+        $token = isset($splitToken[1]) ? $splitToken[1] : '';
+        try {
+            $token = verifyAuthToken($token);
+            if (!$token) throw new Exception("Unauthorized");
+            $tokenData = is_string($token) ? json_decode($token, true) : $token;
+            $hrole = $tokenData['role'] ?? null;
+            $loguid = $tokenData['loguid'] ?? null;
+            if (!$loguid || $hrole !== "hospital_admin") {
+                echo json_encode(["success"=>false,"message"=>"Invalid user token or insufficient privileges"]);
+                return;
+            }
+
+            $this->ensurePatientInfoContentTable();
+
+            // Resolve hospital id for current hosuid
+            $this->load->model('HospitalCommonModel');
+            $hosInfo = $this->HospitalCommonModel->get_logHospitalInfo($loguid);
+            $hospital_id = isset($hosInfo['id']) ? intval($hosInfo['id']) : null;
+            if (!$hospital_id) {
+                $hosRow = $this->db->where('hosuid', $loguid)->get('ms_hospitals')->row_array();
+                $hospital_id = isset($hosRow['id']) ? intval($hosRow['id']) : null;
+            }
+
+            $this->db->from("ms_patient_info_content");
+            $this->db->where("hosuid", $loguid);
+            $this->db->where("isdelete", 0);
+            $row = $this->db->get()->row_array();
+
+            if (!$row) {
+                $insert = [
+                    "hospital_id" => $hospital_id,
+                    "hosuid" => $loguid,
+                    "name_status" => 1,
+                    "email_status" => 1,
+                    "phone_status" => 1,
+                    "dob_status" => 1,
+                    "gender_status" => 1,
+                    "blood_group_status" => 1,
+                    "address_status" => 1,
+                    "status" => 1,
+                    "isdelete" => 0,
+                    "created_by" => $loguid,
+                    "created_at" => date('Y-m-d H:i:s')
+                ];
+                $this->db->insert("ms_patient_info_content", $insert);
+
+                $this->db->from("ms_patient_info_content");
+                $this->db->where("hosuid", $loguid);
+                $this->db->where("isdelete", 0);
+                $row = $this->db->get()->row_array();
+            } else {
+                // Backfill hospital_id if missing
+                if ((!isset($row['hospital_id']) || !$row['hospital_id']) && $hospital_id) {
+                    $this->db->where("id", $row['id']);
+                    $this->db->update("ms_patient_info_content", [
+                        "hospital_id" => $hospital_id,
+                        "updated_by" => $loguid,
+                        "updated_at" => date('Y-m-d H:i:s')
+                    ]);
+                    // re-fetch
+                    $this->db->from("ms_patient_info_content");
+                    $this->db->where("id", $row['id']);
+                    $row = $this->db->get()->row_array();
+                }
+            }
+
+            $AES_KEY = "RohitGaradHos@173414";
+            $encryptedData = $this->encrypt_aes_for_js(json_encode($row), $AES_KEY);
+
+            echo json_encode([
+                "success" => true,
+                "data" => $encryptedData,
+                "rowData" => $row
+            ]);
+        } catch (Exception $e) {
+            echo json_encode([
+                "success" => false,
+                "message" => "Authorization failed: " . $e->getMessage()
+            ]);
+        }
+    }
+
+    public function hs_patient_info_content_update() {
+        $userToken = $this->input->get_request_header('Authorization');
+        $splitToken = explode(" ", $userToken);
+        $token = isset($splitToken[1]) ? $splitToken[1] : '';
+        try {
+            $token = verifyAuthToken($token);
+            if (!$token) throw new Exception("Unauthorized");
+            $tokenData = is_string($token) ? json_decode($token, true) : $token;
+            $hrole = $tokenData['role'] ?? null;
+            $loguid = $tokenData['loguid'] ?? null;
+            if (!$loguid || $hrole !== "hospital_admin") {
+                echo json_encode(["success"=>false,"message"=>"Invalid user token or insufficient privileges"]);
+                return;
+            }
+
+            $this->ensurePatientInfoContentTable();
+
+            // Resolve hospital id for current hosuid
+            $this->load->model('HospitalCommonModel');
+            $hosInfo = $this->HospitalCommonModel->get_logHospitalInfo($loguid);
+            $hospital_id = isset($hosInfo['id']) ? intval($hosInfo['id']) : null;
+            if (!$hospital_id) {
+                $hosRow = $this->db->where('hosuid', $loguid)->get('ms_hospitals')->row_array();
+                $hospital_id = isset($hosRow['id']) ? intval($hosRow['id']) : null;
+            }
+
+            $json = file_get_contents("php://input");
+            $data = json_decode($json, true);
+            if (!$data || !is_array($data)) {
+                echo json_encode(["success"=>false,"message"=>"Invalid payload"]);
+                return;
+            }
+
+            $updateData = [
+                "hospital_id" => $hospital_id,
+                "name_status" => isset($data['name_status']) ? (int)$data['name_status'] : 1,
+                "email_status" => isset($data['email_status']) ? (int)$data['email_status'] : 1,
+                "phone_status" => isset($data['phone_status']) ? (int)$data['phone_status'] : 1,
+                "dob_status" => isset($data['dob_status']) ? (int)$data['dob_status'] : 1,
+                "gender_status" => isset($data['gender_status']) ? (int)$data['gender_status'] : 1,
+                "blood_group_status" => isset($data['blood_group_status']) ? (int)$data['blood_group_status'] : 1,
+                "address_status" => isset($data['address_status']) ? (int)$data['address_status'] : 1,
+                "status" => 1,
+                "isdelete" => 0,
+                "updated_by" => $loguid,
+                "updated_at" => date('Y-m-d H:i:s')
+            ];
+
+            $this->db->from("ms_patient_info_content");
+            $this->db->where("hosuid", $loguid);
+            $this->db->where("isdelete", 0);
+            $row = $this->db->get()->row_array();
+
+            if ($row) {
+                $this->db->where("id", $row['id']);
+                $this->db->update("ms_patient_info_content", $updateData);
+            } else {
+                $insert = array_merge($updateData, [
+                    "hosuid" => $loguid,
+                    "created_by" => $loguid,
+                    "created_at" => date('Y-m-d H:i:s')
+                ]);
+                $this->db->insert("ms_patient_info_content", $insert);
+            }
+
+            echo json_encode([
+                "success" => true,
+                "message" => "Patient info content updated successfully"
+            ]);
+        } catch (Exception $e) {
+            echo json_encode([
+                "success" => false,
+                "message" => "Authorization failed: " . $e->getMessage()
+            ]);
         }
     }
 

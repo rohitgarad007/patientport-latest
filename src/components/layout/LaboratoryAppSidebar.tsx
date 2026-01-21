@@ -3,7 +3,7 @@ import Cookies from "js-cookie";
 import { useEffect, useState } from "react";
 import { PaIcons } from "@/components/icons/PaIcons";
 import { formatDistanceToNow } from "date-fns";
-import { getUnseenOrders, markOrdersSeen, getUnseenQueue, markQueueSeen, getUnseenProcessing, markProcessingSeen } from "../../services/labNotificationService";
+import { getUnseenOrders, markOrdersSeen, getUnseenQueue, markQueueSeen, getUnseenCompleted, markCompletedSeen } from "../../services/labNotificationService";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +18,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
+import { requestOrderNotificationPermission, subscribeToOrderForegroundMessages } from "@/services/firebaseMessagingService";
 
 // Static Data for Notifications
 const notificationData = {
@@ -105,6 +106,10 @@ export function LaboratoryAppSidebar() {
 
   const [unseenProcessing, setUnseenProcessing] = useState<any[]>([]);
   const [unseenProcessingCount, setUnseenProcessingCount] = useState(0);
+  const [pushReady, setPushReady] = useState(false);
+  const [hasLoadedOrders, setHasLoadedOrders] = useState(false);
+  const [newOrderNotificationCount, setNewOrderNotificationCount] = useState(0);
+  const [newOrderNotifications, setNewOrderNotifications] = useState<any[]>([]);
 
   const formatTimeAgo = (dateString: string) => {
     if (!dateString) return "";
@@ -148,8 +153,22 @@ export function LaboratoryAppSidebar() {
         icon: PaIcons.PurchaseIcon,
         color: "bg-blue-100 text-blue-600"
       }));
+      const previousCount = unseenCount;
+       const previousIds = unseenOrders.map((o: any) => o.id);
       setUnseenOrders(formatted);
       setUnseenCount(formatted.length);
+      if (hasLoadedOrders && formatted.length > previousCount) {
+        const newlyAdded = formatted.filter(
+          (o: any) => !previousIds.includes(o.id)
+        );
+        if (newlyAdded.length > 0) {
+          setNewOrderNotificationCount(newlyAdded.length);
+          setNewOrderNotifications(newlyAdded);
+        }
+      }
+      if (!hasLoadedOrders) {
+        setHasLoadedOrders(true);
+      }
     } catch (error) {
       console.error("Failed to fetch unseen orders", error);
     }
@@ -157,20 +176,20 @@ export function LaboratoryAppSidebar() {
 
   const fetchUnseenProcessing = async () => {
     try {
-      const orders = await getUnseenProcessing();
+      const orders = await getUnseenCompleted();
       const formatted = orders.map((o: any) => ({
         id: o.order_id,
-        title: `Processing Order #${o.order_number || o.order_id}`,
+        title: `Completed Order #${o.order_number || o.order_id}`,
         sub: `Patient: ${o.fname} ${o.lname} (${o.status})`,
         time: formatTimeAgo(o.created_at),
         status: o.status,
-        icon: PaIcons.settings2Icon,
-        color: "bg-purple-100 text-purple-600"
+        icon: PaIcons.ResultsIcon,
+        color: "bg-green-100 text-green-600"
       }));
       setUnseenProcessing(formatted);
       setUnseenProcessingCount(formatted.length);
     } catch (error) {
-      console.error("Failed to fetch unseen processing", error);
+      console.error("Failed to fetch unseen completed", error);
     }
   };
 
@@ -217,6 +236,9 @@ export function LaboratoryAppSidebar() {
       
       // Navigate to orders page
       navigate("/laboratory-orders");
+      setNewOrderNotificationCount(0);
+      setNewOrderNotifications([]);
+      setNewOrderNotificationCount(0);
     } catch (error) {
       console.error("Failed to mark order seen", error);
     }
@@ -246,12 +268,12 @@ export function LaboratoryAppSidebar() {
   const handleProcessingItemClick = async (notification: any) => {
     if (!notification.id) return;
     try {
-      await markProcessingSeen([notification.id]);
+      await markCompletedSeen([notification.id]);
       setUnseenProcessing((prev) => prev.filter((o) => o.id !== notification.id));
       setUnseenProcessingCount((prev) => Math.max(0, prev - 1));
-      navigate("/laboratory-processing");
+      navigate("/laboratory-report");
     } catch (error) {
-      console.error("Failed to mark processing item seen", error);
+      console.error("Failed to mark completed item seen", error);
     }
   };
 
@@ -263,8 +285,23 @@ export function LaboratoryAppSidebar() {
       fetchUnseenOrders();
       fetchUnseenQueue();
       fetchUnseenProcessing();
-    }, 60000);
+    }, 10000);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    requestOrderNotificationPermission().then((token) => {
+      if (token) {
+        setPushReady(true);
+      }
+    });
+
+    subscribeToOrderForegroundMessages((payload: any) => {
+      const data: any = payload?.data || {};
+      if (data.type === "lab_order") {
+        fetchUnseenOrders();
+      }
+    });
   }, []);
 
   // Load lab info from cookie
@@ -314,15 +351,7 @@ export function LaboratoryAppSidebar() {
       onItemClick: handleOrderClick,
       onViewAll: () => navigate("/laboratory-orders"),
     },
-    {
-      title: "Processing",
-      type: "notification",
-      icon: PaIcons.settings2Icon,
-      badge: unseenProcessingCount,
-      data: unseenProcessing,
-      onItemClick: handleProcessingItemClick,
-      onViewAll: () => navigate("/laboratory-processing"),
-    },
+    
     {
       title: "Queue",
       type: "notification",
@@ -331,6 +360,15 @@ export function LaboratoryAppSidebar() {
       data: unseenQueue,
       onItemClick: handleQueueItemClick,
       onViewAll: () => navigate("/laboratory-processing"),
+    },
+    {
+      title: "Completed",
+      type: "notification",
+      icon: PaIcons.ResultsIcon,
+      badge: unseenProcessingCount,
+      data: unseenProcessing,
+      onItemClick: handleProcessingItemClick,
+      onViewAll: () => navigate("/laboratory-report"),
     },
     {
       title: "Profile",
@@ -458,7 +496,6 @@ export function LaboratoryAppSidebar() {
           </ul>
         </nav>
 
-        {/* Mobile Sub-Menu */}
         {activeCategory && (
           <div className="fixed bottom-16 left-0 w-full bg-white dark:bg-neutral-900 border-t border-gray-200 p-4 z-40">
             <div className="flex justify-between items-center mb-2">
@@ -497,6 +534,62 @@ export function LaboratoryAppSidebar() {
                     </NavLink>
                   )
                 )}
+            </div>
+          </div>
+        )}
+
+        {newOrderNotificationCount > 0 && newOrderNotifications.length > 0 && (
+          <div className="fixed bottom-20 left-1/2 z-50 flex -translate-x-1/2 px-3">
+            <div className="max-w-sm rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-800 dark:bg-neutral-900">
+              <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-800">
+                <span className="text-xs font-semibold">
+                  New lab orders ({newOrderNotificationCount})
+                </span>
+                <button
+                  onClick={() => {
+                    navigate("/laboratory-orders");
+                    setNewOrderNotificationCount(0);
+                    setNewOrderNotifications([]);
+                  }}
+                  className="text-[11px] text-blue-600 hover:text-blue-700"
+                >
+                  View all
+                </button>
+              </div>
+              <div className="max-h-32 overflow-y-auto px-3 py-2 space-y-1">
+                {newOrderNotifications.slice(0, 3).map((notification: any) => (
+                  <button
+                    key={notification.id}
+                    onClick={() => handleOrderClick(notification)}
+                    className="flex w-full items-start gap-2 rounded-md px-1 py-1 text-left hover:bg-muted/60"
+                  >
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                        notification.color ? notification.color.split(" ")[0] : "bg-blue-100"
+                      }`}
+                    >
+                      <span
+                        className={`text-[11px] font-semibold ${
+                          notification.color ? notification.color.split(" ")[1] : "text-blue-700"
+                        }`}
+                      >
+                        {notification.order_number || notification.id}
+                      </span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs font-medium leading-tight">
+                        {notification.title}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground line-clamp-1">
+                        {notification.sub}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {notification.time}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}

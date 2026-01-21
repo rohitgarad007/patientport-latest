@@ -259,9 +259,9 @@ const DoctorPatientTreatment = () => {
     
   ]);
 
-
-
+  const [isViewLabReport, setIsViewLabReport] = useState<boolean>(false);
   const [uploadedReports, setUploadedReports] = useState<UploadedReport[]>([]);
+
 
   // Purpose of Visit (Common Complaints)
   type ComplaintItem = { id: string; name: string; description?: string };
@@ -355,6 +355,9 @@ const DoctorPatientTreatment = () => {
                             };
                         });
                         setUploadedReports(mappedReports);
+                    }
+                    if (typeof data.is_viewlab_report !== 'undefined') {
+                        setIsViewLabReport(Boolean(data.is_viewlab_report));
                     }
                 }
             })
@@ -1983,6 +1986,7 @@ const DoctorPatientTreatment = () => {
                       }))}
                       uploadedReports={uploadedReports}
                       onReportsChange={setUploadedReports}
+                      isViewLabReport={isViewLabReport}
                     />
                   </TabsContent>
 

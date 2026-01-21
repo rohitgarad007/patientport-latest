@@ -110,6 +110,49 @@ export const markProcessingSeen = async (orderIds: string[]) => {
   return await res.json();
 };
 
+export const getUnseenCompleted = async () => {
+  const { apiUrl, headers } = await getAuthHeaders();
+  const aesKey = await configService.getAesSecretKey();
+
+  const res = await fetch(`${apiUrl}/lb_unseen_completed`, {
+    method: "GET",
+    headers,
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch completed notifications");
+  }
+
+  const response = await res.json();
+
+  if (response.success && response.data) {
+    const decrypted = decryptAESFromPHP(response.data, aesKey);
+    if (decrypted) {
+      return JSON.parse(decrypted);
+    }
+  }
+  return [];
+};
+
+export const markCompletedSeen = async (orderIds: string[]) => {
+  const { apiUrl, headers } = await getAuthHeaders();
+  const aesKey = await configService.getAesSecretKey();
+
+  const payload = encryptAESForPHP(JSON.stringify({ orderIds }), aesKey);
+
+  const res = await fetch(`${apiUrl}/lb_mark_completed_seen`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ encrypted_payload: payload }),
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to mark completed seen");
+  }
+
+  return await res.json();
+};
+
 export const getUnseenQueue = async () => {
   const { apiUrl, headers } = await getAuthHeaders();
   const aesKey = await configService.getAesSecretKey();

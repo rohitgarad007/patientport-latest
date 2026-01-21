@@ -44,7 +44,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
-import { uploadReport, deleteReport } from "@/services/patientTreatmentService";
+import { uploadReport, deleteReport, getLabReportView } from "@/services/patientTreatmentService";
 
 export interface LabTest {
   id: string;
@@ -79,6 +79,7 @@ interface LabReportUploadSectionProps {
   labTestOptions: LabTest[];
   uploadedReports: UploadedReport[];
   onReportsChange: (reports: UploadedReport[]) => void;
+  isViewLabReport?: boolean;
 }
 
 const LabReportUploadSection = ({
@@ -88,6 +89,7 @@ const LabReportUploadSection = ({
   labTestOptions,
   uploadedReports,
   onReportsChange,
+  isViewLabReport,
 }: LabReportUploadSectionProps) => {
   const { toast } = useToast();
   // Removed local uploadedReports state in favor of props
@@ -108,6 +110,10 @@ const LabReportUploadSection = ({
   const [searchResults, setSearchResults] = useState<LabTest[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [cachedLabTests, setCachedLabTests] = useState<LabTest[]>([]);
+  const [showLabReportModal, setShowLabReportModal] = useState(false);
+  const [labReportDetails, setLabReportDetails] = useState<any | null>(null);
+  const [isLabReportLoading, setIsLabReportLoading] = useState(false);
+  const [labReportError, setLabReportError] = useState<string | null>(null);
 
   // Function to search lab tests from API
   const searchLabTests = async (query: string) => {
@@ -502,9 +508,33 @@ const LabReportUploadSection = ({
     });
   };
 
-  const handlePreview = (report: UploadedReport) => {
-    setSelectedPreview(report);
-    setShowPreviewModal(true);
+  const handlePreview = async (report: UploadedReport) => {
+    if (isViewLabReport && treatmentId) {
+      try {
+        setIsLabReportLoading(true);
+        setLabReportError(null);
+        setLabReportDetails(null);
+        const res = await getLabReportView(treatmentId);
+        if (res && res.success && res.data) {
+          setLabReportDetails(res.data);
+          setSelectedPreview(null);
+        } else if (res && typeof res === 'object') {
+          setLabReportDetails(res.data || res);
+          setSelectedPreview(null);
+        } else {
+          setSelectedPreview(report);
+        }
+      } catch (e: any) {
+        setLabReportError(e?.message || "Failed to load lab report");
+        setSelectedPreview(report);
+      } finally {
+        setShowPreviewModal(true);
+        setIsLabReportLoading(false);
+      }
+    } else {
+      setSelectedPreview(report);
+      setShowPreviewModal(true);
+    }
   };
 
   const handleDownload = (report: UploadedReport) => {
@@ -1208,7 +1238,70 @@ const LabReportUploadSection = ({
             Report Preview
           </DialogTitle>
         </DialogHeader>
-        {selectedPreview && (
+        {isLabReportLoading && (
+          <div className="flex-1 flex items-center justify-center">
+            <Loader2 className="h-6 w-6 animate-spin" />
+          </div>
+        )}
+        {labReportError && !isLabReportLoading && (
+          <div className="p-3 text-sm text-destructive bg-destructive/10 rounded border border-destructive/20">
+            {labReportError}
+          </div>
+        )}
+        {labReportDetails && !isLabReportLoading && (
+          <div className="flex-1 overflow-y-auto space-y-6">
+            <div className="grid md:grid-cols-2 gap-6 bg-muted/30 p-4 rounded-lg border">
+              <div>
+                <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Patient Information</h3>
+                <div className="space-y-1">
+                  <p><span className="text-muted-foreground">Name:</span> <strong>{labReportDetails.fname} {labReportDetails.lname}</strong></p>
+                  <p><span className="text-muted-foreground">Gender/DOB:</span> {labReportDetails.gender} / {labReportDetails.dob}</p>
+                  <p><span className="text-muted-foreground">Phone:</span> {labReportDetails.phone}</p>
+                </div>
+              </div>
+              <div>
+                <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Report Details</h3>
+                <div className="space-y-1">
+                  <p><span className="text-muted-foreground">Order ID:</span> <strong className="font-mono">{labReportDetails.order_id || labReportDetails.order_number}</strong></p>
+                  <p><span className="text-muted-foreground">Ref. Doctor:</span> {labReportDetails.doc_name ? `Dr. ${labReportDetails.doc_name}` : '—'}</p>
+                  <p><span className="text-muted-foreground">Report Date:</span> {new Date().toLocaleDateString()}</p>
+                </div>
+              </div>
+            </div>
+            {Array.isArray(labReportDetails.tests) && labReportDetails.tests.map((test: any, idx: number) => (
+              <div key={idx} className="border rounded-lg overflow-hidden">
+                <div className="bg-primary/5 px-4 py-2 border-b">
+                  <h3 className="font-semibold">{test.testName}</h3>
+                </div>
+                {Array.isArray(test.results) && test.results.length > 0 ? (
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-gray-50 text-xs uppercase tracking-wide text-muted-foreground">
+                        <th className="text-left px-4 py-2">Parameter</th>
+                        <th className="text-left px-4 py-2">Result</th>
+                        <th className="text-left px-4 py-2">Unit</th>
+                        <th className="text-left px-4 py-2">Reference Range</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {test.results.map((result: any, rIdx: number) => (
+                        <tr key={rIdx} className="border-t">
+                          <td className="px-4 py-2 font-medium">{result.parameterName}</td>
+                          <td className="px-4 py-2 font-mono font-semibold">{result.value}</td>
+                          <td className="px-4 py-2 text-sm text-muted-foreground">{result.unit}</td>
+                          <td className="px-4 py-2 font-mono text-sm">{result.referenceRange}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div className="p-4 text-sm text-muted-foreground">No results available</div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+        {selectedPreview && !labReportDetails && !isLabReportLoading && (
           <div className="flex-1 flex flex-col min-h-0 gap-4 mt-2">
             <div className="p-4 bg-muted/30 rounded-lg shrink-0 border">
               <div className="flex items-center gap-3 mb-2">

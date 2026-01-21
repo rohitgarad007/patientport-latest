@@ -87,6 +87,38 @@ export const getTreatment = async (appointmentId: string | number) => {
     return response;
 }
 
+export const getLabReportView = async (treatmentId: string | number) => {
+  const { apiUrl, headers } = await getAuthHeaders();
+  const aesKey = await configService.getAesSecretKey();
+
+  const payload = encryptAESForPHP(JSON.stringify({ treatment_id: treatmentId }), aesKey);
+  if (!payload) throw new Error("Encryption failed");
+
+  const res = await fetch(`${apiUrl}/patient_treatment_lab_report`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ payload }),
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to get lab report");
+  }
+
+  const response = await res.json();
+
+  if (response.success && response.data) {
+    if (typeof response.data === "string") {
+      const decrypted = decryptAESFromPHP(response.data, aesKey);
+      if (decrypted) {
+        const inner = JSON.parse(decrypted);
+        return inner;
+      }
+    }
+  }
+
+  return response;
+};
+
 export const uploadReport = async (
   file: File,
   treatmentId: string,

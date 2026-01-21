@@ -355,6 +355,24 @@ export const fetchReportDetails = async (orderId: string) => {
   return null;
 };
 
+export const toggleReportVisibility = async (treatmentId: string, visible: boolean) => {
+  const { apiUrl, headers } = await getAuthHeaders();
+  const res = await fetch(`${apiUrl}laboratories_toggle_report_visibility`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ treatment_id: treatmentId, visible: visible ? 1 : 0 }),
+  });
+  if (!res.ok) {
+    try {
+      const err = await res.json();
+      throw new Error(err?.message || "Failed to toggle report visibility");
+    } catch {
+      throw new Error("Failed to toggle report visibility");
+    }
+  }
+  return res.json();
+};
+
 // Package Management
 export const fetchPackages = async () => {
   const { apiUrl, headers } = await getAuthHeaders();

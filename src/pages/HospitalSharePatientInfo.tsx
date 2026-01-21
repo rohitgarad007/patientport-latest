@@ -6,10 +6,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { PaIcons } from "@/components/icons/PaIcons";
 import { Table as UiTable } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
-import { fetchPatients, fetchPatientShares, createPatientShare } from "@/services/HsPatientService";
+import {
+  fetchPatients,
+  fetchPatientShares,
+  createPatientShare,
+  fetchPatientInfoContentSettings,
+  updatePatientInfoContentSettings,
+} from "@/services/HsPatientService";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Users, Eye, EyeOff, CheckCircle2, User, Mail, Phone, Calendar, Droplets, MapPin } from "lucide-react";
+import { Users, Eye, EyeOff, CheckCircle2, User, Mail, Phone, Calendar, Droplets, MapPin, FlaskConical } from "lucide-react";
 
 interface PatientItem {
   id: string;
@@ -40,6 +46,7 @@ const HospitalSharePatientInfo = () => {
   const [shares, setShares] = useState<any[]>([]);
 
   useEffect(() => {
+    loadContentSettings();
     loadShares();
   }, []);
 
@@ -64,8 +71,49 @@ const HospitalSharePatientInfo = () => {
     } catch {}
   };
 
+  const loadContentSettings = async () => {
+    try {
+      const res = await fetchPatientInfoContentSettings();
+      if (res.success && res.data) {
+        const data = res.data as any;
+        setSelectedSections({
+          name: data.name_status == 1,
+          email: data.email_status == 1,
+          phone: data.phone_status == 1,
+          dob: data.dob_status == 1,
+          gender: data.gender_status == 1,
+          blood_group: data.blood_group_status == 1,
+          address: data.address_status == 1,
+        });
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const saveContentSettings = async (sections: Record<string, boolean>) => {
+    try {
+      const payload = {
+        name_status: sections.name ? 1 : 0,
+        email_status: sections.email ? 1 : 0,
+        phone_status: sections.phone ? 1 : 0,
+        dob_status: sections.dob ? 1 : 0,
+        gender_status: sections.gender ? 1 : 0,
+        blood_group_status: sections.blood_group ? 1 : 0,
+        address_status: sections.address ? 1 : 0,
+      };
+      await updatePatientInfoContentSettings(payload);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const toggleSection = (key: string) => {
-    setSelectedSections((prev) => ({ ...prev, [key]: !prev[key] }));
+    setSelectedSections((prev) => {
+      const updated = { ...prev, [key]: !prev[key] };
+      void saveContentSettings(updated);
+      return updated;
+    });
   };
 
   const onShare = async () => {
@@ -158,119 +206,63 @@ const HospitalSharePatientInfo = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <img src={PaIcons.patientEditIcon} alt="Share" className="w-6 h-6" />
-          <h1 className="text-xl font-semibold">Share Patient Info</h1>
+
+      <div className="container mx-auto px-4 py-4">
+        
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
+            <Users className="w-5 h-5 text-primary-foreground" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-foreground">Manage Share Patient Info</h1>
+          </div>
         </div>
-      </div>
 
-      <Card className="bg-gradient-to-br from-background via-background to-muted/30 border-0 shadow-none">
+        <Card className="bg-gradient-to-br pt-5 from-background via-background to-muted/30 border-0 shadow-none">
+          <CardContent className="p-0">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+                <CardContent className="p-4 flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-primary/20">
+                    <Users className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{totalSections} <small className="text-xs text-muted-foreground">Total Sections</small></p>
+                    
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
+                <CardContent className="p-4 flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-green-500/20">
+                    <Eye className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{visibleCount} <small className="text-xs text-muted-foreground">Visible</small> </p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="bg-gradient-to-br from-orange-500/10 to-orange-500/5 border-orange-500/20">
+                <CardContent className="p-4 flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-orange-500/20">
+                    <EyeOff className="w-5 h-5 text-orange-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{hiddenCount} <small className="text-xs text-muted-foreground">Hidden</small></p>
+                  </div>
+                </CardContent>
+              </Card>
+              
+            </div>
+          </CardContent>
+        </Card>
+
+
+       
         <CardContent className="p-0">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/20">
-                  <Users className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{totalSections}</p>
-                  <p className="text-xs text-muted-foreground">Total Sections</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-green-500/20">
-                  <Eye className="w-5 h-5 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{visibleCount}</p>
-                  <p className="text-xs text-muted-foreground">Visible</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-gradient-to-br from-orange-500/10 to-orange-500/5 border-orange-500/20">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-orange-500/20">
-                  <EyeOff className="w-5 h-5 text-orange-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{hiddenCount}</p>
-                  <p className="text-xs text-muted-foreground">Hidden</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-blue-500/20">
-                  <CheckCircle2 className="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">0</p>
-                  <p className="text-xs text-muted-foreground">Required</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Patients</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-3 mb-4">
-            <Input
-              placeholder="Search patients"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            <Button onClick={loadPatients}>Search</Button>
-          </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>Select</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {patients.map((p) => (
-                <TableRow key={p.id} className={selectedPatient?.id === p.id ? "bg-muted/40" : ""}>
-                  <TableCell>{`${p.fname} ${p.lname}`}</TableCell>
-                  <TableCell>{p.email || "-"}</TableCell>
-                  <TableCell>{p.phone || "-"}</TableCell>
-                  <TableCell>
-                    <Button size="sm" variant="secondary" onClick={() => setSelectedPatient(p)}>Select</Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Share Details</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <div className="text-sm">Recipient Email</div>
-              <Input placeholder="name@example.com" value={shareTo} onChange={(e) => setShareTo(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <div className="text-sm">Selected Patient</div>
-              <Input readOnly value={selectedPatient ? `${selectedPatient.fname} ${selectedPatient.lname}` : ""} placeholder="No patient selected" />
-            </div>
-          </div>
+          
           <div className="mt-6">
-            <Card className="shadow-lg border-0 bg-card/50 backdrop-blur">
+            <Card className="">
               <CardHeader className="border-b bg-muted/30">
                 <CardTitle className="flex items-center gap-2">
                   <Users className="w-5 h-5 text-muted-foreground" />
@@ -327,45 +319,11 @@ const HospitalSharePatientInfo = () => {
               </CardContent>
             </Card>
           </div>
-          <div className="mt-4 flex justify-end">
-            <Button onClick={onShare} disabled={!selectedPatient}>
-              Share
-            </Button>
-          </div>
+          
         </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Shared Info</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <UiTable>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Patient</TableHead>
-                <TableHead>Recipient</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Date</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {shares.map((s) => (
-                <TableRow key={s.id}>
-                  <TableCell>{s.name}</TableCell>
-                  <TableCell>{s.share_to}</TableCell>
-                  <TableCell>{s.email || "-"}</TableCell>
-                  <TableCell>{s.phone || "-"}</TableCell>
-                  <TableCell>{s.status === 1 ? "Active" : "Revoked"}</TableCell>
-                  <TableCell>{s.created_at || "-"}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </UiTable>
-        </CardContent>
-      </Card>
+      
+        </div>
+      
     </div>
   );
 };

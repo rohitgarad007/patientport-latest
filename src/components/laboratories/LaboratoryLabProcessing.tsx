@@ -12,6 +12,7 @@ import {
   User,
   Save
 } from 'lucide-react';
+import jsPDF from 'jspdf';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,7 +27,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { fetchProcessingQueue, fetchValidationQueue, fetchCompletedReports, getMasterLabTestById, saveDraft, getDrafts, submitValidation, approveAndGenerateReport } from '@/services/LaboratoryService';
+import { fetchProcessingQueue, fetchValidationQueue, fetchCompletedReports, getMasterLabTestById, saveDraft, getDrafts, submitValidation, approveAndGenerateReport, fetchReportDetails, uploadGeneratedReport } from '@/services/LaboratoryService';
 
 const orderDetailsCache: Record<string, Record<string, any>> = {};
 const orderDraftsCache: Record<string, Record<string, any>> = {};
@@ -507,21 +508,157 @@ function ResultEntryPanel({ order, onOrderComplete }: { order: QueueOrder; onOrd
     }
   };
 
+  const generateReportPDF = (details: any) => {
+    const doc = new jsPDF();
+    let y = 20;
+
+    doc.setFontSize(18);
+    doc.setTextColor(40, 40, 40);
+    doc.text("LabFlow Diagnostics", 105, y, { align: "center" });
+    y += 8;
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text("NABL Accredited Laboratory", 105, y, { align: "center" });
+    y += 6;
+    doc.text("123 Medical Center Road, Healthcare District • Ph: 1800-123-4567", 105, y, { align: "center" });
+    y += 15;
+
+    doc.setDrawColor(200, 200, 200);
+    doc.rect(15, y, 180, 35);
+    
+    doc.setFontSize(9);
+    doc.setTextColor(120, 120, 120);
+    doc.text("PATIENT INFORMATION", 20, y + 8);
+    doc.text("REPORT DETAILS", 110, y + 8);
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(10);
+    
+    doc.text(`Name: ${details.fname} ${details.lname}`, 20, y + 16);
+    doc.text(`Gender/DOB: ${details.gender} / ${details.dob}`, 20, y + 22);
+    doc.text(`Phone: ${details.phone}`, 20, y + 28);
+
+    doc.text(`Order ID: ${details.order_number}`, 110, y + 16);
+    doc.text(`Ref. Doctor: ${details.doc_name ? "Dr. " + details.doc_name : "—"}`, 110, y + 22);
+    doc.text(`Report Date: ${new Date().toLocaleDateString()}`, 110, y + 28);
+
+    y += 45;
+
+    if (details.tests && Array.isArray(details.tests)) {
+      details.tests.forEach((test: any) => {
+        if (y > 250) {
+          doc.addPage();
+          y = 20;
+        }
+
+        doc.setFillColor(245, 245, 245);
+        doc.rect(15, y, 180, 8, "F");
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(0, 0, 0);
+        doc.text(test.testName || "Test", 20, y + 5);
+        y += 12;
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(100, 100, 100);
+        doc.text("Parameter", 20, y);
+        doc.text("Result", 90, y);
+        doc.text("Unit", 130, y);
+        doc.text("Reference Range", 160, y);
+        y += 2;
+        doc.setDrawColor(230, 230, 230);
+        doc.line(15, y, 195, y);
+        y += 6;
+
+        if (test.results && Array.isArray(test.results)) {
+          test.results.forEach((res: any) => {
+            if (y > 270) {
+              doc.addPage();
+              y = 20;
+            }
+            
+            doc.setTextColor(0, 0, 0);
+            doc.text(res.parameterName || "", 20, y);
+            
+            if (res.flag === 'Critical') doc.setTextColor(220, 38, 38);
+            else if (res.flag === 'High') doc.setTextColor(234, 88, 12);
+            else if (res.flag === 'Low') doc.setTextColor(37, 99, 235);
+            else doc.setTextColor(0, 0, 0);
+
+            doc.setFont("courier", "bold");
+            doc.text((res.value || "") + (res.flag && res.flag !== 'Normal' ? (res.flag === 'High' ? ' ↑' : res.flag === 'Low' ? ' ↓' : ' !') : ''), 90, y);
+            doc.setFont("helvetica", "normal");
+            
+            doc.setTextColor(100, 100, 100);
+            doc.text(res.unit || "", 130, y);
+            doc.text(res.referenceRange || "", 160, y);
+            
+            y += 6;
+          });
+        }
+        y += 10;
+      });
+    }
+
+    if (y > 250) {
+      doc.addPage();
+      y = 20;
+    }
+    y += 10;
+    doc.setDrawColor(200, 200, 200);
+    doc.line(15, y, 195, y);
+    y += 10;
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.text("Validated by: Dr. Pathologist Name", 20, y);
+    doc.text("This report is generated electronically.", 195, y, { align: "right" });
+
+    return doc;
+  };
+
   const handleApproveGenerateReport = async () => {
     try {
       await handleSaveDraft();
       const testIds = order.tests.map(t => t.id);
       const res = await approveAndGenerateReport(order.order_id, testIds, comments);
-      if (res.success) {
-        toast.success('Report generated', {
-          description: 'Results approved and report generated'
+      if (!res.success) {
+        toast.error(res.message || 'Failed to generate report');
+        return;
+      }
+
+      toast.info('Generating and uploading report...', {
+        description: 'Please wait while the report PDF is prepared'
+      });
+
+      const details = await fetchReportDetails(order.order_id);
+      if (!details) {
+        toast.error('Failed to load report details for PDF');
+        return;
+      }
+
+      const doc = generateReportPDF(details);
+      const pdfBlob = doc.output('blob');
+
+      const formData = new FormData();
+      formData.append('report_file', pdfBlob, `Report_${details.order_number}.pdf`);
+      formData.append('patient_id', details.patient_id);
+      formData.append('treatment_id', details.treatment_id);
+
+      const testIdsForUpload = details.tests.map((t: any) => String(t.lab_test_id)).filter(Boolean);
+      formData.append('covered_tests', JSON.stringify(testIdsForUpload));
+      formData.append('lab_test_id', testIdsForUpload.join(','));
+
+      const uploadRes = await uploadGeneratedReport(formData);
+      if (uploadRes.success) {
+        toast.success('Report generated and uploaded', {
+          description: 'Results approved, report generated and file uploaded'
         });
         onOrderComplete();
       } else {
-        toast.error(res.message || 'Failed to generate report');
+        toast.error(uploadRes.message || 'Failed to upload report');
       }
     } catch (e: any) {
-      toast.error(e.message || 'Failed to generate report');
+      toast.error(e.message || 'Failed to generate/upload report');
     }
   };
 

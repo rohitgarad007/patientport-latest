@@ -1,5 +1,5 @@
 <?php
-// Script to add is_processing_seen column to lb_lab_orders table
+// Script to add notification columns to lb_lab_orders table
 // Place this file in api/ directory and run it via browser or command line
 
 define('BASEPATH', 'dummy'); // Prevent direct script access check from blocking
@@ -20,22 +20,37 @@ $options = [
 try {
     $pdo = new PDO($dsn, $db['username'], $db['password'], $options);
     
-    // Check if column exists
+    // Ensure is_processing_seen column
     $stmt = $pdo->prepare("SHOW COLUMNS FROM lb_lab_orders LIKE 'is_processing_seen'");
     $stmt->execute();
-    $result = $stmt->fetch();
-    
-    if ($result) {
+    $hasProcessingSeen = $stmt->fetch();
+    if ($hasProcessingSeen) {
         echo "Column 'is_processing_seen' already exists.\n";
     } else {
-        // Add column
-        $sql = "ALTER TABLE lb_lab_orders ADD COLUMN is_processing_seen INT(1) DEFAULT 0 AFTER is_queue_seen";
-        // If is_queue_seen doesn't exist, just add it at the end. 
-        // Safer to just add it.
-        // Let's check is_queue_seen first just to be nice with ordering, but not strictly necessary.
-        
         $pdo->exec("ALTER TABLE lb_lab_orders ADD COLUMN is_processing_seen INT(1) DEFAULT 0");
         echo "Column 'is_processing_seen' added successfully.\n";
+    }
+
+    // Ensure is_completed_seen column
+    $stmt = $pdo->prepare("SHOW COLUMNS FROM lb_lab_orders LIKE 'is_completed_seen'");
+    $stmt->execute();
+    $hasCompletedSeen = $stmt->fetch();
+    if ($hasCompletedSeen) {
+        echo "Column 'is_completed_seen' already exists.\n";
+    } else {
+        $pdo->exec("ALTER TABLE lb_lab_orders ADD COLUMN is_completed_seen INT(1) DEFAULT 0");
+        echo "Column 'is_completed_seen' added successfully.\n";
+    }
+
+    // Ensure is_viewlab_report column on ms_patient_treatment_lab_reports
+    $stmt = $pdo->prepare("SHOW COLUMNS FROM ms_patient_treatment_lab_reports LIKE 'is_viewlab_report'");
+    $stmt->execute();
+    $hasViewLab = $stmt->fetch();
+    if ($hasViewLab) {
+        echo "Column 'is_viewlab_report' already exists.\n";
+    } else {
+        $pdo->exec("ALTER TABLE ms_patient_treatment_lab_reports ADD COLUMN is_viewlab_report INT(1) DEFAULT 1");
+        echo "Column 'is_viewlab_report' added successfully.\n";
     }
     
 } catch (\PDOException $e) {

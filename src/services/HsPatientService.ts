@@ -234,3 +234,36 @@ export const revokePatientShare = async (id: string) => {
   if (!res.ok) throw new Error("Failed to revoke patient info share");
   return res.json();
 };
+
+export const fetchPatientInfoContentSettings = async () => {
+  const { apiUrl, headers } = await getAuthHeaders();
+  const AES_KEY = await configService.getAesSecretKey();
+  const res = await fetch(`${apiUrl}hs_patient_info_content_get`, {
+    method: "GET",
+    headers,
+  });
+  if (!res.ok) throw new Error("Failed to fetch patient info content settings");
+  const json = await res.json();
+  if (json.success && json.data) {
+    const decrypted = decryptAESFromPHP(json.data, AES_KEY);
+    let data: any = null;
+    try {
+      data = decrypted ? JSON.parse(decrypted) : null;
+    } catch {
+      data = null;
+    }
+    return { ...json, data };
+  }
+  return json;
+};
+
+export const updatePatientInfoContentSettings = async (data: any) => {
+  const { apiUrl, headers } = await getAuthHeaders();
+  const res = await fetch(`${apiUrl}hs_patient_info_content_update`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to update patient info content settings");
+  return res.json();
+};

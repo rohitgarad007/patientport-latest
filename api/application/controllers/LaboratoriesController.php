@@ -704,6 +704,42 @@ class LaboratoriesController extends CI_Controller {
         }
     }
 
+    public function ToggleReportVisibility() {
+        if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            return;
+        }
+        $userToken = $this->input->get_request_header('Authorization');
+        $splitToken = explode(" ", $userToken);
+        $token = isset($splitToken[1]) ? $splitToken[1] : '';
+        try {
+            $token = verifyAuthToken($token);
+            if (!$token) throw new Exception("Unauthorized");
+            $tokenData = is_string($token) ? json_decode($token, true) : $token;
+            $labid = $tokenData['lab_id'] ?? null;
+            if (!$labid) {
+                echo json_encode(["success" => false, "message" => "Invalid user token or insufficient privileges"]);
+                return;
+            }
+            $raw = json_decode(file_get_contents("php://input"), true);
+            $treatment_id = isset($raw['treatment_id']) ? intval($raw['treatment_id']) : 0;
+            $visible = isset($raw['visible']) ? (intval($raw['visible']) ? 1 : 0) : null;
+            if (empty($treatment_id) || $visible === null) {
+                echo json_encode(["success" => false, "message" => "Missing treatment_id or visible value"]);
+                return;
+            }
+            $this->db->where('treatment_id', $treatment_id);
+            $updated = $this->db->update('ms_patient_treatment_lab_reports', ['is_viewlab_report' => $visible]);
+            echo json_encode([
+                "success" => $updated ? true : false,
+                "message" => $updated ? "Report visibility updated" : "Failed to update visibility",
+                "treatment_id" => $treatment_id,
+                "visible" => $visible
+            ]);
+        } catch (Exception $e) {
+            echo json_encode(["success" => false, "message" => "Authorization failed: " . $e->getMessage()]);
+        }
+    }
+
     public function GetReportDetails() {
         // Handle CORS preflight
         if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -1005,7 +1041,8 @@ class LaboratoriesController extends CI_Controller {
                 'file_type' => 'pdf',
                 'covered_tests' => $covered_tests,
                 'lab_test_id' => $lab_test_id,
-                'is_combined' => 0
+                'is_combined' => 0,
+                'is_owner' => 3
             ];
 
             $insert_id = $this->LabCommonModel->save_generated_report($db_data);
@@ -1353,6 +1390,83 @@ class LaboratoriesController extends CI_Controller {
             echo json_encode([
                 "success" => $result,
                 "message" => $result ? "Processing marked as seen" : "Failed to mark processing"
+            ]);
+
+        } catch (Exception $e) {
+            echo json_encode(["success" => false, "message" => "Authorization failed: " . $e->getMessage()]);
+        }
+    }
+
+    public function get_unseen_completed_notifications() {
+        $userToken = $this->input->get_request_header('Authorization');
+        $splitToken = explode(" ", $userToken);
+        $token = isset($splitToken[1]) ? $splitToken[1] : '';
+        try {
+            $token = verifyAuthToken($token);
+            if (!$token) throw new Exception("Unauthorized");
+            $tokenData = is_string($token) ? json_decode($token, true) : $token;
+            $labid = $tokenData['lab_id'] ?? null;
+            
+            if (!$labid) {
+                echo json_encode(["success" => false, "message" => "Invalid user token or insufficient privileges"]);
+                return;
+            }
+
+            $orders = $this->LabCommonModel->get_unseen_completed_notifications($labid);
+            
+            $AES_KEY = "RohitGaradHos@173414";
+            $encryptedData = $this->encrypt_aes_for_js(json_encode($orders), $AES_KEY);
+
+            echo json_encode([
+                "success" => true,
+                "data"    => $encryptedData
+            ]);
+
+        } catch (Exception $e) {
+            echo json_encode(["success" => false, "message" => "Authorization failed: " . $e->getMessage()]);
+        }
+    }
+
+    public function mark_completed_seen() {
+        $userToken = $this->input->get_request_header('Authorization');
+        $splitToken = explode(" ", $userToken);
+        $token = isset($splitToken[1]) ? $splitToken[1] : '';
+        try {
+            $token = verifyAuthToken($token);
+            if (!$token) throw new Exception("Unauthorized");
+            $tokenData = is_string($token) ? json_decode($token, true) : $token;
+            $labid = $tokenData['lab_id'] ?? null;
+            
+            if (!$labid) {
+                echo json_encode(["success" => false, "message" => "Invalid user token or insufficient privileges"]);
+                return;
+            }
+
+            $rawInput = file_get_contents("php://input");
+            $input = json_decode($rawInput, true);
+            $encryptedPayload = $input['encrypted_payload'] ?? '';
+
+            if (empty($encryptedPayload)) {
+                echo json_encode(["success" => false, "message" => "No data provided"]);
+                return;
+            }
+            
+            $AES_KEY = "RohitGaradHos@173414";
+            $decryptedJson = $this->decrypt_aes_from_js($encryptedPayload, $AES_KEY);
+            $data = json_decode($decryptedJson, true);
+            
+            $orderIds = $data['orderIds'] ?? [];
+
+            if (empty($orderIds)) {
+                 echo json_encode(["success" => false, "message" => "No order IDs provided"]);
+                 return;
+            }
+
+            $result = $this->LabCommonModel->mark_completed_seen($labid, $orderIds);
+
+            echo json_encode([
+                "success" => $result,
+                "message" => $result ? "Completed marked as seen" : "Failed to mark completed"
             ]);
 
         } catch (Exception $e) {

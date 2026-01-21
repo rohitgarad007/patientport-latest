@@ -6,7 +6,7 @@ $db_pass = '';
 $db_name = 'patientport_live'; // Assuming this is the DB name based on typical XAMPP setups, or I'll check config
 
 // Try to find database config
-$configFile = 'c:/xampp/htdocs/patientport-liveApp/api/application/config/database.php';
+$configFile = 'c:/xampp/htdocs/patientport-latest/api/application/config/database.php';
 if (file_exists($configFile)) {
     include($configFile);
     $db_host = $db['default']['hostname'];
@@ -46,7 +46,7 @@ if ($result->num_rows > 0) {
 }
 
 // 3. Check Log File
-$logFile = 'c:/xampp/htdocs/patientport-liveApp/api/application/logs/lab_notifications.log';
+$logFile = 'c:/xampp/htdocs/patientport-latest/api/application/logs/lab_notifications.log';
 echo "<h3>Log File Content</h3>";
 if (file_exists($logFile)) {
     echo "<pre>" . htmlspecialchars(file_get_contents($logFile)) . "</pre>";

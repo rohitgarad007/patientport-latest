@@ -382,7 +382,6 @@ class PatientTreatmentModel extends CI_Model {
             ];
         }, $labRows);
 
-        // Map Lab Reports
         $repRows = $this->db->get_where('ms_patient_treatment_lab_reports', ['treatment_id' => $treatment_id])->result_array();
         $master['lab_reports'] = array_map(function($row) {
             $url = $row['file_url'];
@@ -392,13 +391,24 @@ class PatientTreatmentModel extends CI_Model {
             return [
                 'id' => $row['id'],
                 'fileName' => $row['file_name'],
-                'fileUrl' => $url, // Changed from url to fileUrl
+                'fileUrl' => $url,
                 'fileType' => $row['file_type'],
                 'isCombinedReport' => $row['is_combined'] == 1,
                 'coveredTestIds' => !empty($row['covered_tests']) ? json_decode($row['covered_tests'], true) : [],
                 'labTestId' => !empty($row['lab_test_id']) ? $row['lab_test_id'] : null
             ];
         }, $repRows);
+
+        $is_viewlab_report = 0;
+        if (!empty($repRows)) {
+            foreach ($repRows as $row) {
+                if (isset($row['is_viewlab_report']) && intval($row['is_viewlab_report']) === 1) {
+                    $is_viewlab_report = 1;
+                    break;
+                }
+            }
+        }
+        $master['is_viewlab_report'] = $is_viewlab_report;
 
         // Simplify purpose to just IDs if that's what frontend expects for 'purposeSelectedIds'
         // But frontend handles it. Let's send the full objects for now, or just IDs if logic requires.
