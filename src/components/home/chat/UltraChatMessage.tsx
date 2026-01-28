@@ -306,7 +306,8 @@ const UltraChatMessage = ({
 
   if (message.type === "date_picker") {
     const today = new Date();
-    const dates = Array.from({ length: 7 }, (_, i) => {
+    const limit = message.data?.limit || 7;
+    const dates = Array.from({ length: limit }, (_, i) => {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
       return date;
@@ -385,16 +386,35 @@ const UltraChatMessage = ({
       evening: getTranslation(language, 'evening'),
     };
 
-    const formatTime12 = (t?: string) => {
-      if (!t) return "";
-      const parts = t.split(":");
-      let h = parseInt(parts[0] || "0", 10);
-      const m = parseInt(parts[1] || "0", 10);
-      const ampm = h >= 12 ? "pm" : "am";
-      h = h % 12;
-      if (h === 0) h = 12;
-      const mm = String(m).padStart(2, "0");
-      return `${h}.${mm} ${ampm}`;
+    // Helper to check if slot is expired (only for today)
+    const isSlotExpired = (slotDate: string, endTime: string) => {
+      if (!slotDate || !endTime) return false;
+      try {
+        const now = new Date();
+        const [y, m, d] = slotDate.split('-').map(Number);
+        const sDate = new Date(y, m - 1, d);
+        
+        // Check if same day
+        const isToday = sDate.getDate() === now.getDate() &&
+                        sDate.getMonth() === now.getMonth() &&
+                        sDate.getFullYear() === now.getFullYear();
+
+        if (!isToday) return false;
+
+        // Parse end time "HH:mm:ss"
+        const parts = endTime.split(':');
+        if (parts.length < 2) return false;
+        
+        const h = parseInt(parts[0], 10);
+        const min = parseInt(parts[1], 10);
+        
+        const slotEnd = new Date(now);
+        slotEnd.setHours(h, min, 0, 0);
+        
+        return now > slotEnd;
+      } catch (e) {
+        return false;
+      }
     };
 
     return (
@@ -426,17 +446,30 @@ const UltraChatMessage = ({
                       const label = `${start} - ${end}${count}`;
                       const key = slot.id ?? `${slot.start_time}-${slot.end_time}-${idx}`;
                       const annotatedSlot = { ...slot, source: message.data?.source, date: message.data?.date };
+                      
+                      const expired = isSlotExpired(message.data?.date, slot.end_time);
+                      
                       return (
                         <Button
                           key={key}
-                          disabled={!slot.available}
+                          disabled={!slot.available || expired}
                           variant="outline"
-                          className="px-6 gap-3 h-14 hover:bg-primary hover:text-primary-foreground hover:border-primary 
-             transition-all rounded-2xl font-semibold text-base border-2 flex items-center justify-center"
+                          className={cn(
+                            "px-6 gap-3 h-14 transition-all rounded-2xl font-semibold text-base border-2 flex items-center justify-center",
+                            !expired && "hover:bg-primary hover:text-primary-foreground hover:border-primary",
+                            expired && "bg-red-50 border-red-200 text-red-500 opacity-90 cursor-not-allowed hover:bg-red-50 hover:text-red-500 hover:border-red-200"
+                          )}
                           onClick={() => onSelectTimeSlot?.(annotatedSlot, period)}
                         >
-                          <Clock className="h-5 w-5" />
-                          <span className="max-w-[140px] text-center break-words text-[13px] block">{label}</span>
+                          <Clock className={cn("h-5 w-5", expired && "text-red-500")} />
+                          <div className="flex flex-col items-center justify-center leading-none">
+                            <span className="max-w-[140px] text-center break-words text-[13px] block">{label}</span>
+                            {expired && (
+                              <span className="text-[10px] text-red-600 font-bold uppercase mt-1">
+                                Time Ended
+                              </span>
+                            )}
+                          </div>
                         </Button>
                       );
                     })}

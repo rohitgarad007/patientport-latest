@@ -31,6 +31,20 @@ class ConfigService {
   }
 
   private async fetchConfig(): Promise<AppConfig> {
+    // Force local config if running on localhost
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return {
+        API_KEY: import.meta.env.VITE_API_KEY || '',
+        API_KEY_DeepSeek: import.meta.env.VITE_API_KEY_DEEPSEEK || '',
+        API_KEY_GEMINI: import.meta.env.VITE_API_KEY_GEMINI || '',
+        AES_SECRET_KEY: import.meta.env.VITE_AES_SECRET_KEY || '',
+        API_URL: 'http://localhost/patientport-latest/api/',
+        Live_URL: 'http://localhost/patientport-latest',
+        //API_URL: 'https://umahospital.obwebsite.in/api/',
+        //Live_URL: 'https://umahospital.obwebsite.in',
+      };
+    }
+
     try {
       const response = await fetch('/api/config.php', {
         method: 'GET',
@@ -44,9 +58,9 @@ class ConfigService {
           API_KEY_DeepSeek: serverConfig.VITE_API_KEY_DEEPSEEK || '',
           API_KEY_GEMINI: serverConfig.VITE_API_KEY_GEMINI || '',
           AES_SECRET_KEY: serverConfig.VITE_AES_SECRET_KEY || '',
-          API_URL: 'http://localhost/patientport-latest/api/',
-          Live_URL: 'https://umahospital.obwebsite.in',
-          //API_URL: 'https://umahospital-api.obwebsite.in',
+          API_URL: 'http://localhost/patientport-latest/api',
+          Live_URL: 'http://localhost/patientport-latest',
+          //API_URL: 'https://umahospital.obwebsite.in/api/',
           //Live_URL: 'https://umahospital.obwebsite.in',
         };
       }
@@ -57,13 +71,13 @@ class ConfigService {
     // fallback in dev mode
     if (!this.isProduction) {
       return {
-        API_KEY: import.meta.env.VITE_API_KEY || '',
-        API_KEY_DeepSeek: import.meta.env.VITE_API_KEY_DEEPSEEK || '',
-        API_KEY_GEMINI: import.meta.env.VITE_API_KEY_GEMINI || '',
+        API_KEY: '', // Secure: Moved to backend
+        API_KEY_DeepSeek: '', // Secure: Moved to backend
+        API_KEY_GEMINI: '', // Secure: Moved to backend
         AES_SECRET_KEY: import.meta.env.VITE_AES_SECRET_KEY || '',
         API_URL: 'http://localhost/patientport-latest/api/',
-        Live_URL: 'https://umahospital.obwebsite.in',
-        //API_URL: 'https://umahospital-api.obwebsite.in',
+        Live_URL: 'http://localhost/patientport-latest',
+        //API_URL: 'https://umahospital.obwebsite.in/api/',
         //Live_URL: 'https://umahospital.obwebsite.in',
       };
     }
@@ -72,21 +86,21 @@ class ConfigService {
   }
 
   private validateConfig(config: AppConfig): void {
-    const requiredKeys: (keyof AppConfig)[] = ['API_KEY', 'API_KEY_DeepSeek', 'AES_SECRET_KEY'];
+    const requiredKeys: (keyof AppConfig)[] = ['AES_SECRET_KEY'];
     const missing = requiredKeys.filter(key => !config[key]);
 
     if (missing.length > 0) {
       if (this.isProduction) {
-        throw new Error(`Missing required configuration keys: ${missing.join(', ')}`);
+        console.warn(`Missing required configuration keys: ${missing.join(', ')}`);
       } else {
         console.warn(`Warning: Missing configuration keys: ${missing.join(', ')}`);
       }
     }
   }
 
-  async getApiKey() { return (await this.loadRuntimeConfig()).API_KEY; }
-  async getDeepSeekApiKey() { return (await this.loadRuntimeConfig()).API_KEY_DeepSeek; }
-  async getGeminiApiKey() { return (await this.loadRuntimeConfig()).API_KEY_GEMINI; }
+  async getApiKey() { return ''; /* Secure: Only available on backend */ }
+  async getDeepSeekApiKey() { return ''; /* Secure: Only available on backend */ }
+  async getGeminiApiKey() { return ''; /* Secure: Only available on backend */ }
   async getAesSecretKey() { return (await this.loadRuntimeConfig()).AES_SECRET_KEY; }
   async getApiUrl() { return (await this.loadRuntimeConfig()).API_URL; }
   async getLiveUrl() { return (await this.loadRuntimeConfig()).Live_URL; }

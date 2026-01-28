@@ -10,14 +10,15 @@ import { useUltraChatLogic } from "./useUltraChatLogic";
 import { PaIcons } from "@/components/icons/PaIcons";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { format, parse } from "date-fns";
+import { format, parse, isValid } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 interface UltraChatWindowProps {
   isOpen: boolean;
   onClose: () => void;
+  className?: string;
 }
 
-function UltraChatWindow({ isOpen, onClose }: UltraChatWindowProps) {
+function UltraChatWindow({ isOpen, onClose, className }: UltraChatWindowProps) {
   const [inputValue, setInputValue] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   // UltraChatWindow component
@@ -53,6 +54,7 @@ function UltraChatWindow({ isOpen, onClose }: UltraChatWindowProps) {
 
   // Pure validation and submission gating (no setState here)
   const [selectedGender, setSelectedGender] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [visibleMonth, setVisibleMonth] = useState<Date>(() => {
     const today = new Date();
@@ -97,6 +99,7 @@ function UltraChatWindow({ isOpen, onClose }: UltraChatWindowProps) {
   const errorMsg = getErrorMsg(conversationState, inputValue, selectedGender);
   const canSubmit =
     !isTyping &&
+    !isSubmitting &&
     conversationState !== "language_selection" &&
     hasValue &&
     errorMsg === "";
@@ -104,17 +107,22 @@ function UltraChatWindow({ isOpen, onClose }: UltraChatWindowProps) {
   // Disable free text input until assistant asks for input
   const awaitingAssistantPrompt = !(["book_phone","book_user_register_name","booking_name","book_user_register_dob","book_user_register_gender"].includes(conversationState));
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canSubmit) return;
+    if (!canSubmit || isSubmitting) return;
 
-    let toSend = inputValue;
-    if (conversationState === "book_user_register_gender") {
-      toSend = selectedGender;
+    setIsSubmitting(true);
+    try {
+      let toSend = inputValue;
+      if (conversationState === "book_user_register_gender") {
+        toSend = selectedGender;
+      }
+      await handleSendMessage(toSend);
+      setInputValue("");
+      setSelectedGender("");
+    } finally {
+      setIsSubmitting(false);
     }
-    handleSendMessage(toSend);
-    setInputValue("");
-    setSelectedGender("");
   };
 
   const languageFlags = {
@@ -127,7 +135,8 @@ function UltraChatWindow({ isOpen, onClose }: UltraChatWindowProps) {
     <div
       className={cn(
         "fixed bottom-24 right-6 w-[450px] h-[650px] bg-background border-2 shadow-2xl rounded-2xl transition-all duration-300 flex flex-col z-50",
-        isOpen ? "scale-100 opacity-100" : "scale-95 opacity-0 pointer-events-none"
+        isOpen ? "scale-100 opacity-100" : "scale-95 opacity-0 pointer-events-none",
+        className
       )}
     >
       {/* Header */}
@@ -213,7 +222,7 @@ function UltraChatWindow({ isOpen, onClose }: UltraChatWindowProps) {
                   setInputValue(digitsOnly);
                 }}
                 placeholder="Enter 10-digit phone number"
-                disabled={isTyping}
+                disabled={isTyping || isSubmitting}
                 className="flex-1 rounded-full border-2 h-12 px-4 focus:border-primary transition-all"
               />
               <Button
@@ -234,7 +243,7 @@ function UltraChatWindow({ isOpen, onClose }: UltraChatWindowProps) {
                 type="text"
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder="Enter your full name"
-                disabled={isTyping}
+                disabled={isTyping || isSubmitting}
                 className="flex-1 rounded-full border-2 h-12 px-4 focus:border-primary transition-all"
               />
               <Button
@@ -256,12 +265,16 @@ function UltraChatWindow({ isOpen, onClose }: UltraChatWindowProps) {
                     type="button"
                     variant="outline"
                     className="flex-1 rounded-full border-2 h-12 px-4 justify-between"
-                    disabled={isTyping}
+                    disabled={isTyping || isSubmitting}
                   >
                     <span className="text-left">
-                      {inputValue
-                        ? format(parse(inputValue || "", "yyyy-MM-dd", new Date()), "MMMM d, yyyy")
-                        : "Select date"}
+                      {(() => {
+                        if (!inputValue) return "Select date";
+                        const parsedDate = parse(inputValue, "yyyy-MM-dd", new Date());
+                        return isValid(parsedDate)
+                          ? format(parsedDate, "MMMM d, yyyy")
+                          : "Select date";
+                      })()}
                     </span>
                     <CalendarDays className="h-5 w-5 opacity-70" />
                   </Button>
@@ -346,7 +359,7 @@ function UltraChatWindow({ isOpen, onClose }: UltraChatWindowProps) {
                 value={selectedGender}
                 onChange={(e) => setSelectedGender(e.target.value)}
                 className="flex-1 rounded-full border-2 h-12 px-4 bg-background focus:border-primary transition-all"
-                disabled={isTyping}
+                disabled={isTyping || isSubmitting}
               >
                 <option value="" disabled>
                   Select gender
@@ -372,13 +385,13 @@ function UltraChatWindow({ isOpen, onClose }: UltraChatWindowProps) {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder={conversationState === "language_selection" ? "Please select a language first..." : "Type your message..."}
-                disabled={awaitingAssistantPrompt || isTyping || conversationState === "language_selection"}
+                disabled={awaitingAssistantPrompt || isTyping || isSubmitting || conversationState === "language_selection"}
                 className="flex-1 rounded-full border-2 h-12 px-4 focus:border-primary transition-all"
               />
               <Button
                 type="submit"
                 size="icon"
-                disabled={awaitingAssistantPrompt || !inputValue.trim() || isTyping || conversationState === "language_selection"}
+                disabled={awaitingAssistantPrompt || !inputValue.trim() || isTyping || isSubmitting || conversationState === "language_selection"}
                 className="rounded-full h-12 w-12 bg-gradient-to-br from-primary to-secondary hover:scale-105 transition-transform"
               >
                 <Send className="h-5 w-5" />

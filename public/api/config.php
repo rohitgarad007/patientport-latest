@@ -53,15 +53,13 @@ function getEnvVar($key, $default = '') {
 }
 
 // Load configuration from environment variables
+// Note: API keys for LLMs (OpenAI, DeepSeek, Gemini) are backend-only and not exposed here
 $config = [
-    'VITE_API_KEY' => getEnvVar('VITE_API_KEY'),
-    'VITE_API_KEY_DEEPSEEK' => getEnvVar('VITE_API_KEY_DEEPSEEK'),
-    'VITE_API_KEY_GEMINI' => getEnvVar('VITE_API_KEY_GEMINI'),
     'VITE_AES_SECRET_KEY' => getEnvVar('VITE_AES_SECRET_KEY')
 ];
 
 // Validate that all required keys are present
-$requiredKeys = ['VITE_API_KEY', 'VITE_API_KEY_DEEPSEEK', 'VITE_AES_SECRET_KEY'];
+$requiredKeys = ['VITE_AES_SECRET_KEY'];
 $missingKeys = [];
 
 foreach ($requiredKeys as $key) {

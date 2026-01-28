@@ -22,6 +22,16 @@ const menuItems = [
       { title: "Patients List", url: "/hs-patients-list", icon: PaIcons.patient2 },
     ],
   },
+  {
+    title: "Screen's",
+    icon: PaIcons.screenIcon,
+    children: [
+      { title: "Dashboard", url: "/hs-screen-dashboard", icon: PaIcons.dashboard },
+      { title: "Manage Screens", url: "/hs-manage-screens", icon: PaIcons.manageScreenIcon },
+      { title: "Add Screens", url: "/hs-add-screen", icon: PaIcons.AddIcon },
+      { title: "Screen Settings", url: "/hs-screen-settings", icon: PaIcons.settings2Icon },
+    ],
+  },
   /*{ title: "Doctors", url: "/hs-doctors", icon: PaIcons.doctors },
   { title: "Staff", url: "/hs-staff", icon: PaIcons.staff },
   {
@@ -86,7 +96,7 @@ const menuItems = [
 ];
 
 const profileItems = [
-  //{ title: "Profile", url: "/hs-profile", icon: PaIcons.user1 },
+  { title: "Profile", url: "/hospital-profile", icon: PaIcons.user1 },
   //{ title: "Notification", url: "/hs-notifications", icon: PaIcons.notification },
   //{ title: "Settings", url: "/hs-settings", icon: PaIcons.setting },
   { title: "Logout", action: "logout", icon: PaIcons.switch },

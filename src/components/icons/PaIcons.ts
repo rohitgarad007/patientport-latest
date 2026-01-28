@@ -115,6 +115,9 @@ import roleAccessIcon from "@/assets/images/004-role-playing.png";
 
 import laboratoryIcon from "@/assets/images/002-laboratory.png";
 
+import screenIcon from "@/assets/images/001-smart-tv.png";
+import manageScreenIcon from "@/assets/images/003-automation.png";
+
 
 export const PaIcons = {
   age: ageIcon,
@@ -226,6 +229,9 @@ export const PaIcons = {
   otpIcon: otpIcon,
   roleAccessIcon: roleAccessIcon,
   laboratoryIcon: laboratoryIcon,
+
+  screenIcon: screenIcon,
+  manageScreenIcon: manageScreenIcon,
  
 
 };

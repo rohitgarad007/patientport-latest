@@ -9,7 +9,7 @@ export interface PublicHospitalInfo {
 // Fetch hospital details by public hosuid (e.g., HOS_68ce387acd6a3)
 export const fetchPublicHospitalInfo = async (hosuid: string): Promise<PublicHospitalInfo> => {
   const apiUrl = await configService.getApiUrl();
-  const res = await fetch(`${apiUrl}/public_home_hospital_info`, {
+  const res = await fetch(`${apiUrl}public_home_hospital_info`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
     body: JSON.stringify({ hosuid }),

@@ -43,6 +43,7 @@ export const useUltraChatLogic = () => {
   const [booking, setBooking] = useState<BookingData>({});
   const [availableDoctors, setAvailableDoctors] = useState<any[]>([]);
   const [homeHospitalId, setHomeHospitalId] = useState<number>(() => getCurrentHospitalId() ?? 2);
+  const [appointmentDayLimit, setAppointmentDayLimit] = useState<number>(7);
 
   const addMessage = useCallback((text: string, sender: "user" | "assistant", type?: UltraMessage["type"], data?: any) => {
     const uniqueId =
@@ -76,15 +77,17 @@ export const useUltraChatLogic = () => {
     (async () => {
       // Prefer persisted hospital id if available
       const persisted = getCurrentHospitalId();
-      if (persisted && persisted > 0) {
-        setHomeHospitalId(persisted);
-        return;
-      }
+      const idToFetch = persisted && persisted > 0 ? persisted : undefined;
+      
       try {
-        const info = await fetchHomeHospital();
+        const info = await fetchHomeHospital(idToFetch);
         setHomeHospitalId(Number(info.id || 2));
+        if (info.appointment_day_limit) {
+          setAppointmentDayLimit(info.appointment_day_limit);
+        }
       } catch {
-        setHomeHospitalId(2);
+        if (persisted) setHomeHospitalId(persisted);
+        else setHomeHospitalId(2);
       }
     })();
   }, []);
@@ -158,9 +161,9 @@ export const useUltraChatLogic = () => {
 
     setConversationState("booking_date");
     simulateTyping(() => {
-      addMessage(getTranslation(language, 'selectDate'), "assistant", "date_picker");
+      addMessage(getTranslation(language, 'selectDate'), "assistant", "date_picker", { limit: appointmentDayLimit });
     });
-  }, [language, addMessage, simulateTyping, availableDoctors]);
+  }, [language, addMessage, simulateTyping, availableDoctors, appointmentDayLimit]);
 
   const handleDateSelection = useCallback(async (date: string) => {
     addMessage(`Selected: ${date}`, "user");

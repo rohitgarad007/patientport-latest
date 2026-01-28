@@ -206,6 +206,16 @@ $route['hs_amenity_update']							= 'HSHospitalsController/UpdateAmenityInformat
 $route['hs_amenity_delete']							= 'HSHospitalsController/DeleteAmenityInformation';
 
 
+// WhatsApp Integration Routes
+$route['whatsapp/view_logs'] = 'WhatsAppController/view_logs';
+$route['whatsapp/setup_db'] = 'WhatsAppController/setup_database';
+$route['whatsapp/webhook'] = 'WhatsAppController/webhook';
+$route['whatsapp/send'] = 'WhatsAppController/send_message';
+$route['whatsapp/test'] = 'WhatsAppController/test';
+$route['whatsapp_webhook'] = 'WhatsAppController/webhook'; // Keep for backward compatibility
+
+
+
 
 // Admin Routes
 $route['adm_users_list']								= 'AdmUsersController/ManageUserList';
@@ -237,6 +247,15 @@ $route['adm_pharmacies_delete']							= 'AdmPharmaciesController/DeletePharmacie
 $route['adm_specializations_list']						= 'AdmSpecializationsController/ManageSpecializationsList';
 $route['adm_specializations_add']						= 'AdmSpecializationsController/AddSpecializationsInformation';
 $route['adm_specializations_update']					= 'AdmSpecializationsController/UpdateSpecializationsInformation';
+// Location Routes
+$route['locations/states'] = 'LocationController/get_states';
+$route['locations/cities/(:num)'] = 'LocationController/get_cities/$1';
+
+// Hospital Profile Routes
+$route['hospital/profile/change_password'] = 'HospitalProfileController/change_password';
+$route['hospital/profile/update'] = 'HospitalProfileController/update_profile';
+$route['hospital/profile/(:any)'] = 'HospitalProfileController/get_profile/$1';
+
 $route['adm_specializations_change_status']				= 'AdmSpecializationsController/changeSpecializationsStatus';
 $route['adm_specializations_delete']					= 'AdmSpecializationsController/DeleteSpecializationsInformation';
 

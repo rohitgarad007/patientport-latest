@@ -317,6 +317,13 @@ class PublicHomeController extends CI_Controller {
 
             // Insert appointment record
             $appointmentUid = 'APT-' . strtoupper(substr(md5(uniqid('', true)), 0, 10));
+            // Check hospital booking status preference
+            // 0 = Normal (booked), 1 = Waiting
+            $initialStatus = 'booked';
+            if (isset($hRow['book_appointment_status']) && intval($hRow['book_appointment_status']) == 1) {
+                $initialStatus = 'waiting';
+            }
+
             $data = [
                 'appointment_uid' => $appointmentUid,
                 'hospital_id' => $hospitalId,
@@ -330,7 +337,7 @@ class PublicHomeController extends CI_Controller {
                 'source' => $source,
                 'start_time' => $slotRow['start_time'] ?? null,
                 'end_time' => $slotRow['end_time'] ?? null,
-                'status' => 'booked',
+                'status' => $initialStatus,
                 'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s'),
             ];
@@ -1350,6 +1357,7 @@ class PublicHomeController extends CI_Controller {
                 'id' => isset($row['id']) ? intval($row['id']) : $hospitalId,
                 'name' => $row['hospital_name'] ?? $row['name'] ?? 'Hospital',
                 'short_name' => $row['short_name'] ?? null,
+                'appointment_day_limit' => isset($row['appointment_day_limit']) ? intval($row['appointment_day_limit']) : 7,
             ];
 
             echo json_encode([ 'success' => true, 'item' => $data ]);

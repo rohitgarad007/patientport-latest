@@ -1,4 +1,9 @@
 <?php
+// Load secure keys for backend usage
+if (file_exists(__DIR__ . '/secure_keys.php')) {
+    require_once __DIR__ . '/secure_keys.php';
+}
+
 /**
  * CodeIgniter
  *

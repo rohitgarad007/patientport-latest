@@ -11,8 +11,8 @@ class ConfigManager {
   constructor() {
     this.initialized = false;
     this.config = {
-      API_URL: 'https://umahospital-api.obwebsite.in',
-      Live_URL: 'https://umahospital.obwebsite.in',
+      API_URL: 'http://localhost/patientport-latest/api',
+      Live_URL: 'http://localhost/patientport-latest',
       API_KEY: '',
       API_KEY_DeepSeek: '',
       API_KEY_GEMINI: '',

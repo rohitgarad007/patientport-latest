@@ -29,6 +29,9 @@ import { RoleAccess } from "./pages/hospital-admin/RoleAccess";
 import { HospitalPatients } from "./pages/hospital-admin/HospitalPatients";
 //import { HospitalReports } from "./pages/hospital-admin/HospitalReports";
 import NotFound from "./pages/NotFound";
+import ChatOnlyPage from "./pages/ChatOnlyPage";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 import { getCurrentUser } from "./data/mockData";
 import Config from "./components/ConfigManager"; // ✅ your secure config manager
 
@@ -68,6 +71,18 @@ import { HospitalLayout } from "@/components/layout/HospitalLayout";
 import HospitalDashboard from "./pages/HospitalDashboard";
 import HospitalDoctorsPage from "./pages/HSDoctorsPage";
 import HospitalStaffPage from "./pages/HSStaffPage";
+
+
+import HospitalScreenDashboard from "@/components/tokenScreen/Dashboard2";
+import HospitalManageScreens from "@/components/tokenScreen/ManageScreens2";
+import HospitalAddScreens from "@/components/tokenScreen/AddScreen2";
+import HospitalScreenSettings from "@/components/tokenScreen/ScreenSettings2";
+
+
+
+
+
+
 //import HospitalStaffPage from "./pages/HospitalPatientsList";
 import HospitalPatientsList from "./pages/HSPatientsList";
 import HSPatientView from "./pages/HSPatientView";
@@ -95,6 +110,7 @@ import HospitalInventoryList from "./pages/inventory/HospitalInventoryList";
 import HospitalInventoryMasters from "./pages/inventory/HospitalInventoryMasters";
 import HospitalInventoryAddMedicine from "./pages/inventory/HospitalInventoryAddMedicine";
 import HospitalInventoryAddBatch from "./pages/inventory/HospitalInventoryAddBatch";
+import HospitalProfile from "./pages/HospitalProfile";
 import HSMedicalPage from "./pages/medical/HSMedicalPage";
 import HSMedicalRequests from "./pages/medical/HSMedicalRequests";
 import HospitalSharePatientInfo from "./pages/HospitalSharePatientInfo";
@@ -239,7 +255,10 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/home" element={<HomePage />} />
+            <Route path="/home" element={<ChatOnlyPage />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms-of-service" element={<TermsOfService />} />
+            <Route path="/ai-assistant" element={<ChatOnlyPage />} />
             <Route path="/appointment_cancelled" element={<AppointmentCancelled />} />
             <Route path="/appointment_expired" element={<AppointmentExpired />} />
             <Route path="/track-appointment/:appointmentId" element={<TrackAppintment />} />
@@ -287,8 +306,15 @@ const App = () => {
 
             <Route element={<HospitalProtectedRoute />}>
               <Route path="/hospital-dashboard" element={<HospitalLayout><HospitalDashboard /></HospitalLayout>} />
+              <Route path="/hospital-profile" element={<HospitalLayout><HospitalProfile /></HospitalLayout>} />
               <Route path="/hs-doctors" element={<HospitalLayout><HospitalDoctorsPage /></HospitalLayout>} />
               <Route path="/hs-staff" element={<HospitalLayout><HospitalStaffPage /></HospitalLayout>} />
+
+
+              <Route path="/hs-screen-dashboard" element={<HospitalLayout><HospitalScreenDashboard /></HospitalLayout>} />
+              <Route path="/hs-manage-screens" element={<HospitalLayout><HospitalManageScreens /></HospitalLayout>} />
+              <Route path="/hs-add-screen" element={<HospitalLayout><HospitalAddScreens /></HospitalLayout>} />
+              <Route path="/hs-screen-settings" element={<HospitalLayout><HospitalScreenSettings /></HospitalLayout>} />
               
 
               <Route path="/hs-patients-list" element={<HospitalLayout><HospitalPatientsList /></HospitalLayout>} />

@@ -48,11 +48,13 @@ export interface HomeHospitalInfo {
   id: number;
   name: string;
   short_name?: string | null;
+  appointment_day_limit?: number;
 }
 
-export const fetchHomeHospital = async (): Promise<HomeHospitalInfo> => {
+export const fetchHomeHospital = async (hospitalId?: number): Promise<HomeHospitalInfo> => {
   const apiUrl = await configService.getApiUrl();
-  const res = await fetch(`${apiUrl}home_hospital_info`, {
+  const query = hospitalId ? `?hospital_id=${hospitalId}` : "";
+  const res = await fetch(`${apiUrl}home_hospital_info${query}`, {
     method: "GET",
     headers: { "Accept": "application/json" },
   });
@@ -63,6 +65,7 @@ export const fetchHomeHospital = async (): Promise<HomeHospitalInfo> => {
     id: Number(item.id ?? 2),
     name: String(item.name ?? "Hospital"),
     short_name: item.short_name ?? null,
+    appointment_day_limit: Number(item.appointment_day_limit ?? 7),
   };
 };
 

@@ -1,0 +1,163 @@
+Privacy Policy for UMA Hospital
+https://umahospital.obwebsite.in/
+ (“we,” “us,” or “our”) operates the UMA Hospital website and Hospital Management System to provide healthcare services, patient support, appointment scheduling, digital records access and related services (collectively, the “Services”).
+
+Your privacy and the protection of your personal information are very important to us. This Privacy Policy explains how we collect, use, disclose, secure, and retain personal and sensitive health information in connection with your use of our website and services.
+
+By visiting or using our Services, you agree to the terms of this Privacy Policy
+
+1. Information We Collect
+1.1 Personal Identifiable Information (PII)
+We may collect information that can identify you directly, including but not limited to:
+
+
+Full name, postal address, email address, telephone/mobile number
+
+
+Date of birth, gender
+
+
+Identification numbers required for medical records or billing (e.g., Unique Health ID, insurance number)
+
+
+1.2 Sensitive Personal and Health Information
+We may collect medical, clinical and related personal data necessary for providing healthcare services, including:
+
+
+Medical history, diagnoses, treatment records, prescriptions
+
+
+Laboratory results, imaging reports, clinical notes
+
+
+Insurance and billing information
+
+
+Emergency contact details
+
+
+Note: Medical/health information is considered sensitive personal data and is treated with heightened confidentiality and protection. 
+1.3 Technical & Website Usage Information
+We may automatically collect:
+
+
+IP addresses, device characteristics, browser type
+
+
+Usage data (pages visited, time spent, clicks)
+
+
+Cookies and similar technologies to improve our website performance and user experience
+
+
+
+2. How We Use Your Information
+We process your information for the following purposes:
+
+
+Providing and managing healthcare services; patient care and treatment coordination
+
+
+Processing appointments, registrations, bills, and insurance claims
+
+
+Communication regarding appointments, health results, reminders
+
+
+Improving and personalizing Services
+
+
+Compliance with legal and regulatory requirements
+
+
+We use sensitive health data only to the extent required for providing healthcare and related administrative services, as allowed by applicable law. 
+
+3. Legal Basis & Consent
+
+
+We collect and process your personal information only with your consent or as required to fulfill the services you request.
+
+
+When sensitive health information is collected, explicit consent is obtained at the point of collection or through clearly stated consent mechanisms.
+
+
+You may withdraw consent at any time, subject to legal or contractual requirements. 
+
+
+
+4. Third-Party Disclosure
+We may share data with:
+
+
+Healthcare professionals and providers involved in your care
+
+
+Insurance companies for billing and claim processing
+
+
+Authorized service partners for technical support, analytics, or operational needs
+
+
+Your information is not sold or rented to third parties. Any third party that receives your data must keep it confidential and secure. 
+
+5. Cookies & Tracking Technologies
+Our website may use cookies and similar technologies to:
+
+
+Recognize repeat visitors
+
+
+Track user preferences and improve website performance
+
+
+You can manage cookie preferences through your browser settings; however, disabling cookies may affect certain features.
+
+6. Data Security & Protection
+UMA Hospital uses reasonable technical, administrative, and organisational safeguards to protect your personal data from unauthorized access, misuse, alteration, or destruction. Security measures include encryption, access controls, monitoring, and secure storage systems.
+We regularly review our privacy and security practices to ensure data protection.
+
+7. Data Retention
+We retain your information only as long as necessary to:
+
+
+Provide healthcare and related services
+
+
+Comply with applicable medical record-keeping requirements
+
+
+Fulfill legal and regulatory obligations
+
+
+After that, data is securely deleted or anonymized. 
+
+8. Your Rights
+You have the right to:
+
+
+Access your personal data records
+
+
+Request correction of inaccurate information
+
+
+Request deletion or restriction of processing in accordance with Indian law
+
+
+Withdraw consent where processing is based on consent
+
+
+To exercise your rights, contact us using the contact details below.
+
+9. Children’s Privacy
+We do not knowingly collect personal information from children under the age of 18 without parental or guardian consent. If we learn that such information has been collected without appropriate consent, we will delete it.
+
+10. Links to Other Websites
+Our Services may link to external sites operated by third parties. We are not responsible for their privacy practices, and this policy does not apply to external websites.
+
+11. Updates to This Privacy Policy
+We may modify this Privacy Policy from time to time to reflect changes in legal requirements, technology, or Services. The updated version will be posted on our website with a “Last Updated” date.
+
+12. Contact Information
+If you have questions, complaints, or requests regarding this Privacy Policy or your personal data:
+📧 Email: [info@umahospital.obwebsite.in]
