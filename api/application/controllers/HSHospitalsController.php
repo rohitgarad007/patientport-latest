@@ -20,6 +20,51 @@ class HSHospitalsController  extends CI_Controller {
         header('Content-Type: application/json');
     }
 
+    /* ===== Doctors List Code Start Here ===== */
+    public function getDoctorsList(){
+        if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
+            exit;
+        }
+        $userToken = $this->input->get_request_header('Authorization');
+        $splitToken = explode(" ", $userToken);
+        $token = isset($splitToken[1]) ? $splitToken[1] : '';
+        try {
+            // Validate and decode token
+            $token = verifyAuthToken($token);
+            if (!$token) throw new Exception("Unauthorized");
+
+            $tokenData = is_string($token) ? json_decode($token, true) : $token;
+
+            $hrole = $tokenData['role'] ?? null;
+            $loguid = $tokenData['loguid'] ?? null;
+
+            if (!$loguid || $hrole !== "hospital_admin") {
+                echo json_encode([
+                    "success" => false,
+                    "message" => "Invalid user token or insufficient privileges"
+                ]);
+                return;
+            }
+
+            // Doctors list
+            $doctorsList = $this->HospitalCommonModel->get_HospitalDoctorsList($loguid);
+            $AES_KEY = "RohitGaradHos@173414";
+            $encryptedData = $this->encrypt_aes_for_js(json_encode($doctorsList), $AES_KEY);
+
+            echo json_encode([
+                "success" => true,
+                "data"    => $encryptedData,
+            ]);
+
+        } catch (Exception $e) {
+            echo json_encode([
+                "success" => false,
+                "message" => "Authorization failed: " . $e->getMessage()
+            ]);
+        }
+    }
+    /* ===== Doctors List Code End Here ===== */
+
     // AES Encryption function compatible with JS decryption
     public function encrypt_aes_for_js($plainText, $passphrase) {
         $salt = openssl_random_pseudo_bytes(8);

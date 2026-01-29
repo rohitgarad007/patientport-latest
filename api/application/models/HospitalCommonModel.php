@@ -12,6 +12,15 @@ class HospitalCommonModel extends CI_Model{
 	    return $query->row_array();
     }
 
+    public function get_HospitalDoctorsList($loguid){
+        $this->db->select('docuid as id, name, email, phone, status, gender');
+        $this->db->from('ms_doctors');
+        $this->db->where('hosuid', $loguid);
+        $this->db->where('isdelete', 0); // Only non-deleted
+        $query = $this->db->get();
+        return $query->result_array();
+    }
+
 	public function get_HospitalShiftList($loguid){
 		$this->db->select('id, shiftuid, shift_name, start_time, end_time, status');
         $this->db->from('ms_hospitals_shift_time');

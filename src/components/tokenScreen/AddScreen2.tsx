@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,12 +35,15 @@ import {
   Zap,
   Clock,
   Bell,
-  Eye
+  Eye,
+  Loader2
 } from "lucide-react";
-import { doctors, layoutOptions } from "@/data/dummyData-2";
+import { layoutOptions } from "@/data/dummyData-2";
+import { fetchDoctors, Doctor } from "@/services/HSTokenService";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { PaIcons } from "@/components/icons/PaIcons";
 
 const steps = [
   { id: 1, title: "Basic Info", icon: Monitor, description: "Name & location" },
@@ -67,6 +70,9 @@ export default function AddScreen2() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  
   const [formData, setFormData] = useState({
     name: "",
     location: "",
@@ -82,6 +88,34 @@ export default function AddScreen2() {
     autoRefresh: true,
     refreshInterval: 30,
   });
+
+  useEffect(() => {
+    const loadDoctors = async () => {
+      setLoading(true);
+      try {
+        const response = await fetchDoctors();
+        if (response.success && response.data) {
+          setDoctors(response.data);
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to load doctors list",
+          });
+        }
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to connect to server",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDoctors();
+  }, []);
 
   const selectedDoctor = doctors.find(d => d.id === formData.doctorId);
 
@@ -217,44 +251,63 @@ export default function AddScreen2() {
                   <p className="text-sm text-muted-foreground mt-1">Select which doctor this screen will display</p>
                 </div>
                 <Separator />
-                <div className="grid gap-3">
-                  {doctors.map((doctor) => (
-                    <div
-                      key={doctor.id}
-                      className={cn(
-                        "flex items-center gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all",
-                        formData.doctorId === doctor.id 
-                          ? "border-primary bg-primary/5" 
-                          : "border-transparent bg-muted/50 hover:border-muted"
-                      )}
-                      onClick={() => updateFormData("doctorId", doctor.id)}
-                    >
-                      <Avatar className="w-12 h-12">
-                        <AvatarImage src={doctor.avatar} alt={doctor.name} />
-                        <AvatarFallback>{doctor.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <p className="font-semibold">{doctor.name}</p>
-                          <Badge 
-                            variant={doctor.status === "online" ? "default" : "secondary"}
-                            className={cn(
-                              "text-xs",
-                              doctor.status === "online" && "bg-success text-success-foreground"
-                            )}
-                          >
-                            {doctor.status}
-                          </Badge>
+                
+                {loading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  </div>
+                ) : doctors.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    No doctors found. Please add doctors to your hospital profile first.
+                  </div>
+                ) : (
+                  <div className="grid gap-3">
+                    {doctors.map((doctor) => (
+                      <div
+                        key={doctor.id}
+                        className={cn(
+                          "flex items-center gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all",
+                          formData.doctorId === doctor.id 
+                            ? "border-primary bg-primary/5" 
+                            : "border-transparent bg-muted/50 hover:border-muted"
+                        )}
+                        onClick={() => updateFormData("doctorId", doctor.id)}
+                      >
+                        <Avatar className="w-12 h-12">
+                          <AvatarImage 
+                            src={
+                              doctor.gender === "Female" 
+                                ? PaIcons.femaleDcotorIcon 
+                                : PaIcons.maleDcotorIcon
+                            } 
+                            alt={doctor.name} 
+                            className="object-contain"
+                          />
+                          <AvatarFallback>{doctor.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="font-semibold">{doctor.name}</p>
+                            <Badge 
+                              variant={doctor.status === "active" ? "default" : "secondary"}
+                              className={cn(
+                                "text-xs",
+                                doctor.status === "active" && "bg-success text-success-foreground"
+                              )}
+                            >
+                              {doctor.status}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">{doctor.specialization || "General Practice"}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{doctor.email}</p>
                         </div>
-                        <p className="text-sm text-muted-foreground">{doctor.department} • {doctor.specialty}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{doctor.room} • {doctor.avgTime}</p>
+                        {formData.doctorId === doctor.id && (
+                          <CheckCircle2 className="w-6 h-6 text-primary" />
+                        )}
                       </div>
-                      {formData.doctorId === doctor.id && (
-                        <CheckCircle2 className="w-6 h-6 text-primary" />
-                      )}
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
@@ -414,12 +467,12 @@ export default function AddScreen2() {
                     {selectedDoctor ? (
                       <div className="flex items-center gap-3">
                         <Avatar className="w-10 h-10">
-                          <AvatarImage src={selectedDoctor.avatar} alt={selectedDoctor.name} />
+                          <AvatarImage src={selectedDoctor.image} alt={selectedDoctor.name} />
                           <AvatarFallback>{selectedDoctor.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
                         </Avatar>
                         <div>
                           <p className="font-medium">{selectedDoctor.name}</p>
-                          <p className="text-sm text-muted-foreground">{selectedDoctor.department}</p>
+                          <p className="text-sm text-muted-foreground">{selectedDoctor.specialization || "General Practice"}</p>
                         </div>
                       </div>
                     ) : (

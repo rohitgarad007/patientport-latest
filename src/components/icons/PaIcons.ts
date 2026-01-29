@@ -118,6 +118,9 @@ import laboratoryIcon from "@/assets/images/002-laboratory.png";
 import screenIcon from "@/assets/images/001-smart-tv.png";
 import manageScreenIcon from "@/assets/images/003-automation.png";
 
+import maleDcotorIcon from "@/assets/images/001-doctor.png";
+import femaleDcotorIcon from "@/assets/images/004-doctor-3.png";
+
 
 export const PaIcons = {
   age: ageIcon,
@@ -232,6 +235,8 @@ export const PaIcons = {
 
   screenIcon: screenIcon,
   manageScreenIcon: manageScreenIcon,
- 
+   maleDcotorIcon: maleDcotorIcon,
+  femaleDcotorIcon: femaleDcotorIcon,
+
 
 };
