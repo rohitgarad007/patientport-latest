@@ -247,6 +247,7 @@ class SADoctorsController  extends CI_Controller {
             $expYear = isset($rawData['expYear']) ? trim($this->decrypt_aes_from_js($rawData['expYear'], $AES_KEY)) : 0;
             $expMonth = isset($rawData['expMonth']) ? trim($this->decrypt_aes_from_js($rawData['expMonth'], $AES_KEY)) : 0;
             $consultation_fee = isset($rawData['doctorFees']) ? floatval($this->decrypt_aes_from_js($rawData['doctorFees'], $AES_KEY)) : 0;
+            $gender = isset($rawData['gender']) ? trim($this->decrypt_aes_from_js($rawData['gender'], $AES_KEY)) : '';
 
 
             // 🔑 Default password if empty
@@ -311,6 +312,7 @@ class SADoctorsController  extends CI_Controller {
                 'email'             => $email,
                 'password'          => md5($password),
                 'phone'             => $phone,
+                'gender'            => $gender,
                 'specialization_id' => $specialization_id,
                 'hosuid'            => $hospitalId,
                 'consultation_fee'  => $consultation_fee,
@@ -431,6 +433,7 @@ class SADoctorsController  extends CI_Controller {
             $expYear = isset($rawData['expYear']) ? trim($this->decrypt_aes_from_js($rawData['expYear'], $AES_KEY)) : 0;
             $expMonth = isset($rawData['expMonth']) ? trim($this->decrypt_aes_from_js($rawData['expMonth'], $AES_KEY)) : 0;
             $consultation_fee = isset($rawData['doctorFees']) ? floatval($this->decrypt_aes_from_js($rawData['doctorFees'], $AES_KEY)) : 0;
+            $gender = isset($rawData['gender']) ? trim($this->decrypt_aes_from_js($rawData['gender'], $AES_KEY)) : '';
 
             
 
@@ -466,6 +469,7 @@ class SADoctorsController  extends CI_Controller {
                 'name'                  => $doctorName,
                 //'email'                 => $email,
                 'phone'                 => $phone,
+                'gender'                => $gender,
                 'specialization_id'     => $specialization_id,
                 'hosuid'                => $hospitalId,
                 'consultation_fee'      => $consultation_fee,

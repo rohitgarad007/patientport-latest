@@ -57,7 +57,7 @@ class DoctorCommonModel extends CI_Model{
 	}
 
     public function get_DoctorsList($search = '', $specialization = '', $limit = 10, $offset = 0) {
-	    $this->db->select('d.docuid, d.name as doctorName, d.email as doctorEmail, d.profile_image, d.phone, d.experience_year as expYear, d.experience_month as expMonth, d.consultation_fee as doctorFees, d.status, s.specialization_name, hs.name as hospitalName, d.specialization_id as specialization, d.hosuid as hospitalId');
+	    $this->db->select('d.docuid, d.name as doctorName, d.email as doctorEmail, d.profile_image, d.gender, d.phone, d.experience_year as expYear, d.experience_month as expMonth, d.consultation_fee as doctorFees, d.status, s.specialization_name, hs.name as hospitalName, d.specialization_id as specialization, d.hosuid as hospitalId');
 	    $this->db->from('ms_doctors d');
 	    $this->db->join('ms_doctor_specializations s', 's.id = d.specialization_id', 'left');
 	    $this->db->join('ms_hospitals hs', 'hs.hosuid = d.hosuid', 'left');
@@ -100,7 +100,7 @@ class DoctorCommonModel extends CI_Model{
 	}
 
 	public function get_DoctorsListByHospital($loguid = '', $search = '', $specialization = '', $limit = 10, $offset = 0) {
-	    $this->db->select('d.docuid, d.name as doctorName, d.email as doctorEmail, d.profile_image, d.phone, d.experience_year as expYear, d.experience_month as expMonth, d.consultation_fee as doctorFees, d.status, s.specialization_name, hs.name as hospitalName, d.specialization_id as specialization, d.hosuid as hospitalId');
+	    $this->db->select('d.docuid, d.name as doctorName, d.email as doctorEmail, d.profile_image, d.gender, d.phone, d.experience_year as expYear, d.experience_month as expMonth, d.consultation_fee as doctorFees, d.status, s.specialization_name, hs.name as hospitalName, d.specialization_id as specialization, d.hosuid as hospitalId');
 	    $this->db->from('ms_doctors d');
 	    $this->db->join('ms_doctor_specializations s', 's.id = d.specialization_id', 'left');
 	    $this->db->join('ms_hospitals hs', 'hs.hosuid = d.hosuid', 'left');

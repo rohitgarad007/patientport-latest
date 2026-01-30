@@ -1,7 +1,7 @@
 // services/HSTokenService.ts
 import Cookies from "js-cookie";
 import { configService } from "./configService";
-import { decryptAESFromPHP } from "@/utils/aesDecrypt";
+import { decryptAESFromPHP, encryptAESForPHP } from "@/utils/aesDecrypt";
 
 const getAuthHeaders = async () => {
   const token = Cookies.get("token");
@@ -27,6 +27,29 @@ export interface Doctor {
   gender: string;
   image?: string;
   specialization?: string;
+}
+
+export interface ScreenDoctor {
+  id: string;
+  name: string;
+  specialization: string;
+  gender: string;
+  image?: string;
+}
+
+export interface ScreenData {
+  id: string;
+  screenuid: string;
+  name: string;
+  location: string;
+  description: string;
+  resolution: string;
+  layout: string;
+  theme: string;
+  status: "active" | "inactive";
+  auto_refresh: string;
+  refresh_interval: string;
+  doctors: ScreenDoctor[];
 }
 
 export const fetchDoctors = async () => {
@@ -68,4 +91,113 @@ export const fetchDoctors = async () => {
   }
 
   return { ...json, data: [] };
+};
+
+export const fetchScreens = async () => {
+  const { apiUrl, headers } = await getAuthHeaders();
+
+  const res = await fetch(`${apiUrl.replace(/\/$/, "")}/hs_screens_list`, {
+    method: "GET",
+    headers,
+  });
+
+  if (!res.ok) throw new Error("Failed to fetch screens");
+
+  const json = await res.json();
+  if (json.success && json.data) {
+    const AES_KEY = await configService.getAesSecretKey();
+    const decrypted = decryptAESFromPHP(json.data, AES_KEY);
+
+    let rawItems: any[] = [];
+    try {
+      rawItems = decrypted ? JSON.parse(decrypted) : [];
+      if (!Array.isArray(rawItems)) rawItems = [];
+    } catch {
+      rawItems = [];
+    }
+
+    const mapped: ScreenData[] = rawItems.map((item: any) => ({
+      id: item.id,
+      screenuid: item.screenuid,
+      name: item.name,
+      location: item.location,
+      description: item.description,
+      resolution: item.resolution,
+      layout: item.layout,
+      theme: item.theme,
+      status: item.status,
+      auto_refresh: item.auto_refresh,
+      refresh_interval: item.refresh_interval,
+      doctors: (item.doctors || []).map((doc: any) => ({
+        ...doc,
+        image: doc.image ? `${apiUrl.replace(/\/api\/?$/, "")}/${doc.image}` : null
+      }))
+    }));
+
+    return { ...json, data: mapped };
+  }
+
+  return { ...json, data: [] };
+};
+
+export const saveScreen = async (screenData: any) => {
+  const { apiUrl, headers } = await getAuthHeaders();
+  const AES_KEY = await configService.getAesSecretKey();
+
+  // Encrypt all fields
+  const payload: Record<string, string> = {};
+  for (const [key, value] of Object.entries(screenData)) {
+    if (typeof value === "object") {
+      payload[key] = encryptAESForPHP(JSON.stringify(value), AES_KEY) || "";
+    } else {
+      payload[key] = encryptAESForPHP(String(value), AES_KEY) || "";
+    }
+  }
+
+  const res = await fetch(`${apiUrl.replace(/\/$/, "")}/hs_save_screen`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) throw new Error("Failed to save screen");
+
+  return await res.json();
+};
+
+export interface AppointmentPreview {
+  id: string;
+  token: number;
+  name: string;
+  status: string;
+  time: string;
+  created_at?: string;
+}
+
+export const fetchScreenAppointments = async (doctorIds: string[]) => {
+  const { apiUrl, headers } = await getAuthHeaders();
+  const AES_KEY = await configService.getAesSecretKey();
+
+  const payload = {
+    doctorIds: encryptAESForPHP(JSON.stringify(doctorIds), AES_KEY) || ""
+  };
+
+  const res = await fetch(`${apiUrl.replace(/\/$/, "")}/hs_screens_appointments`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) throw new Error("Failed to fetch appointments");
+
+  const json = await res.json();
+  if (json.success && json.data) {
+    const decrypted = decryptAESFromPHP(json.data, AES_KEY);
+    try {
+      return decrypted ? JSON.parse(decrypted) : {};
+    } catch {
+      return {};
+    }
+  }
+  return {};
 };

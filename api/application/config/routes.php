@@ -272,7 +272,11 @@ $route['hs_specializations_add']						= 'HSHospitalsController/AddSpecialization
 $route['hs_specializations_update']						= 'HSHospitalsController/UpdateSpecializationInfo';
 $route['hs_specializations_delete']						= 'HSHospitalsController/DeleteSpecializationInfo';
 $route['get_specializations_list']						= 'HSDoctorsController/GetSpecializationsList';
-$route['hs_doctors_list']								= 'HSHospitalsController/getDoctorsList';
+
+$route['hs_doctors_list'] = 'HSHospitalsController/getDoctorsList';
+$route['hs_save_screen'] = 'HSHospitalsController/saveScreen';
+$route['hs_screens_list'] = 'HSHospitalsController/getScreensList';
+$route['hs_screens_appointments'] = 'HSHospitalsController/getScreenPreviewAppointments';
 
 
 $route['hs_amenities_list']								= 'HSHospitalsController/getAmenityList';

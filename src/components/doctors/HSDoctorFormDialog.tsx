@@ -121,6 +121,7 @@ export default function HSDoctorFormDialog({
     doctorName: "",
     doctorEmail: "",
     phone: "",
+    gender: null as { label: string; value: string } | null,
     specialization: "",
     doctorFees: "",
     password: "",
@@ -139,6 +140,12 @@ export default function HSDoctorFormDialog({
   // Options for years (0-45) and months (0-11)
   const yearOptions = Array.from({ length: 46 }, (_, i) => ({ label: `${i}`, value: `${i}` }));
   const monthOptions = Array.from({ length: 12 }, (_, i) => ({ label: `${i}`, value: `${i}` }));
+  
+  const genderOptions = [
+    { label: "Male", value: "Male" },
+    { label: "Female", value: "Female" },
+    { label: "Other", value: "Other" },
+  ];
 
   useEffect(() => {
     if (open) {
@@ -153,6 +160,7 @@ export default function HSDoctorFormDialog({
         doctorName: initialData.doctorName ?? "",
         doctorEmail: initialData.doctorEmail ?? "",
         phone: initialData.phone ?? "",
+        gender: initialData.gender ? { label: initialData.gender, value: initialData.gender } : null,
         specialization: initialData.specialization ?? "",
         doctorFees: initialData.doctorFees ?? "",
         password: "", // do not prefill password for security reasons
@@ -171,6 +179,7 @@ export default function HSDoctorFormDialog({
   const requiredFields = [
     "doctorName",
     "phone",
+    "gender",
     "specialization",
     "expYear",
     "expMonth",
@@ -192,6 +201,7 @@ export default function HSDoctorFormDialog({
       doctorName: "",
       doctorEmail: "",
       phone: "",
+      gender: null,
       specialization: "",
       doctorFees: "",
       password: "",
@@ -244,6 +254,9 @@ export default function HSDoctorFormDialog({
         if (!value) return "Phone is required";
         if (!/^\d{10}$/.test(value)) return "Phone must be 10 digits";
         return "";
+      case "gender":
+        if (!value) return "Please select gender";
+        return "";
       case "specialization":
         if (!value) return "Please select specialization";
         return "";
@@ -282,6 +295,7 @@ export default function HSDoctorFormDialog({
     const fieldsToValidate = [
       "doctorName",
       "phone",
+      "gender",
       "specialization",
       "expYear",
       "expMonth",
@@ -309,6 +323,7 @@ export default function HSDoctorFormDialog({
     const payload: any = {
       doctorName: formData.doctorName.trim(),
       phone: formData.phone.trim(),
+      gender: formData.gender?.value ?? "",
       specialization: formData.specialization,
       doctorFees: formData.doctorFees ?? "",
       expYear: formData.expYear?.value ?? "",
@@ -374,7 +389,7 @@ export default function HSDoctorFormDialog({
             )}
           </div>
 
-          {/* Phone & Experience */}
+          {/* Phone & Gender */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="phone">Phone</Label>
@@ -383,6 +398,14 @@ export default function HSDoctorFormDialog({
             </div>
 
             <div>
+              <Label>Gender</Label>
+              <Select options={genderOptions} value={formData.gender} onChange={(val) => handleChange("gender", val)} placeholder="Select Gender" isSearchable />
+              {formErrors.gender && <p className="text-red-600 text-sm mt-1">{formErrors.gender}</p>}
+            </div>
+          </div>
+
+          {/* Experience */}
+          <div>
               <Label>Experience</Label>
               <div className="flex gap-2 items-start">
                 <div className="w-1/2">
@@ -394,7 +417,6 @@ export default function HSDoctorFormDialog({
                   {formErrors.expMonth && <p className="text-red-600 text-sm mt-1">{formErrors.expMonth}</p>}
                 </div>
               </div>
-            </div>
           </div>
 
           {/* Specialization & Hospital */}

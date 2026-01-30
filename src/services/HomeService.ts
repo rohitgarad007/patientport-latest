@@ -10,6 +10,7 @@ export interface HomeDoctor {
   image?: string;
   profile_image?: string;
   image_url?: string;
+  gender?: string;
   reviews?: number;
   availability?: string;
   specialization?: string;
@@ -34,9 +35,10 @@ export const fetchHomeDoctors = async (hospitalId?: number): Promise<HomeDoctor[
     rating: Number(row.rating ?? 4.8),
     experience: row.experience ? `${row.experience}` : "10+ years",
     // Normalize image fields so UI can use either key
-    image: row.image || row.profile_image || row.image_url || "/placeholder.svg",
-    profile_image: row.profile_image || row.image || row.image_url || "/placeholder.svg",
+    image: row.image || row.profile_image || row.image_url || "",
+    profile_image: row.profile_image || row.image || row.image_url || "",
     image_url: row.image_url || undefined,
+    gender: row.gender || "",
     reviews: Number(row.reviews ?? 0),
     availability: row.availability || "Mon, Wed, Fri",
     specialization: row.specialization_name || "",
@@ -226,6 +228,7 @@ export const getDoctors = async (): Promise<GetDoctorsResponse> => {
     specialty: d.specialty ?? d.specialization ?? d.specialization_name ?? d.department ?? undefined,
     // Normalize image key
     profile_image: d.profile_image ?? d.image_url ?? d.image ?? d.photo ?? undefined,
+    gender: d.gender || "",
   }));
   return { ...(json as GetDoctorsResponse), items: normalized, doctors: normalized };
 };

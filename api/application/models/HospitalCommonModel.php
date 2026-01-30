@@ -13,7 +13,7 @@ class HospitalCommonModel extends CI_Model{
     }
 
     public function get_HospitalDoctorsList($loguid){
-        $this->db->select('docuid as id, name, email, phone, status, gender');
+        $this->db->select('id, docuid, name, email, phone, status, gender');
         $this->db->from('ms_doctors');
         $this->db->where('hosuid', $loguid);
         $this->db->where('isdelete', 0); // Only non-deleted
@@ -411,4 +411,104 @@ class HospitalCommonModel extends CI_Model{
 	    return $query->result_array();
 	}
 
+    public function save_screen_info($screen_data, $doctor_ids) {
+        $this->db->trans_start();
+
+        // 1. Insert Screen Info
+        $this->db->insert('ms_hospitals_screens', $screen_data);
+        
+        $screen_id = $this->db->insert_id();
+
+        // 2. Insert Screen Doctors
+        if (!empty($doctor_ids) && is_array($doctor_ids)) {
+            foreach ($doctor_ids as $doctor_id) {
+                $doc_data = [
+                    'screenuid' => $screen_id, // Saving screen_id (int) as requested
+                    'docuid' => $doctor_id,    // Saving doctor_id (int) as requested
+                    'hosuid' => $screen_data['hosuid'] // Saving hospital_id (int) from screen_data
+                ];
+                $this->db->insert('ms_hospitals_screen_doctors', $doc_data);
+            }
+        }
+
+        $this->db->trans_complete();
+
+        return $this->db->trans_status();
+    }
+
+    public function get_HospitalScreensList($hospital_id) {
+        $this->db->select('
+            s.id, s.screenuid, s.name, s.location, s.description, 
+            s.resolution, s.layout, s.theme, s.status, s.auto_refresh, s.refresh_interval,
+            sd.docuid as doctor_id, 
+            d.name as doctor_name, 
+            d.profile_image, 
+            d.gender,
+            hs.name as specialization
+        ');
+        $this->db->from('ms_hospitals_screens s');
+        $this->db->join('ms_hospitals_screen_doctors sd', 's.id = sd.screenuid', 'left');
+        $this->db->join('ms_doctors d', 'sd.docuid = d.id', 'left');
+        $this->db->join('ms_hospitals_specialization hs', 'd.specialization_id = hs.speuid', 'left');
+        $this->db->where('s.hosuid', $hospital_id);
+        $this->db->where('s.isdelete', 0);
+        
+        $query = $this->db->get();
+        $result = $query->result_array();
+
+        // Group doctors by screen
+        $screens = [];
+        foreach ($result as $row) {
+            $screen_id = $row['id'];
+            if (!isset($screens[$screen_id])) {
+                $screens[$screen_id] = [
+                    'id' => $row['id'],
+                    'screenuid' => $row['screenuid'],
+                    'name' => $row['name'],
+                    'location' => $row['location'],
+                    'description' => $row['description'],
+                    'resolution' => $row['resolution'],
+                    'layout' => $row['layout'],
+                    'theme' => $row['theme'],
+                    'status' => $row['status'] == 1 ? 'active' : 'inactive',
+                    'auto_refresh' => $row['auto_refresh'],
+                    'refresh_interval' => $row['refresh_interval'],
+                    'doctors' => []
+                ];
+            }
+            if ($row['doctor_id']) {
+                $screens[$screen_id]['doctors'][] = [
+                    'id' => $row['doctor_id'],
+                    'name' => $row['doctor_name'],
+                    'specialization' => $row['specialization'] ? $row['specialization'] : 'General',
+                    'gender' => $row['gender'],
+                    'image' => $row['profile_image']
+                ];
+            }
+        }
+        return array_values($screens);
+    }
+
+    public function get_DoctorsAppointmentsToday($doctor_ids) {
+        if (empty($doctor_ids)) return [];
+
+        $today = date('Y-m-d');
+        
+        $this->db->select('
+            a.doctor_id,
+            a.token_no,
+            a.patient_name,
+            a.status,
+            a.start_time,
+            a.created_at,
+            a.id as appointment_id
+        ');
+        $this->db->from('ms_patient_appointment a');
+        $this->db->where_in('a.doctor_id', $doctor_ids);
+        $this->db->where('a.date', $today);
+        $this->db->order_by('a.token_no', 'ASC');
+        
+        $query = $this->db->get();
+        return $query->result_array();
+    }
 }

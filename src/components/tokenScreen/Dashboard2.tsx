@@ -111,7 +111,7 @@ export default function Dashboard2() {
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-foreground">Active Screens</h2>
               <Button variant="ghost" size="sm" asChild>
-                <Link to="/manage-screens" className="flex items-center gap-1 text-muted-foreground hover:text-foreground">
+                <Link to="/hs-manage-screens" className="flex items-center gap-1 text-muted-foreground hover:text-foreground">
                   View All
                   <ArrowRight className="w-4 h-4" />
                 </Link>

@@ -324,6 +324,11 @@ class PublicHomeController extends CI_Controller {
                 $initialStatus = 'waiting';
             }
 
+            // Set timezone to Asia/Kolkata for correct timestamp
+            $tz = new DateTimeZone('Asia/Kolkata');
+            $now = new DateTime('now', $tz);
+            $createdAt = $now->format('Y-m-d H:i:s');
+
             $data = [
                 'appointment_uid' => $appointmentUid,
                 'hospital_id' => $hospitalId,
@@ -338,8 +343,8 @@ class PublicHomeController extends CI_Controller {
                 'start_time' => $slotRow['start_time'] ?? null,
                 'end_time' => $slotRow['end_time'] ?? null,
                 'status' => $initialStatus,
-                'created_at' => date('Y-m-d H:i:s'),
-                'updated_at' => date('Y-m-d H:i:s'),
+                'created_at' => $createdAt,
+                'updated_at' => $createdAt,
             ];
             $this->db->insert('ms_patient_appointment', $data);
             $insertId = $this->db->insert_id();
@@ -836,6 +841,7 @@ class PublicHomeController extends CI_Controller {
                 d.email,
                 d.phone,
                 d.profile_image,
+                d.gender,
                 d.specialization_id,
                 s.specialization_name,
                 d.experience_year,
@@ -863,6 +869,7 @@ class PublicHomeController extends CI_Controller {
                 'email' => $row['email'] ?? null,
                 'phone' => $row['phone'] ?? null,
                 'profile_image' => $row['profile_image'] ?? '',
+                'gender' => $row['gender'] ?? '',
                 'specialization_id' => isset($row['specialization_id']) ? intval($row['specialization_id']) : null,
                 'specialization' => $row['specialization_name'] ?? '',
                 'experience' => trim(($row['experience_year'] ?: '0') . ' years ' . ($row['experience_month'] ?: '0') . ' months'),
@@ -1265,6 +1272,7 @@ class PublicHomeController extends CI_Controller {
                 d.phone,
                 d.specialization_id,
                 d.profile_image,
+                d.gender,
                 s.specialization_name,
                 d.experience_year,
                 d.experience_month,
@@ -1306,7 +1314,8 @@ class PublicHomeController extends CI_Controller {
                     'phone' => $row['phone'],
                     'profile_image' => !empty($row['profile_image'])
                     ? base_url('api/assets/images/doctors/'.$row['profile_image'])
-                    : base_url('api/assets/images/doctors/no-image.png'),
+                    : '',
+                    'gender' => $row['gender'] ?? '',
                     'specialization_id' => (int)$row['specialization_id'],
                     'specialization_name' => $row['specialization_name'] ?? '',
                     'experience' => trim(($row['experience_year'] ?: '0') . ' years ' . ($row['experience_month'] ?: '0') . ' months'),

@@ -1,10 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Monitor, 
   Search, 
@@ -24,14 +23,13 @@ import {
   Activity,
   RefreshCw,
   Power,
-  Volume2,
-  Maximize2,
-  ChevronRight,
   Filter,
   Download,
-  Upload
+  Upload,
+  Layers,
+  User
 } from "lucide-react";
-import { screens, doctors } from "@/data/dummyData-2";
+import { PaIcons } from "@/components/icons/PaIcons";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import {
@@ -41,15 +39,44 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ScreenPreviewDialog } from "@/components/tokenScreen/ScreenPreviewDialog";
-import { EditScreenDialog } from "@/components/tokenScreen/EditScreenDialog";
-import { DeleteScreenDialog } from "@/components/tokenScreen/DeleteScreenDialog";
+import { ScreenPreviewDialog } from "./ScreenPreviewDialog";
+import { EditScreenDialog } from "./EditScreenDialog";
+import { DeleteScreenDialog } from "./DeleteScreenDialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { fetchScreens } from "@/services/HSTokenService";
 
-const screenGroups = [
-  { id: "all", label: "All Screens", count: 12 },
-  { id: "active", label: "Active", count: 8 },
-  { id: "idle", label: "Idle", count: 2 },
-  { id: "offline", label: "Offline", count: 2 },
+interface MultiDoctorScreen {
+  id: string;
+  name: string;
+  location: string;
+  doctors: {
+    id: string;
+    name: string;
+    specialization: string;
+    department: string;
+    specialty: string;
+    avatar: string;
+    gender: string;
+    room: string;
+    avgTime: string;
+    status: string;
+  }[];
+  currentPatients: {
+    doctor: any;
+    patient: { token: string } | null;
+  }[];
+  totalQueue: number;
+  status: string;
+  resolution: string;
+  lastUpdated: string;
+  layout: string;
+  screenType: "single" | "multi";
+}
+
+const screenTypeFilters = [
+  { id: "all", label: "All Types" },
+  { id: "single", label: "Single Doctor" },
+  { id: "multi", label: "Multi Doctor" },
 ];
 
 export default function ManageScreens2() {
@@ -57,200 +84,288 @@ export default function ManageScreens2() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
-  const [selectedScreen, setSelectedScreen] = useState<typeof screens[0] | null>(null);
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [selectedScreen, setSelectedScreen] = useState<any>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [screens, setScreens] = useState<MultiDoctorScreen[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const screenGroups = [
+    { id: "all", label: "All Screens", count: screens.length },
+    { id: "active", label: "Active", count: screens.filter(s => s.status === 'active').length },
+    { id: "idle", label: "Idle", count: screens.filter(s => s.status === 'idle').length },
+    { id: "offline", label: "Offline", count: screens.filter(s => s.status === 'offline').length },
+  ];
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const res = await fetchScreens();
+        if (res.success && res.data) {
+           const mapped: MultiDoctorScreen[] = res.data.map((s: any) => ({
+             id: s.id,
+             name: s.name,
+             location: s.location,
+             doctors: s.doctors.map((d: any) => ({
+               id: d.id,
+               name: d.name,
+               specialization: d.specialization || "General",
+               department: d.specialization || "General",
+               specialty: d.specialization || "General",
+              avatar: d.image,
+              gender: d.gender,
+              room: "101", // Mock
+              avgTime: "10 min", // Mock
+              status: "active" // Mock
+            })),
+             currentPatients: s.doctors.map((d: any, idx: number) => ({
+               doctor: d,
+               patient: { token: `A-00${idx + 1}` } // Mock token
+             })), 
+             totalQueue: 0, 
+             status: s.status,
+             resolution: s.resolution,
+             lastUpdated: "Just now",
+             layout: s.layout,
+             screenType: (s.doctors && s.doctors.length > 1) ? "multi" : "single" as "single" | "multi"
+           }));
+           setScreens(mapped);
+        }
+      } catch (error) {
+        console.error("Failed to fetch screens:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
 
   const filteredScreens = screens.filter(screen => {
     const matchesSearch = screen.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       screen.location.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = activeFilter === "all" || screen.status === activeFilter;
-    return matchesSearch && matchesFilter;
+    const matchesType = typeFilter === "all" || screen.screenType === typeFilter;
+    return matchesSearch && matchesFilter && matchesType;
   });
 
-  const handlePreview = (screen: typeof screens[0]) => {
-    setSelectedScreen(screen);
+  const handlePreview = (screen: MultiDoctorScreen) => {
+    // Convert to legacy format for dialog
+    setSelectedScreen({
+      ...screen,
+      doctor: screen.doctors[0],
+      currentPatient: screen.currentPatients[0]?.patient,
+      queue: [],
+    });
     setPreviewOpen(true);
   };
 
-  const handleEdit = (screen: typeof screens[0]) => {
-    setSelectedScreen(screen);
+  const handleEdit = (screen: MultiDoctorScreen) => {
+    setSelectedScreen({
+      ...screen,
+      doctor: screen.doctors[0],
+      currentPatient: screen.currentPatients[0]?.patient,
+      queue: [],
+    });
     setEditOpen(true);
   };
 
-  const handleDelete = (screen: typeof screens[0]) => {
-    setSelectedScreen(screen);
+  const handleDelete = (screen: MultiDoctorScreen) => {
+    setSelectedScreen({
+      ...screen,
+      doctor: screen.doctors[0],
+      currentPatient: screen.currentPatients[0]?.patient,
+      queue: [],
+    });
     setDeleteOpen(true);
   };
 
-  const handleSettings = (screen: typeof screens[0]) => {
-    navigate(`/hs-screen-settings?screen=${screen.id}`);
+  const handleSettings = (screen: MultiDoctorScreen) => {
+    navigate(`/screen-settings-2?screen=${screen.id}`);
   };
 
   return (
     <div>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Screen Management</h1>
-            <p className="text-muted-foreground mt-1">Monitor, configure, and control all display screens</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" className="gap-2">
-              <Download className="w-4 h-4" />
-              Export
-            </Button>
-            <Button variant="outline" size="sm" className="gap-2">
-              <Upload className="w-4 h-4" />
-              Import
-            </Button>
-            <Button size="sm" className="gap-2" onClick={() => navigate("/add-screen-2")}>
-              <Plus className="w-4 h-4" />
-              Add Screen
-            </Button>
-          </div>
-        </div>
-
-        {/* Stats Row */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {screenGroups.map((group) => (
-            <Card 
-              key={group.id}
-              className={cn(
-                "p-4 cursor-pointer transition-all border-2",
-                activeFilter === group.id 
-                  ? "border-primary bg-primary/5" 
-                  : "border-transparent hover:border-muted"
-              )}
-              onClick={() => setActiveFilter(group.id)}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">{group.label}</p>
-                  <p className="text-2xl font-bold mt-1">{group.count}</p>
-                </div>
-                <div className={cn(
-                  "w-10 h-10 rounded-lg flex items-center justify-center",
-                  group.id === "all" && "bg-primary/10 text-primary",
-                  group.id === "active" && "bg-success/10 text-success",
-                  group.id === "idle" && "bg-warning/10 text-warning",
-                  group.id === "offline" && "bg-destructive/10 text-destructive"
-                )}>
-                  {group.id === "offline" ? <WifiOff className="w-5 h-5" /> : <Monitor className="w-5 h-5" />}
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-
-        {/* Search & Controls */}
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search screens by name or location..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" className="h-9 w-9">
-              <Filter className="w-4 h-4" />
-            </Button>
-            <div className="flex items-center rounded-lg border p-1">
-              <Button
-                variant={viewMode === "grid" ? "secondary" : "ghost"}
-                size="icon"
-                className="h-7 w-7"
-                onClick={() => setViewMode("grid")}
-              >
-                <Grid3X3 className="w-4 h-4" />
+      <TooltipProvider>
+        <div className="space-y-6">
+          {/* Header */}
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Screen Management</h1>
+              <p className="text-muted-foreground mt-1">Monitor, configure, and control all display screens</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button variant="outline" size="sm" className="gap-2">
+                <Download className="w-4 h-4" />
+                Export
               </Button>
-              <Button
-                variant={viewMode === "list" ? "secondary" : "ghost"}
-                size="icon"
-                className="h-7 w-7"
-                onClick={() => setViewMode("list")}
-              >
-                <List className="w-4 h-4" />
+              <Button variant="outline" size="sm" className="gap-2">
+                <Upload className="w-4 h-4" />
+                Import
+              </Button>
+              <Button size="sm" className="gap-2" onClick={() => navigate("/add-screen-2")}>
+                <Plus className="w-4 h-4" />
+                Add Screen
               </Button>
             </div>
           </div>
-        </div>
 
-        {/* Screens Grid/List */}
-        {viewMode === "grid" ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {filteredScreens.map((screen) => (
-              <ScreenCard 
-                key={screen.id} 
-                screen={screen}
-                onPreview={() => handlePreview(screen)}
-                onEdit={() => handleEdit(screen)}
-                onDelete={() => handleDelete(screen)}
-                onSettings={() => handleSettings(screen)}
-              />
+          {/* Stats Row */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {screenGroups.map((group) => (
+              <Card 
+                key={group.id}
+                className={cn(
+                  "p-4 cursor-pointer transition-all border-2",
+                  activeFilter === group.id 
+                    ? "border-primary bg-primary/5" 
+                    : "border-transparent hover:border-muted"
+                )}
+                onClick={() => setActiveFilter(group.id)}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">{group.label}</p>
+                    <p className="text-2xl font-bold mt-1">{group.count}</p>
+                  </div>
+                  <div className={cn(
+                    "w-10 h-10 rounded-lg flex items-center justify-center",
+                    group.id === "all" && "bg-primary/10 text-primary",
+                    group.id === "active" && "bg-success/10 text-success",
+                    group.id === "idle" && "bg-warning/10 text-warning",
+                    group.id === "offline" && "bg-destructive/10 text-destructive"
+                  )}>
+                    {group.id === "offline" ? <WifiOff className="w-5 h-5" /> : <Monitor className="w-5 h-5" />}
+                  </div>
+                </div>
+              </Card>
             ))}
           </div>
-        ) : (
-          <Card className="divide-y">
-            {filteredScreens.map((screen) => (
-              <ScreenListItem 
-                key={screen.id} 
-                screen={screen}
-                onPreview={() => handlePreview(screen)}
-                onEdit={() => handleEdit(screen)}
-                onDelete={() => handleDelete(screen)}
-                onSettings={() => handleSettings(screen)}
+
+          {/* Search & Controls */}
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search screens by name or location..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
               />
-            ))}
-          </Card>
-        )}
+            </div>
+            <div className="flex items-center gap-2">
+              {/* Screen Type Filter */}
+              <div className="flex items-center rounded-lg border p-1">
+                {screenTypeFilters.map((filter) => (
+                  <Button
+                    key={filter.id}
+                    variant={typeFilter === filter.id ? "secondary" : "ghost"}
+                    size="sm"
+                    className="h-7 px-3 text-xs"
+                    onClick={() => setTypeFilter(filter.id)}
+                  >
+                    {filter.id === "single" && <User className="w-3 h-3 mr-1" />}
+                    {filter.id === "multi" && <Users className="w-3 h-3 mr-1" />}
+                    {filter.label}
+                  </Button>
+                ))}
+              </div>
+              <Button variant="outline" size="icon" className="h-9 w-9">
+                <Filter className="w-4 h-4" />
+              </Button>
+              <div className="flex items-center rounded-lg border p-1">
+                <Button
+                  variant={viewMode === "grid" ? "secondary" : "ghost"}
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => setViewMode("grid")}
+                >
+                  <Grid3X3 className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant={viewMode === "list" ? "secondary" : "ghost"}
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => setViewMode("list")}
+                >
+                  <List className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
 
-        {/* Empty State */}
-        {filteredScreens.length === 0 && (
-          <Card className="p-12 text-center">
-            <Monitor className="w-12 h-12 mx-auto text-muted-foreground/50" />
-            <h3 className="text-lg font-semibold mt-4">No screens found</h3>
-            <p className="text-muted-foreground mt-1">Try adjusting your search or filter criteria</p>
-          </Card>
-        )}
-      </div>
+          {/* Screens Grid/List */}
+          {viewMode === "grid" ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {filteredScreens.map((screen) => (
+                <MultiDoctorScreenCard 
+                  key={screen.id} 
+                  screen={screen}
+                  onPreview={() => handlePreview(screen)}
+                  onEdit={() => handleEdit(screen)}
+                  onDelete={() => handleDelete(screen)}
+                  onSettings={() => handleSettings(screen)}
+                />
+              ))}
+            </div>
+          ) : (
+            <Card className="divide-y">
+              {filteredScreens.map((screen) => (
+                <MultiDoctorScreenListItem 
+                  key={screen.id} 
+                  screen={screen}
+                  onPreview={() => handlePreview(screen)}
+                  onEdit={() => handleEdit(screen)}
+                  onDelete={() => handleDelete(screen)}
+                  onSettings={() => handleSettings(screen)}
+                />
+              ))}
+            </Card>
+          )}
 
-      {/* Dialogs */}
-      <ScreenPreviewDialog
-        screen={selectedScreen}
-        open={previewOpen}
-        onOpenChange={setPreviewOpen}
-      />
-      <EditScreenDialog
-        screen={selectedScreen}
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        onSave={() => {}}
-      />
-      <DeleteScreenDialog
-        screen={selectedScreen}
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-        onConfirm={() => {}}
-      />
+          {/* Empty State */}
+          {filteredScreens.length === 0 && (
+            <Card className="p-12 text-center">
+              <Monitor className="w-12 h-12 mx-auto text-muted-foreground/50" />
+              <h3 className="text-lg font-semibold mt-4">No screens found</h3>
+              <p className="text-muted-foreground mt-1">Try adjusting your search or filter criteria</p>
+            </Card>
+          )}
+        </div>
+
+        {/* Dialogs */}
+        <ScreenPreviewDialog
+          screen={selectedScreen}
+          open={previewOpen}
+          onOpenChange={setPreviewOpen}
+        />
+        <EditScreenDialog
+          screen={selectedScreen}
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          onSave={() => {}}
+        />
+        <DeleteScreenDialog
+          screen={selectedScreen}
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+          onConfirm={() => {}}
+        />
+      </TooltipProvider>
     </div>
   );
 }
 
-// Screen Card Component
-function ScreenCard({ 
+// Multi-Doctor Screen Card Component
+function MultiDoctorScreenCard({ 
   screen, 
   onPreview, 
   onEdit, 
   onDelete, 
   onSettings 
 }: { 
-  screen: typeof screens[0];
+  screen: MultiDoctorScreen;
   onPreview: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -263,35 +378,65 @@ function ScreenCard({
   };
   
   const config = statusConfig[screen.status as keyof typeof statusConfig];
+  const isMultiDoctor = screen.doctors.length > 1;
 
   return (
     <Card className="group overflow-hidden transition-all hover:shadow-xl border-0 shadow-lg">
-      {/* Preview Area */}
-      <div className="relative h-40 bg-gradient-to-br from-muted to-muted/50 overflow-hidden">
+      {/* Preview Area - Shows multi-doctor layout */}
+      <div className="relative h-44 bg-gradient-to-br from-muted to-muted/50 overflow-hidden">
         {/* Mock Screen Display */}
-        <div className="absolute inset-4 rounded-lg bg-card shadow-inner overflow-hidden">
-          {screen.currentPatient ? (
-            <div className="h-full flex flex-col p-3">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <div className={cn("w-1.5 h-1.5 rounded-full", config.color)} />
-                Now Serving
-              </div>
-              <div className="flex-1 flex items-center justify-center">
-                <span className="text-2xl font-bold text-primary">{screen.currentPatient.token}</span>
-              </div>
-              <div className="text-xs text-center text-muted-foreground truncate">
-                {screen.doctor.room}
-              </div>
-            </div>
-          ) : (
-            <div className="h-full flex items-center justify-center">
-              <span className="text-sm text-muted-foreground">No active token</span>
-            </div>
-          )}
+        <div className="absolute inset-3 rounded-lg bg-card shadow-inner overflow-hidden">
+          {/* Always show grid based on assigned doctors */}
+          <div className={cn(
+            "h-full grid gap-1 p-1",
+            screen.doctors.length === 1 && "grid-cols-1",
+            screen.doctors.length === 2 && "grid-cols-2",
+            screen.doctors.length === 3 && "grid-cols-3",
+            screen.doctors.length >= 4 && "grid-cols-2 grid-rows-2"
+          )}>
+            {screen.doctors.slice(0, 4).map((doctor, idx) => {
+              // Find active patient for this doctor
+              const patientInfo = screen.currentPatients.find(
+                p => p.doctor?.id === doctor.id || (p.doctor as any)?.id === doctor.id
+              ) || screen.currentPatients[idx]; // Fallback to index matching if ID mismatch in mock
+
+              return (
+                <div 
+                  key={doctor.id} 
+                  className="rounded bg-muted/30 p-2 flex flex-col items-center justify-center text-center"
+                >
+                  <Avatar className="w-6 h-6 mb-1">
+                    <AvatarImage src={doctor.avatar} />
+                    <AvatarFallback className="bg-muted p-0.5">
+                      <img 
+                        src={(doctor.gender || "").toLowerCase() === 'female' ? PaIcons.femaleDcotorIcon : PaIcons.maleDcotorIcon} 
+                        alt="Doc"
+                        className="w-full h-full object-contain"
+                      />
+                    </AvatarFallback>
+                  </Avatar>
+                  <p className="text-[9px] font-medium truncate w-full">{doctor.name.split(" ")[1] || doctor.name}</p>
+                  {patientInfo?.patient ? (
+                    <Badge variant="secondary" className="text-[8px] h-4 px-1 mt-1 font-bold">
+                      {patientInfo.patient.token}
+                    </Badge>
+                  ) : (
+                    <span className="text-[8px] text-muted-foreground mt-1">—</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
         
         {/* Status Badge */}
-        <div className="absolute top-2 right-2">
+        <div className="absolute top-2 right-2 flex items-center gap-1">
+          {isMultiDoctor && (
+            <Badge variant="outline" className="gap-1 bg-background/80 backdrop-blur-sm">
+              <Layers className="w-3 h-3" />
+              {screen.doctors.length} Doctors
+            </Badge>
+          )}
           <Badge 
             variant={screen.status === "active" ? "default" : "secondary"}
             className={cn(
@@ -364,16 +509,80 @@ function ScreenCard({
           </DropdownMenu>
         </div>
 
-        {/* Doctor Info */}
-        <div className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
-          <Avatar className="w-8 h-8">
-            <AvatarImage src={screen.doctor.avatar} alt={screen.doctor.name} />
-            <AvatarFallback className="text-xs">{screen.doctor.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{screen.doctor.name}</p>
-            <p className="text-xs text-muted-foreground">{screen.doctor.department}</p>
-          </div>
+        {/* Doctors Info */}
+        <div className="space-y-2">
+          {isMultiDoctor ? (
+            <div className="p-2 rounded-lg bg-muted/50">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-muted-foreground">Assigned Doctors</span>
+                <Badge variant="secondary" className="text-xs h-5">
+                  {screen.doctors.length} doctors
+                </Badge>
+              </div>
+              <div className="flex items-center -space-x-2">
+                {screen.doctors.slice(0, 4).map((doctor, idx) => (
+                  <Tooltip key={doctor.id}>
+                    <TooltipTrigger asChild>
+                      <Avatar className="w-8 h-8 border-2 border-background cursor-pointer hover:z-10 transition-transform hover:scale-110">
+                        <AvatarImage src={doctor.avatar} alt={doctor.name} />
+                        <AvatarFallback className="bg-muted p-0.5">
+                          <img 
+                            src={(doctor.gender || "").toLowerCase() === 'female' ? PaIcons.femaleDcotorIcon : PaIcons.maleDcotorIcon} 
+                            alt="Doc"
+                            className="w-full h-full object-contain"
+                          />
+                        </AvatarFallback>
+                      </Avatar>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-xs">
+                      <p className="font-medium">{doctor.name}</p>
+                      <p className="text-muted-foreground">{doctor.department}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                ))}
+                {screen.doctors.length > 4 && (
+                  <div className="w-8 h-8 rounded-full bg-muted border-2 border-background flex items-center justify-center">
+                    <span className="text-xs font-medium">+{screen.doctors.length - 4}</span>
+                  </div>
+                )}
+              </div>
+              {/* Active tokens summary */}
+              <div className="flex flex-wrap gap-1 mt-2">
+                {screen.currentPatients.filter(cp => cp.patient).slice(0, 3).map((cp, idx) => (
+                  <Badge key={idx} variant="outline" className="text-xs font-mono">
+                    {cp.patient?.token}
+                  </Badge>
+                ))}
+                {screen.currentPatients.filter(cp => cp.patient).length > 3 && (
+                  <Badge variant="outline" className="text-xs">
+                    +{screen.currentPatients.filter(cp => cp.patient).length - 3} more
+                  </Badge>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
+              <Avatar className="w-8 h-8">
+                <AvatarImage src={screen.doctors[0].avatar} alt={screen.doctors[0].name} />
+                <AvatarFallback className="bg-muted p-0.5">
+                  <img 
+                    src={screen.doctors[0].gender === 'Female' ? PaIcons.femaleDcotorIcon : PaIcons.maleDcotorIcon} 
+                    alt="Doc"
+                    className="w-full h-full object-contain"
+                  />
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{screen.doctors[0].name}</p>
+                <p className="text-xs text-muted-foreground">{screen.doctors[0].department}</p>
+              </div>
+              {screen.currentPatients[0]?.patient && (
+                <Badge variant="secondary" className="font-mono font-bold">
+                  {screen.currentPatients[0].patient.token}
+                </Badge>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Meta */}
@@ -384,7 +593,7 @@ function ScreenCard({
           </span>
           <span className="flex items-center gap-1">
             <Users className="w-3 h-3" />
-            {screen.queue.length} in queue
+            {screen.totalQueue} in queue
           </span>
           <span>Updated {screen.lastUpdated}</span>
         </div>
@@ -393,15 +602,15 @@ function ScreenCard({
   );
 }
 
-// Screen List Item Component
-function ScreenListItem({ 
+// Multi-Doctor Screen List Item Component
+function MultiDoctorScreenListItem({ 
   screen, 
   onPreview, 
   onEdit, 
   onDelete, 
   onSettings 
 }: { 
-  screen: typeof screens[0];
+  screen: MultiDoctorScreen;
   onPreview: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -414,41 +623,88 @@ function ScreenListItem({
   };
   
   const config = statusConfig[screen.status as keyof typeof statusConfig];
+  const isMultiDoctor = screen.doctors.length > 1;
 
   return (
     <div className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors">
       {/* Status & Name */}
       <div className="flex items-center gap-3 flex-1 min-w-0">
-        <div className={cn("w-3 h-3 rounded-full", config.color)} />
+        <div className={cn("w-3 h-3 rounded-full shrink-0", config.color)} />
         <div className="min-w-0">
-          <h3 className="font-semibold truncate">{screen.name}</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold truncate">{screen.name}</h3>
+            {isMultiDoctor && (
+              <Badge variant="outline" className="text-xs shrink-0">
+                <Layers className="w-3 h-3 mr-1" />
+                {screen.doctors.length} Doctors
+              </Badge>
+            )}
+          </div>
           <p className="text-sm text-muted-foreground truncate">{screen.location}</p>
         </div>
       </div>
 
-      {/* Doctor */}
-      <div className="hidden md:flex items-center gap-2 w-48">
-        <Avatar className="w-8 h-8">
-          <AvatarImage src={screen.doctor.avatar} alt={screen.doctor.name} />
-          <AvatarFallback className="text-xs">{screen.doctor.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
-        </Avatar>
-        <span className="text-sm truncate">{screen.doctor.name}</span>
+      {/* Doctors */}
+      <div className="hidden md:flex items-center gap-2 w-56">
+        <div className="flex items-center -space-x-2">
+          {screen.doctors.slice(0, 3).map((doctor) => (
+            <Tooltip key={doctor.id}>
+              <TooltipTrigger asChild>
+                <Avatar className="w-7 h-7 border-2 border-background">
+                  <AvatarImage src={doctor.avatar} alt={doctor.name} />
+                  <AvatarFallback className="bg-muted p-0.5">
+                    <img 
+                      src={(doctor.gender || "").toLowerCase() === 'female' ? PaIcons.femaleDcotorIcon : PaIcons.maleDcotorIcon} 
+                      alt="Doc"
+                      className="w-full h-full object-contain"
+                    />
+                  </AvatarFallback>
+                </Avatar>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">
+                <p className="font-medium">{doctor.name}</p>
+                <p className="text-muted-foreground">{doctor.specialty}</p>
+              </TooltipContent>
+            </Tooltip>
+          ))}
+          {screen.doctors.length > 3 && (
+            <div className="w-7 h-7 rounded-full bg-muted border-2 border-background flex items-center justify-center">
+              <span className="text-[10px] font-medium">+{screen.doctors.length - 3}</span>
+            </div>
+          )}
+        </div>
+        {!isMultiDoctor && (
+          <span className="text-sm truncate ml-2">{screen.doctors[0].name}</span>
+        )}
       </div>
 
-      {/* Current Token */}
-      <div className="hidden lg:block w-24 text-center">
-        {screen.currentPatient ? (
-          <Badge variant="outline" className="font-mono font-bold">
-            {screen.currentPatient.token}
+      {/* Current Tokens */}
+      <div className="hidden lg:flex items-center gap-1 w-32">
+        {screen.currentPatients.filter(cp => cp.patient).slice(0, 2).map((cp, idx) => (
+          <Badge key={idx} variant="outline" className="font-mono font-bold text-xs">
+            {cp.patient?.token}
           </Badge>
-        ) : (
+        ))}
+        {screen.currentPatients.filter(cp => cp.patient).length > 2 && (
+          <span className="text-xs text-muted-foreground">
+            +{screen.currentPatients.filter(cp => cp.patient).length - 2}
+          </span>
+        )}
+        {screen.currentPatients.filter(cp => cp.patient).length === 0 && (
           <span className="text-sm text-muted-foreground">—</span>
         )}
       </div>
 
       {/* Queue */}
       <div className="hidden lg:block w-20 text-center">
-        <span className="text-sm">{screen.queue.length} waiting</span>
+        <span className="text-sm">{screen.totalQueue} waiting</span>
+      </div>
+
+      {/* Layout */}
+      <div className="hidden xl:block w-20 text-center">
+        <Badge variant="secondary" className="text-xs capitalize">
+          {screen.layout}
+        </Badge>
       </div>
 
       {/* Actions */}

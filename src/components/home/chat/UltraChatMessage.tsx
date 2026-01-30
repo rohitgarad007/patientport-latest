@@ -257,11 +257,19 @@ const UltraChatMessage = ({
                         isSelected && "ring-2 ring-green-600"
                       )}
                     >
-                      {/* Fallback Initial */}
+                      {/* Fallback Initial or Gender Icon */}
                       {!src && (
-                        <span className="text-lg font-semibold text-gray-500">
-                          {initial}
-                        </span>
+                         doctor.gender ? (
+                            <img 
+                              src={(doctor.gender || "").toLowerCase() === 'female' ? PaIcons.femaleDcotorIcon : PaIcons.maleDcotorIcon}
+                              alt={name}
+                              className="w-[60px] h-[60px] object-cover rounded-xl"
+                            />
+                         ) : (
+                            <span className="text-lg font-semibold text-gray-500">
+                              {initial}
+                            </span>
+                         )
                       )}
 
                       {/* Profile Image */}
