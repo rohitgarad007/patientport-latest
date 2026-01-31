@@ -1,7 +1,7 @@
 // StaffProtectedRoute.tsx
 import { Outlet, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { fetchStaffPermissions } from "@/services/staffService";
+import { fetchStaffPermissions, getStaffRoles } from "@/services/staffService";
 import Cookies from "js-cookie";
 
 interface StaffProtectedRouteProps {
@@ -28,9 +28,19 @@ const StaffProtectedRoute = ({ permissionId }: StaffProtectedRouteProps) => {
         }
 
         const parsedInfo = JSON.parse(userInfo);
-        if (parsedInfo.role !== "staff") {
-          setHasAccess(false);
-          return;
+        
+        // Fetch roles from DB
+        const rolesResponse = await getStaffRoles();
+        const allRoles = rolesResponse.data || [];
+        
+        // Check if user's role exists in DB and is NOT Receptionist
+        // The user role must be one of the roles in ms_staff_role, but NOT 'Receptionist'
+        const userRole = parsedInfo.role;
+        const matchedRole = allRoles.find((r: any) => r.roleName === userRole);
+        
+        if (!matchedRole || matchedRole.roleName === "Receptionist") {
+           setHasAccess(false);
+           return;
         }
 
         // ✅ Fetch permissions (cached internally)

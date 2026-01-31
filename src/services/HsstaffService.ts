@@ -204,7 +204,21 @@ export const getStaffById = async (id: string) => {
   });
 
   if (!res.ok) throw new Error("Failed to fetch staff details");
-  return res.json();
+  const json = await res.json();
+
+  if (json.success && json.data) {
+    const AES_KEY = await configService.getAesSecretKey();
+    const decrypted = decryptAESFromPHP(json.data, AES_KEY);
+    return { ...json, data: decrypted ? JSON.parse(decrypted) : {} };
+  }
+
+  return json;
+};
+
+// ✅ Fetch Staff Permissions
+export const fetchStaffPermissions = async () => {
+   // Implementation to be restored or updated
+   return [];
 };
 
 // ✅ Delete staff
