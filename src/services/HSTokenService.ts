@@ -201,3 +201,63 @@ export const fetchScreenAppointments = async (doctorIds: string[]) => {
   }
   return {};
 };
+
+export interface UpcomingToken {
+  token_no: string;
+  patient_name: string;
+  status: string;
+  start_time: string;
+  doctor_name: string;
+  priority: string;
+}
+
+export interface ActiveDoctor {
+  id: string;
+  name: string;
+  department: string;
+  room: string;
+  avgTime: string;
+  profile_image: string | null;
+  status: string;
+}
+
+export interface ActivityItem {
+  id: string;
+  message: string;
+  time: string;
+}
+
+export interface TokenDashboardStats {
+  activeScreens: number;
+  totalScreens: number;
+  todayTokens: number;
+  avgWaitTime: string;
+  pendingQueue: number;
+  upcomingTokens: UpcomingToken[];
+  activeScreensList: any[]; // Using any to avoid complex mapping for now, or match ScreenData structure
+  activeDoctors: ActiveDoctor[];
+  recentActivity: ActivityItem[];
+}
+
+export const fetchDashboardStats = async () => {
+  const { apiUrl, headers } = await getAuthHeaders();
+
+  const res = await fetch(`${apiUrl.replace(/\/$/, "")}/hs_token_dashboard_stats`, {
+    method: "GET",
+    headers,
+  });
+
+  if (!res.ok) throw new Error("Failed to fetch dashboard stats");
+
+  const json = await res.json();
+  if (json.success && json.data) {
+    const AES_KEY = await configService.getAesSecretKey();
+    const decrypted = decryptAESFromPHP(json.data, AES_KEY);
+    try {
+      return decrypted ? JSON.parse(decrypted) : null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+};

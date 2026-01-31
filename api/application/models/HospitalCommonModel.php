@@ -511,4 +511,98 @@ class HospitalCommonModel extends CI_Model{
         $query = $this->db->get();
         return $query->result_array();
     }
+
+    public function get_TokenDashboardStats($hospital_id) {
+        $today = date('Y-m-d');
+
+        // 1. Active Screens Count
+        $this->db->where('hosuid', $hospital_id);
+        $this->db->where('status', 1);
+        $this->db->where('isdelete', 0);
+        $activeScreens = $this->db->count_all_results('ms_hospitals_screens');
+
+        // 2. Total Screens Count
+        $this->db->where('hosuid', $hospital_id);
+        $this->db->where('isdelete', 0);
+        $totalScreens = $this->db->count_all_results('ms_hospitals_screens');
+
+        // 3. Today's Tokens (Served + Waiting)
+        $this->db->from('ms_patient_appointment a');
+        $this->db->join('ms_doctors d', 'a.doctor_id = d.id');
+        $this->db->where('d.hosuid', $hospital_id);
+        $this->db->where('a.date', $today);
+        $todayTokens = $this->db->count_all_results();
+
+        // 4. Pending Queue
+        $this->db->from('ms_patient_appointment a');
+        $this->db->join('ms_doctors d', 'a.doctor_id = d.id');
+        $this->db->where('d.hosuid', $hospital_id);
+        $this->db->where('a.date', $today);
+        $this->db->where_in('a.status', ['waiting', 'booked']);
+        $pendingQueue = $this->db->count_all_results();
+
+        // 6. Upcoming Tokens (Next 5)
+        $this->db->select('a.token_no, a.patient_name, a.status, a.start_time, d.name as doctor_name, "Normal" as priority');
+        $this->db->from('ms_patient_appointment a');
+        $this->db->join('ms_doctors d', 'a.doctor_id = d.id');
+        $this->db->where('d.hosuid', $hospital_id);
+        $this->db->where('a.date', $today);
+        $this->db->where_in('a.status', ['waiting', 'booked']);
+        $this->db->order_by('a.token_no', 'ASC');
+        $this->db->limit(5);
+        $upcomingTokens = $this->db->get()->result_array();
+
+        // 6. Active Screens List (Detailed)
+        $activeScreensList = $this->get_HospitalScreensList($hospital_id);
+
+        // 7. Active Doctors (New)
+        $this->db->select('d.id, d.name, d.profile_image, d.status, hs.name as department');
+        $this->db->from('ms_doctors d');
+        $this->db->join('ms_hospitals_specialization hs', 'd.specialization_id = hs.speuid', 'left');
+        $this->db->where('d.hosuid', $hospital_id);
+        $this->db->where('d.status', 1);
+        $this->db->where('d.isdelete', 0);
+        $this->db->limit(5); 
+        $activeDoctors = $this->db->get()->result_array();
+        
+        // Enrich doctors with dummy data for now
+        foreach ($activeDoctors as &$doc) {
+            $doc['room'] = 'Room ' . (rand(100, 110)); 
+            $doc['avgTime'] = '12 min'; 
+        }
+
+        // 8. Recent Activity (New - Based on appointments)
+        $this->db->select('a.id, a.token_no, a.patient_name, a.status, a.created_at, a.updated_at');
+        $this->db->from('ms_patient_appointment a');
+        $this->db->join('ms_doctors d', 'a.doctor_id = d.id');
+        $this->db->where('d.hosuid', $hospital_id);
+        $this->db->order_by('a.updated_at', 'DESC'); 
+        $this->db->limit(5);
+        $recentAppts = $this->db->get()->result_array();
+
+        $recentActivity = [];
+        foreach ($recentAppts as $apt) {
+            $timeVal = $apt['updated_at'] ? $apt['updated_at'] : $apt['created_at'];
+            $timestamp = strtotime($timeVal);
+            $formattedTime = $timestamp ? date('h:i A', $timestamp) : '';
+            
+            $recentActivity[] = [
+                'id' => $apt['id'],
+                'message' => "Token " . $apt['token_no'] . " updated to " . $apt['status'],
+                'time' => $formattedTime
+            ];
+        }
+
+        return [
+            'activeScreens' => $activeScreens,
+            'totalScreens' => $totalScreens,
+            'todayTokens' => $todayTokens,
+            'avgWaitTime' => '15 min',
+            'pendingQueue' => $pendingQueue,
+            'upcomingTokens' => $upcomingTokens,
+            'activeScreensList' => $activeScreensList,
+            'activeDoctors' => $activeDoctors,
+            'recentActivity' => $recentActivity
+        ];
+    }
 }

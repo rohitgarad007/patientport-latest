@@ -299,6 +299,56 @@ class HSHospitalsController  extends CI_Controller {
         }
     }
 
+    public function getTokenDashboardStats() {
+        if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
+            exit;
+        }
+        // Enable error reporting for debugging
+        error_reporting(E_ALL);
+        ini_set('display_errors', 1);
+
+        $userToken = $this->input->get_request_header('Authorization');
+        $splitToken = explode(" ", $userToken);
+        $token = isset($splitToken[1]) ? $splitToken[1] : '';
+        try {
+            // Validate and decode token
+            $token = verifyAuthToken($token);
+            if (!$token) throw new Exception("Unauthorized");
+
+            $tokenData = is_string($token) ? json_decode($token, true) : $token;
+            $hrole = $tokenData['role'] ?? null;
+            $loguid = $tokenData['loguid'] ?? null;
+
+            if (!$loguid || $hrole !== "hospital_admin") {
+                echo json_encode([
+                    "success" => false,
+                    "message" => "Invalid user token or insufficient privileges"
+                ]);
+                return;
+            }
+
+            $hospitalInfo = $this->HospitalCommonModel->get_logHospitalInfo($loguid);
+            $hospital_id = isset($hospitalInfo['id']) ? $hospitalInfo['id'] : 0;
+
+            $stats = $this->HospitalCommonModel->get_TokenDashboardStats($hospital_id);
+            
+            $AES_KEY = "RohitGaradHos@173414";
+            $encryptedResponse = $this->encrypt_aes_for_js(json_encode($stats), $AES_KEY);
+
+            echo json_encode([
+                "success" => true,
+                "data" => $encryptedResponse
+            ]);
+
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode([
+                "success" => false,
+                "message" => "Server Error: " . $e->getMessage()
+            ]);
+        }
+    }
+
     /* ===== Screen Management Code End Here ===== */
 
     // AES Encryption function compatible with JS decryption

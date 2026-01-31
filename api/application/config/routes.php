@@ -277,6 +277,7 @@ $route['hs_doctors_list'] = 'HSHospitalsController/getDoctorsList';
 $route['hs_save_screen'] = 'HSHospitalsController/saveScreen';
 $route['hs_screens_list'] = 'HSHospitalsController/getScreensList';
 $route['hs_screens_appointments'] = 'HSHospitalsController/getScreenPreviewAppointments';
+$route['hs_token_dashboard_stats'] = 'HSHospitalsController/getTokenDashboardStats';
 
 
 $route['hs_amenities_list']								= 'HSHospitalsController/getAmenityList';
