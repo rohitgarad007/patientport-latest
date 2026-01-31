@@ -257,7 +257,7 @@ export default function HSStaffFormDialog({ open, onOpenChange, onSubmit, initia
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-2xl mx-auto">
+      <DialogContent className="w-full max-w-2xl mx-auto max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-center">{initialData ? "Edit Staff" : "Add Staff"}</DialogTitle>
           <DialogDescription className="text-center">{initialData ? "Update staff details" : "Enter staff details"}</DialogDescription>
