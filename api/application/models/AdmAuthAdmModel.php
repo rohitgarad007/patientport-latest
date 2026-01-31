@@ -225,6 +225,8 @@ class AdmAuthAdmModel extends CI_Model{
                 staffCount,
                 patientCount
             ");
+        } elseif ($role === 'staff') {
+             $this->db->select("$uidField AS loguid, id, name, email, password, phone, $statusField AS status, role");
         } else {
             $this->db->select("$uidField AS loguid, id, name, email, password, phone, $statusField AS status");
         }
@@ -239,8 +241,10 @@ class AdmAuthAdmModel extends CI_Model{
 
         $user = $query->row_array();
 
-        // Add role statically
-        $user['role'] = $role;
+        // Add role statically if not present
+        if (!isset($user['role'])) {
+            $user['role'] = $role;
+        }
 
         // 2️⃣ Check if account is active
         if ($user['status'] != 1) {

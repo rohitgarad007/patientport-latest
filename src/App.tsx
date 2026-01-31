@@ -157,6 +157,13 @@ import StaffasRoomAvailable from "./pages/StaffasRoomAvailable";
 import StaffasManageRoomAvailable from "./pages/staff-ward/StaffasManageRoomAvailable";
 
 
+
+import ReceptionProtectedRoute from "./components/auth/ReceptionProtectedRoute";
+import { ReceptionLayout } from "@/components/layout/ReceptionLayout";
+import ReceptionDashboard from "@/components/reception/ReceptionDashboard";
+import Screen1ClassicBlue from "@/components/reception/Screen1ClassicBlue";
+import ReceptionSettings from "@/components/reception/ReceptionSettings";
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const currentUser = getCurrentUser();
   return currentUser ? <>{children}</> : <Navigate to="/login" replace />;
@@ -391,7 +398,16 @@ const App = () => {
 
               <Route path="/sf-icu-access" element={<StaffLayout><StaffasRoomAvailable /></StaffLayout>} />
               <Route path="/sf-assign-rooms" element={<StaffLayout><StaffasManageRoomAvailable /></StaffLayout>} />
+
+
             </Route>
+
+             <Route element={<ReceptionProtectedRoute />}>
+                <Route path="/reception-dashboard" element={<ReceptionLayout><ReceptionDashboard /></ReceptionLayout>} />
+                <Route path="/reception-screen-live" element={<ReceptionLayout><Screen1ClassicBlue /></ReceptionLayout>} />
+                <Route path="/reception-settings" element={<ReceptionLayout><ReceptionSettings /></ReceptionLayout>} />
+
+             </Route>
 
 
             <Route path="/" element={<Navigate to="/dashboard" replace />} />

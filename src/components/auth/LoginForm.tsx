@@ -108,7 +108,7 @@
         // Set cookies correctly
         Cookies.set("token", data.token, { expires: 1 });
         Cookies.set("userInfo", JSON.stringify(data.userInfo), { expires: 1 });
-
+        
         // Success alert and redirect
         let timerInterval: any;
         Swal.fire({
@@ -136,7 +136,11 @@
               navigate("/doctor-dashboard");
               break;
             case "staff":
-              navigate("/staff-dashboard");
+              if (data.userInfo.role === "Receptionist") {
+                navigate("/reception-dashboard");
+              } else {
+                navigate("/staff-dashboard");
+              }
               break;
             case "patient":
               navigate("/patient-dashboard");
