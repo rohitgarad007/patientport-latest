@@ -209,7 +209,7 @@ export const fetchStaffPermissions = async (forceRefresh = false) => {
 
       const { apiUrl, headers } = await getAuthHeaders();
 
-      const res = await fetch(`${apiUrl}/sf_staff_permissions`, {
+      const res = await fetch(`${apiUrl}sf_staff_permissions`, {
         method: "POST",
         headers,
         body: JSON.stringify({}),

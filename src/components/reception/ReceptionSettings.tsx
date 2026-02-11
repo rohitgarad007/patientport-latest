@@ -142,9 +142,9 @@ const ReceptionSettings = () => {
     { id: 2, name: "Split View", description: "Doctor info left, queue right", component: Screen2SplitView },
     { id: 3, name: "Dark Theme", description: "Modern dark UI design", component: Screen3DarkTheme },
     { id: 4, name: "Card Layout", description: "Card-based token display", component: Screen4CardLayout },
-    { id: 7, name: "Full Screen Token", description: "Giant token display", component: Screen7FullScreenToken },
-    { id: 8, name: "Timeline View", description: "Vertical timeline queue", component: Screen8TimelineView },
-    { id: 10, name: "Gradient Modern", description: "Contemporary gradient design", component: Screen10GradientModern },
+    { id: 5, name: "Full Screen Token", description: "Giant token display", component: Screen7FullScreenToken },
+    { id: 6, name: "Timeline View", description: "Vertical timeline queue", component: Screen8TimelineView },
+    { id: 7, name: "Gradient Modern", description: "Contemporary gradient design", component: Screen10GradientModern },
   ];
 
   const [currentScreen, setCurrentScreen] = useState(0);
