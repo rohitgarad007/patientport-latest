@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { receptionService } from "@/services/ReceptionService";
 import { useSearchParams, Link } from "react-router-dom";
 import { 
   ArrowLeft, 
@@ -149,6 +150,91 @@ const ReceptionSettings = () => {
 
   const [currentScreen, setCurrentScreen] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [isFlashOnCall, setIsFlashOnCall] = useState(true);
+  const [isEmergencyMode, setIsEmergencyMode] = useState(false);
+
+  useEffect(() => {
+    const loadSettings = async () => {
+        setIsLoading(true);
+        try {
+            const response = await receptionService.fetchScreenSettings();
+            if (response && response.success && response.data) {
+                const settings = response.data;
+                
+                if (settings.screen_layout_id) {
+                    const index = screens.findIndex(s => s.id.toString() === settings.screen_layout_id.toString());
+                    if (index !== -1) {
+                        setCurrentScreen(index);
+                    }
+                }
+
+                // Prioritize explicit columns from DB
+                if (settings.volume !== undefined) setVolume([parseInt(settings.volume)]);
+                if (settings.is_muted !== undefined) setIsMuted(settings.is_muted == 1);
+                if (settings.repeat_count !== undefined) setRepeatCount(settings.repeat_count.toString());
+                if (settings.is_announcing !== undefined) setIsAnnouncing(settings.is_announcing == 1);
+                if (settings.is_paused !== undefined) setIsPaused(settings.is_paused == 1);
+                if (settings.flash_on_call !== undefined) setIsFlashOnCall(settings.flash_on_call == 1);
+                if (settings.emergency_mode !== undefined) setIsEmergencyMode(settings.emergency_mode == 1);
+
+                // Fallback to JSON blob if needed (for backward compatibility or missing columns)
+                if (settings.settings && !settings.volume) {
+                    const extra = typeof settings.settings === 'string' ? JSON.parse(settings.settings) : settings.settings;
+                    if (extra.volume) setVolume(Array.isArray(extra.volume) ? extra.volume : [extra.volume]);
+                    if (extra.isMuted !== undefined) setIsMuted(extra.isMuted);
+                    if (extra.repeatCount) setRepeatCount(extra.repeatCount);
+                    if (extra.isAnnouncing !== undefined) setIsAnnouncing(extra.isAnnouncing);
+                    if (extra.isPaused !== undefined) setIsPaused(extra.isPaused);
+                    if (extra.flashOnCall !== undefined) setIsFlashOnCall(extra.flashOnCall);
+                    if (extra.emergencyMode !== undefined) setIsEmergencyMode(extra.emergencyMode);
+                }
+            }
+        } catch (error) {
+            console.error("Failed to load settings", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    loadSettings();
+  }, []);
+
+  const handleSaveSettings = async () => {
+    setIsSaving(true);
+    try {
+        const settingsToSave = {
+        screen_layout_id: screens[currentScreen].id,
+        settings: {
+            volume: Array.isArray(volume) ? volume[0] : volume,
+            isMuted,
+            repeatCount,
+            isAnnouncing,
+            isPaused,
+            flashOnCall: isFlashOnCall,
+            emergencyMode: isEmergencyMode
+        }
+    };
+        
+        await receptionService.saveScreenSettings(settingsToSave);
+        toast({
+            title: "Settings Saved",
+            description: "Screen layout and preferences have been saved.",
+        });
+    } catch (error) {
+        console.error("Failed to save settings", error);
+        toast({
+            variant: "destructive",
+            title: "Save Failed",
+            description: "Could not save screen settings.",
+        });
+    } finally {
+        setIsSaving(false);
+    }
+  };
+
   const CurrentComponent = screens[currentScreen].component;
 
   return (
@@ -227,6 +313,13 @@ const ReceptionSettings = () => {
                   </div>
                 </button>
               ))}
+            </div>
+
+            <div className="flex justify-end pt-4">
+                <Button onClick={handleSaveSettings} disabled={isSaving || isLoading} className="gap-2">
+                    {isSaving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
+                    {isSaving ? "Saving..." : "Save Screen Configuration"}
+                </Button>
             </div>
               
 
@@ -311,7 +404,7 @@ const ReceptionSettings = () => {
                     <Bell className="h-5 w-5" />
                     <span className="text-sm font-medium">Flash on Call</span>
                   </div>
-                  <Switch defaultChecked />
+                  <Switch checked={isFlashOnCall} onCheckedChange={setIsFlashOnCall} />
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -319,50 +412,11 @@ const ReceptionSettings = () => {
                     <AlertCircle className="h-5 w-5" />
                     <span className="text-sm font-medium">Emergency Mode</span>
                   </div>
-                  <Switch />
+                  <Switch checked={isEmergencyMode} onCheckedChange={setIsEmergencyMode} />
                 </div>
               </CardContent>
             </Card>
 
-            {/* Call History */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Clock className="h-5 w-5 text-primary" />
-                  Recent Activity
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="h-64">
-                  <div className="space-y-3">
-                    {callHistory.map((item, index) => (
-                      <div key={index} className="flex items-center gap-3 text-sm">
-                        <div className={cn(
-                          "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
-                          item.action === "Called" ? "bg-success/10 text-success" :
-                          item.action === "Completed" ? "bg-primary/10 text-primary" :
-                          item.action === "Recalled" ? "bg-warning/10 text-warning" :
-                          "bg-destructive/10 text-destructive"
-                        )}>
-                          {item.action === "Called" && <PhoneCall className="h-4 w-4" />}
-                          {item.action === "Completed" && <CheckCircle className="h-4 w-4" />}
-                          {item.action === "Recalled" && <RotateCcw className="h-4 w-4" />}
-                          {(item.action === "Skipped" || item.action === "No Show") && <XCircle className="h-4 w-4" />}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium">
-                            <span className="font-mono text-primary">{item.token}</span>
-                            {" "}{item.action.toLowerCase()}
-                          </p>
-                          <p className="text-muted-foreground truncate">{item.doctor}</p>
-                        </div>
-                        <span className="text-muted-foreground shrink-0">{item.time}</span>
-                      </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
           </div>
         </div>
       </main>

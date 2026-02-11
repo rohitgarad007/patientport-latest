@@ -339,6 +339,112 @@ class HospitalCommonModel extends CI_Model{
 	    return $query->result_array();
 	}
 
+    /* ===== Reception Dashboard Queries ===== */
+
+    public function get_ReceptionStats($hospital_id, $hosuid) {
+        $today = date('Y-m-d');
+        
+        // Total Patients Today
+        $this->db->where('hospital_id', $hospital_id);
+        $this->db->where('date', $today);
+        $totalPatients = $this->db->count_all_results('ms_patient_appointment');
+
+        // Completed Today
+        $this->db->where('hospital_id', $hospital_id);
+        $this->db->where('date', $today);
+        $this->db->where('status', 'completed');
+        $completedToday = $this->db->count_all_results('ms_patient_appointment');
+
+        // Doctors Online (Active)
+        $this->db->where('hosuid', $hosuid);
+        $this->db->where('status', '1');
+        $this->db->where('isdelete', 0);
+        $doctorsAvailable = $this->db->count_all_results('ms_doctors');
+
+        // Emergency Cases (Mock logic or use priority if available)
+        // Assuming no explicit emergency flag in appointment table yet, returning 0 or checking 'source' if relevant
+        $emergencyCases = 0; 
+
+        // Average Wait Time (Mock or calculation)
+        $avgWaitTime = 15; // Default mock value for now
+
+        return [
+            'totalPatients' => $totalPatients,
+            'completedToday' => $completedToday,
+            'doctorsAvailable' => $doctorsAvailable,
+            'emergencyCases' => $emergencyCases,
+            'avgWaitTime' => $avgWaitTime
+        ];
+    }
+
+    public function get_ActiveConsultations($hospital_id) {
+        $today = date('Y-m-d');
+        
+        $this->db->select('mpa.id, mpa.token_no, mpa.patient_name, md.name as doctor_name, md.profile_image as doctor_image, hs.name as specialization');
+        $this->db->from('ms_patient_appointment mpa');
+        $this->db->join('ms_doctors md', 'md.id = mpa.doctor_id', 'left');
+        $this->db->join('ms_hospitals_specialization hs', 'md.specialization_id = hs.speuid', 'left');
+        $this->db->where('mpa.hospital_id', $hospital_id);
+        $this->db->where('mpa.date', $today);
+        $this->db->where('mpa.status', 'in_progress'); // Assuming 'in_progress' status
+        $query = $this->db->get();
+        return $query->result_array();
+    }
+
+    public function get_DashboardDoctors($hosuid) {
+        $this->db->select('md.id, md.name, md.profile_image, md.status, hs.name as specialization');
+        $this->db->from('ms_doctors md');
+        $this->db->join('ms_hospitals_specialization hs', 'md.specialization_id = hs.speuid', 'left');
+        $this->db->where('md.hosuid', $hosuid);
+        $this->db->where('md.isdelete', 0);
+        $query = $this->db->get();
+        return $query->result_array();
+    }
+
+    public function get_WaitingQueue($hospital_id) {
+        $today = date('Y-m-d');
+        
+        $this->db->select('mpa.id, mpa.token_no, mpa.patient_name, md.name as doctor_name, mpa.start_time, mpa.source');
+        $this->db->from('ms_patient_appointment mpa');
+        $this->db->join('ms_doctors md', 'md.id = mpa.doctor_id', 'left');
+        $this->db->where('mpa.hospital_id', $hospital_id);
+        $this->db->where('mpa.date', $today);
+        $this->db->where('mpa.status', 'waiting'); // Assuming 'waiting' status
+        $this->db->order_by('mpa.token_no', 'ASC');
+        $this->db->limit(10);
+        $query = $this->db->get();
+        return $query->result_array();
+    }
+
+    public function save_ScreenSettings($hospital_id, $data) {
+        $this->db->where('hospital_id', $hospital_id);
+        $query = $this->db->get('ms_hospitals_screen_settings');
+
+        if ($query->num_rows() > 0) {
+            $this->db->where('hospital_id', $hospital_id);
+            $this->db->update('ms_hospitals_screen_settings', $data);
+        } else {
+            $data['hospital_id'] = $hospital_id;
+            $this->db->insert('ms_hospitals_screen_settings', $data);
+        }
+        return $this->db->affected_rows() > 0;
+    }
+
+    public function get_ScreenSettings($hospital_id) {
+        $this->db->where('hospital_id', $hospital_id);
+        $query = $this->db->get('ms_hospitals_screen_settings');
+        return $query->row_array();
+    }
+
+    public function get_StaffHospitalInfo($staff_uid) {
+        $this->db->select('hospital_id, hosuid');
+        $this->db->from('ms_staff');
+        $this->db->where('staff_uid', $staff_uid);
+        $this->db->where('isdelete', 0);
+        $query = $this->db->get();
+        return $query->row_array();
+    }
+
 
 	public function get_HospitalWardTypeList($loguid){
 	    $this->db->select('hwt.wardtypeuid, hwt.title, hwt.status');

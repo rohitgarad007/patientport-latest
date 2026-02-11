@@ -1,13 +1,72 @@
 import { patients, doctors } from "@/data/hospitalData-2";
 import { Badge } from "@/components/ui/badge";
 import { Check, Clock, User, ArrowDown } from "lucide-react";
+import { ReceptionDashboardData } from "@/services/ReceptionService";
 
-export default function  Screen8TimelineView  () {
-  const doctor = doctors[2]; // Dr. Emily Chen
-  const allPatients = patients.slice(0, 8);
-  const completedPatients = allPatients.filter(p => p.status === 'completed');
-  const currentPatient = allPatients.find(p => p.status === 'current')!;
-  const waitingPatients = allPatients.filter(p => p.status === 'waiting');
+interface ScreenProps {
+  data?: ReceptionDashboardData | null;
+  settings?: any;
+}
+
+export default function Screen8TimelineView({ data, settings }: ScreenProps) {
+  // Helper to get current patient from data
+  const getCurrentPatient = () => {
+    if (data?.activeConsultations && data.activeConsultations.length > 0) {
+      const p = data.activeConsultations[0];
+      return {
+        id: p.id,
+        tokenNumber: p.token_no,
+        name: p.patient_name,
+        age: 0,
+        gender: 'M',
+        visitType: 'Consultation',
+        appointmentTime: new Date().toLocaleTimeString(),
+        status: 'current'
+      };
+    }
+    // Fallback
+    return patients.find(p => p.status === 'current')!;
+  };
+
+  // Helper to get waiting patients
+  const getWaitingPatients = () => {
+    if (data?.waitingQueue && data.waitingQueue.length > 0) {
+      return data.waitingQueue.map(p => ({
+        id: p.id,
+        tokenNumber: p.token_no,
+        name: p.patient_name,
+        age: 0,
+        gender: 'M',
+        visitType: 'Consultation',
+        appointmentTime: p.created_at || new Date().toLocaleTimeString(),
+        status: 'waiting',
+        priority: 'normal'
+      }));
+    }
+    // Fallback
+    return patients.filter(p => p.status === 'waiting');
+  };
+
+  // Helper to get doctor info
+  const getDoctor = () => {
+    if (data?.activeConsultations && data.activeConsultations.length > 0) {
+      const d = data.activeConsultations[0];
+      return {
+        name: d.doctor_name,
+        specialty: d.department_name,
+        image: d.doc_img || doctors[2].image,
+        room: "101",
+        avgTime: 15
+      };
+    }
+    return doctors[2];
+  };
+
+  const doctor = getDoctor();
+  const currentPatient = getCurrentPatient();
+  const waitingPatients = getWaitingPatients();
+  // Note: API doesn't return list of completed patients yet, so we use dummy data for now
+  const completedPatients = patients.filter(p => p.status === 'completed');
 
   return (
     <div className="min-h-screen bg-slate-50 p-8">
@@ -70,7 +129,7 @@ export default function  Screen8TimelineView  () {
                   <Badge className="bg-[#FF8A00] hover:bg-[#E67C00] text-white border-0 px-3 py-1">NOW SERVING</Badge>
                 </div>
                 <p className="font-bold text-slate-900 text-xl mb-1">{currentPatient.name}</p>
-                <p className="text-slate-500 font-medium">{currentPatient.age} yrs • {currentPatient.visitType}</p>
+                <p className="text-slate-500 font-medium">{currentPatient.age ? `${currentPatient.age} yrs • ` : ''}{currentPatient.visitType}</p>
               </div>
             </div>
 
@@ -91,14 +150,17 @@ export default function  Screen8TimelineView  () {
                     <span className="text-sm text-slate-400 font-medium">{patient.appointmentTime}</span>
                   </div>
                   <p className="font-bold text-slate-900 text-lg mb-2">{patient.name}</p>
+                  {/* @ts-ignore */}
                   {patient.priority === 'urgent' && (
                     <Badge variant="destructive" className="rounded-full">Urgent</Badge>
                   )}
+                  {/* @ts-ignore */}
                   {patient.priority === 'vip' && (
                     <Badge className="bg-amber-400 hover:bg-amber-500 text-white border-0 rounded-full">VIP</Badge>
                   )}
+                  {/* @ts-ignore */}
                   {!patient.priority && (
-                    <Badge variant="outline" className="text-slate-400 border-slate-200">Waiting</Badge>
+                    <Badge variant="outline" className="text-slate-400 border-slate-200">Regular</Badge>
                   )}
                 </div>
               </div>

@@ -147,6 +147,12 @@ $route['laboratories_report_details'] = 'LaboratoriesController/GetReportDetails
 $route['laboratories_collected_samples'] = 'LaboratoriesController/getCollectedSamples';
 $route['laboratories_update_order_status'] = 'LaboratoriesController/updateOrderStatus';
 $route['laboratories_approve_generate_report'] = 'LaboratoriesController/ApproveAndGenerateReport';
+
+
+// Reception Routes
+$route['reception_dashboard_stats'] = 'ReceptionController/getDashboardStats';
+$route['save_screen_settings'] = 'ReceptionController/save_screen_settings';
+$route['get_screen_settings'] = 'ReceptionController/get_screen_settings';
 $route['ms_doctor_specializations']					= 'SADoctorsController/GetSpecializationsList';
 $route['ms_doctors_list']							= 'SADoctorsController/ManageDoctorList';
 $route['ms_doctors_add']							= 'SADoctorsController/AddDoctorInformation';
@@ -278,6 +284,9 @@ $route['hs_save_screen'] = 'HSHospitalsController/saveScreen';
 $route['hs_screens_list'] = 'HSHospitalsController/getScreensList';
 $route['hs_screens_appointments'] = 'HSHospitalsController/getScreenPreviewAppointments';
 $route['hs_token_dashboard_stats'] = 'HSHospitalsController/getTokenDashboardStats';
+
+$route['save_screen_settings'] = 'ReceptionController/save_screen_settings';
+$route['get_screen_settings'] = 'ReceptionController/get_screen_settings';
 
 
 $route['hs_amenities_list']								= 'HSHospitalsController/getAmenityList';

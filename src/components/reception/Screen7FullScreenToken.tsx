@@ -1,11 +1,69 @@
 import { patients, doctors } from "@/data/hospitalData-2";
 import { Badge } from "@/components/ui/badge";
 import { Bell, Volume2 } from "lucide-react";
+import { ReceptionDashboardData } from "@/services/ReceptionService";
 
-export default function  Screen7FullScreenToken ()  {
-  const currentPatient = patients[2];
-  const nextPatients = patients.filter(p => p.status === 'waiting').slice(0, 3);
-  const doctor = doctors[0];
+interface ScreenProps {
+  data?: ReceptionDashboardData | null;
+  settings?: any;
+}
+
+export default function Screen7FullScreenToken({ data, settings }: ScreenProps) {
+  // Helper to get current patient from data
+  const getCurrentPatient = () => {
+    if (data?.activeConsultations && data.activeConsultations.length > 0) {
+      const p = data.activeConsultations[0];
+      return {
+        id: p.id,
+        tokenNumber: p.token_no,
+        name: p.patient_name,
+        age: 0,
+        gender: 'M',
+        visitType: 'Consultation',
+        appointmentTime: new Date().toLocaleTimeString(),
+        status: 'current'
+      };
+    }
+    // Fallback
+    return patients[2];
+  };
+
+  // Helper to get waiting patients
+  const getWaitingPatients = () => {
+    if (data?.waitingQueue && data.waitingQueue.length > 0) {
+      return data.waitingQueue.map(p => ({
+        id: p.id,
+        tokenNumber: p.token_no,
+        name: p.patient_name,
+        age: 0,
+        gender: 'M',
+        visitType: 'Consultation',
+        appointmentTime: p.created_at || new Date().toLocaleTimeString(),
+        status: 'waiting'
+      }));
+    }
+    // Fallback
+    return patients.filter(p => p.status === 'waiting').slice(0, 3);
+  };
+
+  // Helper to get doctor info
+  const getDoctor = () => {
+    if (data?.activeConsultations && data.activeConsultations.length > 0) {
+      const d = data.activeConsultations[0];
+      return {
+        name: d.doctor_name,
+        specialty: d.department_name,
+        image: d.doc_img || doctors[0].image,
+        room: "101",
+        avgTime: 15
+      };
+    }
+    return doctors[0];
+  };
+
+  const currentPatient = getCurrentPatient();
+  const nextPatients = getWaitingPatients().slice(0, 3);
+  const doctor = getDoctor();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 to-blue-700 flex flex-col text-white">
@@ -55,7 +113,7 @@ export default function  Screen7FullScreenToken ()  {
           <div className="space-y-3">
             <h2 className="text-6xl font-bold text-white tracking-tight drop-shadow-md">{currentPatient.name}</h2>
             <div className="flex items-center justify-center gap-4 text-blue-100 mt-4">
-              <span className="text-2xl font-medium">{currentPatient.age} years old</span>
+              <span className="text-2xl font-medium">{currentPatient.age ? `${currentPatient.age} years old` : ''}</span>
               <span className="opacity-50">•</span>
               <Badge className="bg-white/20 hover:bg-white/30 text-white border-0 text-lg py-1.5 px-6 rounded-full transition-colors backdrop-blur-md">
                 {currentPatient.visitType.toUpperCase()}

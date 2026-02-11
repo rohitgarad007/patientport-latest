@@ -1,11 +1,84 @@
 import { doctors, patients, hospitalStats } from "@/data/hospitalData-2";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Users, Activity, Zap } from "lucide-react";
+import { ReceptionDashboardData } from "@/services/ReceptionService";
 
-export default function Screen3DarkTheme () {
-  const doctor = doctors[2];
-  const currentPatient = patients.find(p => p.tokenNumber === 'C-001')!;
-  const waitingPatients = patients.filter(p => p.tokenNumber.startsWith('C') && p.status === 'waiting');
+interface ScreenProps {
+  data?: ReceptionDashboardData | null;
+  settings?: any;
+}
+
+export default function Screen3DarkTheme({ data, settings }: ScreenProps) {
+  // Helper to get current patient from data
+  const getCurrentPatient = () => {
+    if (data?.activeConsultations && data.activeConsultations.length > 0) {
+      const p = data.activeConsultations[0];
+      return {
+        id: p.id,
+        tokenNumber: p.token_no,
+        name: p.patient_name,
+        age: 0, // Not available in API yet
+        gender: 'M', // Not available in API yet
+        visitType: 'Consultation',
+        appointmentTime: new Date().toLocaleTimeString(),
+        status: 'current'
+      };
+    }
+    // Fallback
+    return patients.find(p => p.tokenNumber === 'C-001')!;
+  };
+
+  // Helper to get waiting patients
+  const getWaitingPatients = () => {
+    if (data?.waitingQueue && data.waitingQueue.length > 0) {
+      return data.waitingQueue.map(p => ({
+        id: p.id,
+        tokenNumber: p.token_no,
+        name: p.patient_name,
+        age: 0,
+        gender: 'M',
+        visitType: 'Consultation',
+        appointmentTime: p.created_at || new Date().toLocaleTimeString(),
+        status: 'waiting'
+      }));
+    }
+    // Fallback
+    return patients.filter(p => p.tokenNumber.startsWith('C') && p.status === 'waiting');
+  };
+
+  // Helper to get doctor info
+  const getDoctor = () => {
+    if (data?.activeConsultations && data.activeConsultations.length > 0) {
+      const d = data.activeConsultations[0];
+      return {
+        name: d.doctor_name,
+        specialty: d.department_name,
+        image: d.doc_img || doctors[2].image,
+        room: "101", // Not in API
+        avgTime: 15
+      };
+    }
+    return doctors[2];
+  };
+
+  // Helper to get stats
+  const getStats = () => {
+      if (data?.stats) {
+          return {
+              completedToday: data.stats.completed_patients,
+              waiting: data.stats.waiting_patients
+          };
+      }
+      return {
+          completedToday: hospitalStats.completedToday,
+          waiting: patients.filter(p => p.tokenNumber.startsWith('C') && p.status === 'waiting').length
+      };
+  };
+
+  const doctor = getDoctor();
+  const currentPatient = getCurrentPatient();
+  const waitingPatients = getWaitingPatients();
+  const stats = getStats();
 
   return (
     <div className="min-h-screen bg-[#111827] text-white p-8 flex flex-col overflow-hidden">
@@ -56,11 +129,11 @@ export default function Screen3DarkTheme () {
           {/* Stats Row */}
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-[#1F2937] rounded-2xl p-5 text-center border border-gray-800 shadow-lg">
-              <p className="text-4xl font-bold text-green-500 mb-1">{hospitalStats.completedToday}</p>
+              <p className="text-4xl font-bold text-green-500 mb-1">{stats.completedToday}</p>
               <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Completed</p>
             </div>
             <div className="bg-[#1F2937] rounded-2xl p-5 text-center border border-gray-800 shadow-lg">
-              <p className="text-4xl font-bold text-orange-500 mb-1">{waitingPatients.length}</p>
+              <p className="text-4xl font-bold text-orange-500 mb-1">{stats.waiting}</p>
               <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Waiting</p>
             </div>
           </div>
@@ -79,7 +152,7 @@ export default function Screen3DarkTheme () {
                 {currentPatient.tokenNumber}
               </div>
               <h3 className="text-3xl font-bold text-white mb-2">{currentPatient.name}</h3>
-              <p className="text-gray-400 text-lg font-medium">{currentPatient.age} yrs • {currentPatient.visitType}</p>
+              <p className="text-gray-400 text-lg font-medium">{currentPatient.age ? `${currentPatient.age} yrs • ` : ''}{currentPatient.visitType}</p>
             </div>
           </div>
           

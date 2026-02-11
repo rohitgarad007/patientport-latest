@@ -1,11 +1,69 @@
 import { doctors, patients } from "@/data/hospitalData-2";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, Clock, Users, ChevronRight, Wifi, Volume2 } from "lucide-react";
+import { ReceptionDashboardData } from "@/services/ReceptionService";
 
-export default function Screen10GradientModern (){
-  const doctor = doctors[0];
-  const currentPatient = patients[2];
-  const waitingPatients = patients.filter(p => p.status === 'waiting').slice(0, 5);
+interface ScreenProps {
+  data?: ReceptionDashboardData | null;
+  settings?: any;
+}
+
+export default function Screen10GradientModern({ data, settings }: ScreenProps) {
+  // Helper to get current patient from data
+  const getCurrentPatient = () => {
+    if (data?.activeConsultations && data.activeConsultations.length > 0) {
+      const p = data.activeConsultations[0];
+      return {
+        id: p.id,
+        tokenNumber: p.token_no,
+        name: p.patient_name,
+        age: 0,
+        gender: 'M',
+        visitType: 'Consultation',
+        appointmentTime: new Date().toLocaleTimeString(),
+        status: 'current'
+      };
+    }
+    // Fallback
+    return patients[2];
+  };
+
+  // Helper to get waiting patients
+  const getWaitingPatients = () => {
+    if (data?.waitingQueue && data.waitingQueue.length > 0) {
+      return data.waitingQueue.map(p => ({
+        id: p.id,
+        tokenNumber: p.token_no,
+        name: p.patient_name,
+        age: 0,
+        gender: 'M',
+        visitType: 'Consultation',
+        appointmentTime: p.created_at || new Date().toLocaleTimeString(),
+        status: 'waiting'
+      }));
+    }
+    // Fallback
+    return patients.filter(p => p.status === 'waiting').slice(0, 5);
+  };
+
+  // Helper to get doctor info
+  const getDoctor = () => {
+    if (data?.activeConsultations && data.activeConsultations.length > 0) {
+      const d = data.activeConsultations[0];
+      return {
+        name: d.doctor_name,
+        specialty: d.department_name,
+        image: d.doc_img || doctors[0].image,
+        room: "101",
+        avgTime: 15
+      };
+    }
+    return doctors[0];
+  };
+
+  const doctor = getDoctor();
+  const currentPatient = getCurrentPatient();
+  const waitingPatients = getWaitingPatients();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary via-accent to-primary relative overflow-hidden">
@@ -68,7 +126,7 @@ export default function Screen10GradientModern (){
 
                 <h2 className="text-3xl font-bold text-primary-foreground mb-2">{currentPatient.name}</h2>
                 <div className="flex items-center justify-center gap-3">
-                  <span className="text-primary-foreground/70">{currentPatient.age} years</span>
+                  <span className="text-primary-foreground/70">{currentPatient.age ? `${currentPatient.age} years` : ''}</span>
                   <span className="text-primary-foreground/40">•</span>
                   <Badge className="bg-primary-foreground/20 text-primary-foreground border-primary-foreground/30">
                     {currentPatient.visitType.toUpperCase()}

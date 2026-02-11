@@ -1,12 +1,69 @@
 import { doctors, patients } from "@/data/hospitalData-2";
 import { Badge } from "@/components/ui/badge";
 import { Clock, MapPin, User, ChevronRight } from "lucide-react";
+import { ReceptionDashboardData } from "@/services/ReceptionService";
 
+interface ScreenProps {
+  data?: ReceptionDashboardData | null;
+  settings?: any;
+}
 
-export default function Screen4CardLayout() {
-  const doctor = doctors[3];
-  const currentPatient = patients[2];
-  const waitingPatients = patients.filter(p => p.status === 'waiting');
+export default function Screen4CardLayout({ data, settings }: ScreenProps) {
+  // Helper to get current patient from data
+  const getCurrentPatient = () => {
+    if (data?.activeConsultations && data.activeConsultations.length > 0) {
+      const p = data.activeConsultations[0];
+      return {
+        id: p.id,
+        tokenNumber: p.token_no,
+        name: p.patient_name,
+        age: 0,
+        gender: 'M',
+        visitType: 'Consultation',
+        appointmentTime: new Date().toLocaleTimeString(),
+        status: 'current'
+      };
+    }
+    // Fallback
+    return patients[2];
+  };
+
+  // Helper to get waiting patients
+  const getWaitingPatients = () => {
+    if (data?.waitingQueue && data.waitingQueue.length > 0) {
+      return data.waitingQueue.map(p => ({
+        id: p.id,
+        tokenNumber: p.token_no,
+        name: p.patient_name,
+        age: 0,
+        gender: 'M',
+        visitType: 'Consultation',
+        appointmentTime: p.created_at || new Date().toLocaleTimeString(),
+        status: 'waiting'
+      }));
+    }
+    // Fallback
+    return patients.filter(p => p.status === 'waiting');
+  };
+
+  // Helper to get doctor info
+  const getDoctor = () => {
+    if (data?.activeConsultations && data.activeConsultations.length > 0) {
+      const d = data.activeConsultations[0];
+      return {
+        name: d.doctor_name,
+        specialty: d.department_name,
+        image: d.doc_img || doctors[3].image,
+        room: "102",
+        avgTime: 12
+      };
+    }
+    return doctors[3];
+  };
+
+  const doctor = getDoctor();
+  const currentPatient = getCurrentPatient();
+  const waitingPatients = getWaitingPatients();
 
   return (
     <div className="min-h-screen bg-slate-100 p-8 flex flex-col">
@@ -80,7 +137,7 @@ export default function Screen4CardLayout() {
               <p className="text-xs font-bold text-white/80 uppercase tracking-[0.2em] mb-4">Now Serving</p>
               <div className="token-number text-7xl font-bold text-white mb-4 tracking-tight">{currentPatient.tokenNumber}</div>
               <h3 className="text-3xl font-bold text-white mb-2">{currentPatient.name}</h3>
-              <p className="text-white/90 font-medium text-lg">{currentPatient.age} yrs • {currentPatient.visitType}</p>
+              <p className="text-white/90 font-medium text-lg">{currentPatient.age ? `${currentPatient.age} yrs • ` : ''}{currentPatient.visitType}</p>
             </div>
           </div>
         </div>
