@@ -29,6 +29,7 @@ export interface ActiveConsultation {
   id: string;
   token_no: string;
   patient_name: string;
+  doctor_id?: string;
   doctor_name: string;
   doctor_image?: string;
   specialization?: string;
@@ -38,8 +39,10 @@ export interface WaitingQueueItem {
   id: string;
   token_no: string;
   patient_name: string;
+  doctor_id?: string;
   doctor_name: string;
   start_time?: string;
+  created_at?: string;
   source?: string;
 }
 
@@ -49,6 +52,8 @@ export interface DashboardDoctor {
   profile_image?: string;
   status: string; // "1" for active/online, "0" for inactive/offline
   specialization?: string;
+  room_number?: string;
+  avg_consultation_time?: string;
 }
 
 export interface ReceptionDashboardData {
@@ -150,5 +155,51 @@ export const receptionService = {
         }
     }
     return null;
+  },
+
+  fetchScreensList: async () => {
+    const { headers, apiUrl } = await getAuthHeaders();
+    const response = await fetch(`${apiUrl.replace(/\/$/, "")}/hs_screens_list`, {
+      method: "GET",
+      headers,
+    });
+
+    if (!response.ok) throw new Error("Failed to fetch screens list");
+
+    const json = await response.json();
+    if (json.success && json.data) {
+      const AES_KEY = await configService.getAesSecretKey();
+      const decrypted = decryptAESFromPHP(json.data, AES_KEY);
+      try {
+        return decrypted ? JSON.parse(decrypted) : [];
+      } catch (e) {
+        console.error("Parse error", e);
+        return [];
+      }
+    }
+    return [];
+  },
+
+  fetchReceptionScreens: async () => {
+    const { headers, apiUrl } = await getAuthHeaders();
+    const response = await fetch(`${apiUrl.replace(/\/$/, "")}/reception_screens_list`, {
+      method: "GET",
+      headers,
+    });
+
+    if (!response.ok) throw new Error("Failed to fetch reception screens list");
+
+    const json = await response.json();
+    if (json.success && json.data) {
+      const AES_KEY = await configService.getAesSecretKey();
+      const decrypted = decryptAESFromPHP(json.data, AES_KEY);
+      try {
+        return decrypted ? JSON.parse(decrypted) : [];
+      } catch (e) {
+        console.error("Parse error", e);
+        return [];
+      }
+    }
+    return [];
   }
 };

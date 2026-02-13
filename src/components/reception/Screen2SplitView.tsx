@@ -19,9 +19,9 @@ export default function Screen2SplitView ({ data, settings }: ScreenProps) {
         id: d.id,
         name: d.name,
         specialty: d.specialization || "General",
-        room: (d as any).room || "Room 1",
+        room: d.room_number || "Room 1",
         image: d.profile_image || defaultDoctors[0].image,
-        avgTime: parseInt((d as any).avgTime) || 15,
+        avgTime: d.avg_consultation_time ? parseInt(d.avg_consultation_time) : 15,
         status: d.status === "1" ? 'available' : 'busy'
       };
     }
@@ -92,64 +92,64 @@ export default function Screen2SplitView ({ data, settings }: ScreenProps) {
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex">
       {/* Left Panel - Doctor & Token */}
-      <div className="w-[45%] bg-[#2563EB] p-8 flex flex-col relative overflow-hidden">
+      <div className="w-[35%] bg-[#2563EB] p-6 flex flex-col relative overflow-hidden">
         {/* Decorative Circle */}
         <div className="absolute -top-20 -right-20 w-64 h-64 bg-white/5 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-black/10 to-transparent" />
 
-        <div className="flex items-center justify-between mb-12 relative z-10">
+        <div className="flex items-center justify-between mb-8 relative z-10">
           <img 
             src="https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=120&h=40&fit=crop" 
             alt="Hospital Logo" 
-            className="h-12 rounded-lg bg-white/10 p-2"
+            className="h-10 rounded-lg bg-white/10 p-2"
           />
-          <Badge className="bg-white/20 hover:bg-white/30 text-white border-0 text-sm px-4 py-1.5 backdrop-blur-sm">
+          <Badge className="bg-white/20 hover:bg-white/30 text-white border-0 text-xs px-3 py-1 backdrop-blur-sm">
             {doctor.specialty || "General"} Department
           </Badge>
         </div>
 
         <div className="flex-1 flex flex-col justify-center relative z-10">
-          <div className="mb-12 relative">
+          <div className="mb-8 relative">
             <div className="flex items-center justify-between">
               <div className="relative">
                 <img
                   src={doctor.image}
                   alt={doctor.name}
-                  className="w-40 h-40 rounded-[2rem] object-cover ring-4 ring-white/20 shadow-2xl"
+                  className="w-24 h-24 rounded-[2rem] object-cover ring-4 ring-white/20 shadow-2xl"
                 />
               </div>
               <div className="absolute right-0 top-1/2 -translate-y-1/2">
-                <div className={`w-4 h-4 rounded-full ${doctor.status === 'available' ? 'bg-green-400 shadow-[0_0_10px_rgba(74,222,128,0.5)]' : 'bg-red-400'} animate-pulse`} />
+                <div className={`w-3 h-3 rounded-full ${doctor.status === 'available' ? 'bg-green-400 shadow-[0_0_10px_rgba(74,222,128,0.5)]' : 'bg-red-400'} animate-pulse`} />
               </div>
             </div>
             
-            <div className="mt-8 space-y-2">
-              <h2 className="text-4xl font-bold text-white tracking-tight">{doctor.name}</h2>
-              <p className="text-xl text-blue-100 font-medium">{doctor.specialty}</p>
-              <Badge className="bg-white/20 hover:bg-white/30 text-white border-0 mt-2 text-base px-4 py-1">
+            <div className="mt-6 space-y-1">
+              <h2 className="text-2xl font-bold text-white tracking-tight">{doctor.name}</h2>
+              <p className="text-lg text-blue-100 font-medium">{doctor.specialty}</p>
+              <Badge className="bg-white/20 hover:bg-white/30 text-white border-0 mt-2 text-sm px-3 py-0.5">
                 {doctor.room}
               </Badge>
             </div>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-md rounded-3xl p-10 text-center border border-white/10 shadow-xl">
-            <p className="text-xs font-bold text-blue-200 tracking-[0.2em] uppercase mb-6">Currently Serving</p>
-            <div className="token-number text-8xl font-bold text-white mb-4 tracking-tight">{currentPatient.tokenNumber}</div>
-            <h3 className="text-3xl font-bold text-white mb-2">{currentPatient.name}</h3>
-            <p className="text-blue-100 text-lg">{currentPatient.age > 0 ? `${currentPatient.age} yrs • ` : ''}{currentPatient.visitType}</p>
+          <div className="bg-white/10 backdrop-blur-md rounded-3xl p-6 text-center border border-white/10 shadow-xl">
+            <p className="text-[10px] font-bold text-blue-200 tracking-[0.2em] uppercase mb-3">Currently Serving</p>
+            <div className="token-number text-6xl font-bold text-white mb-2 tracking-tight">{currentPatient.tokenNumber}</div>
+            <h3 className="text-xl font-bold text-white mb-1">{currentPatient.name}</h3>
+            <p className="text-blue-100 text-sm">{currentPatient.age > 0 ? `${currentPatient.age} yrs • ` : ''}{currentPatient.visitType}</p>
           </div>
         </div>
 
-        <div className="flex items-center justify-between text-blue-100 mt-8 relative z-10 font-medium">
+        <div className="flex items-center justify-between text-blue-100 mt-4 relative z-10 font-medium">
           <div className="text-white">
             <TimeDisplay variant="compact" />
           </div>
-          <span className="text-sm">~{doctor.avgTime} min per patient</span>
+          <span className="text-xs">~{doctor.avgTime} min per patient</span>
         </div>
       </div>
 
       {/* Right Panel - Queue */}
-      <div className="w-[55%] p-10 flex flex-col bg-[#F8FAFC]">
+      <div className="w-[65%] p-10 flex flex-col bg-[#F8FAFC]">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-3xl font-bold text-slate-900">Waiting Queue</h2>
           <div className="flex items-center gap-6 text-slate-500">

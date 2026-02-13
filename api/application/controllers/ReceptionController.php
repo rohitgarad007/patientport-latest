@@ -194,6 +194,8 @@ class ReceptionController extends CI_Controller {
                 'is_paused' => isset($settings['isPaused']) ? ($settings['isPaused'] ? 1 : 0) : 0,
                 'flash_on_call' => isset($settings['flashOnCall']) ? ($settings['flashOnCall'] ? 1 : 0) : 1,
                 'emergency_mode' => isset($settings['emergencyMode']) ? ($settings['emergencyMode'] ? 1 : 0) : 0,
+                'display_view' => isset($settings['displayView']) ? $settings['displayView'] : 'single',
+                'display_timer' => isset($settings['displayTimer']) ? (int)$settings['displayTimer'] : 30,
                 'settings' => json_encode($settings)
             ];
             
@@ -252,6 +254,62 @@ class ReceptionController extends CI_Controller {
             
             $response = json_encode(['success' => true, 'data' => $settings]);
             echo json_encode(['data' => $this->encrypt_aes_for_js($response, "RohitGaradHos@173414")]);
+
+        } catch (Throwable $e) {
+             $response = json_encode(['success' => false, 'message' => $e->getMessage()]);
+             echo json_encode(['data' => $this->encrypt_aes_for_js($response, "RohitGaradHos@173414")]);
+        }
+    }
+
+    public function getReceptionScreensList() {
+        if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') { exit; }
+        
+        try {
+            $userToken = $this->input->get_request_header('Authorization');
+            if (empty($userToken) && isset($_SERVER['HTTP_AUTHORIZATION'])) {
+                $userToken = $_SERVER['HTTP_AUTHORIZATION'];
+            }
+            if (empty($userToken) && function_exists('apache_request_headers')) {
+                $headers = apache_request_headers();
+                if (isset($headers['Authorization'])) {
+                    $userToken = $headers['Authorization'];
+                } elseif (isset($headers['authorization'])) {
+                    $userToken = $headers['authorization'];
+                }
+            }
+            
+            $splitToken = explode(" ", $userToken);
+            $token = isset($splitToken[1]) ? $splitToken[1] : '';
+            $token = verifyAuthToken($token);
+            if (!$token) throw new Exception("Unauthorized");
+            
+            $tokenData = is_string($token) ? json_decode($token, true) : $token;
+            $hrole = $tokenData['role'] ?? null;
+            $loguid = $tokenData['loguid'] ?? null;
+            
+            if (!$loguid || ($hrole !== "hospital_admin" && $hrole !== "Receptionist")) {
+                throw new Exception("Unauthorized access");
+            }
+
+            if ($hrole === "hospital_admin") {
+                $hospitalInfo = $this->HospitalCommonModel->get_logHospitalInfo($loguid);
+                $hospital_id = $hospitalInfo['id'] ?? 0;
+            } else {
+                $staffInfo = $this->HospitalCommonModel->get_StaffHospitalInfo($loguid);
+                $hospital_id = $staffInfo['hospital_id'] ?? 0;
+            }
+
+            if (!$hospital_id) throw new Exception("Hospital not found");
+
+            // Get screens list using the common model
+            $screensList = $this->HospitalCommonModel->get_HospitalScreensList($hospital_id);
+            $AES_KEY = "RohitGaradHos@173414";
+            $encryptedData = $this->encrypt_aes_for_js(json_encode($screensList), $AES_KEY);
+
+            echo json_encode([
+                "success" => true,
+                "data"    => $encryptedData
+            ]);
 
         } catch (Throwable $e) {
              $response = json_encode(['success' => false, 'message' => $e->getMessage()]);

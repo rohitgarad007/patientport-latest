@@ -1,12 +1,57 @@
-import { doctors, patients, hospitalStats, departments } from "@/data/hospitalData";
-import { StatsCard } from "@/components/token/StatsCard";
+import { doctors, patients, hospitalStats, departments } from "@/data/hospitalData-2";
+import { StatsCard } from "@/components/reception/token/StatsCard";
 import { Badge } from "@/components/ui/badge";
 import { Users, Clock, CheckCircle, AlertTriangle, Activity, TrendingUp } from "lucide-react";
+import { ReceptionDashboardData } from "@/services/ReceptionService";
 
-export const Screen9Dashboard = () => {
-  const activeDoctors = doctors.filter(d => d.status !== 'break');
-  const currentPatients = patients.filter(p => p.status === 'current');
-  const waitingPatients = patients.filter(p => p.status === 'waiting');
+interface ScreenProps {
+  data?: ReceptionDashboardData | null;
+  settings?: any;
+}
+
+export default function Screen9Dashboard({ data, settings }: ScreenProps) {
+  // Use dynamic data if available
+  const stats = data?.stats || hospitalStats;
+  
+  // Map dynamic doctors if available
+  const activeDoctors = data?.doctors 
+    ? data.doctors.map(d => ({
+        id: d.id,
+        name: d.name,
+        specialty: d.specialization || "General",
+        room: "Room 1", // Needs backend field
+        image: d.profile_image || "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400&h=400&fit=crop",
+        status: d.status === "1" ? 'available' : 'busy',
+        patients: 0,
+        avgTime: 15
+      }))
+    : doctors.filter(d => d.status !== 'break');
+
+  const currentPatients = data?.activeConsultations 
+    ? data.activeConsultations.map(c => ({
+        id: c.id,
+        tokenNumber: c.token_no,
+        name: c.patient_name,
+        status: 'current',
+        appointmentTime: new Date().toLocaleTimeString(),
+        age: 30, // Dummy
+        gender: 'M', // Dummy
+        visitType: 'Consultation'
+      }))
+    : patients.filter(p => p.status === 'current');
+
+  const waitingPatients = data?.waitingQueue
+    ? data.waitingQueue.map(q => ({
+        id: q.id,
+        tokenNumber: q.token_no,
+        name: q.patient_name,
+        status: 'waiting',
+        appointmentTime: q.start_time || new Date().toLocaleTimeString(),
+        age: 30, // Dummy
+        gender: 'M', // Dummy
+        visitType: 'Consultation'
+      }))
+    : patients.filter(p => p.status === 'waiting');
 
   return (
     <div className="min-h-screen bg-muted p-6">
@@ -34,11 +79,11 @@ export const Screen9Dashboard = () => {
 
       {/* Stats Row */}
       <div className="grid grid-cols-5 gap-4 mb-6">
-        <StatsCard title="Total Patients" value={hospitalStats.totalPatients} icon={Users} variant="primary" />
-        <StatsCard title="Average Wait" value={`${hospitalStats.avgWaitTime} min`} icon={Clock} variant="warning" />
-        <StatsCard title="Completed" value={hospitalStats.completedToday} icon={CheckCircle} variant="success" trend="+12% from yesterday" />
-        <StatsCard title="Emergency" value={hospitalStats.emergencyCases} icon={AlertTriangle} variant="default" />
-        <StatsCard title="Doctors Online" value={hospitalStats.doctorsAvailable} icon={Activity} variant="accent" />
+        <StatsCard title="Total Patients" value={stats.totalPatients} icon={Users} variant="primary" />
+        <StatsCard title="Average Wait" value={`${stats.avgWaitTime} min`} icon={Clock} variant="warning" />
+        <StatsCard title="Completed" value={stats.completedToday} icon={CheckCircle} variant="success" trend="+12% from yesterday" />
+        <StatsCard title="Emergency" value={stats.emergencyCases} icon={AlertTriangle} variant="default" />
+        <StatsCard title="Doctors Online" value={stats.doctorsAvailable} icon={Activity} variant="accent" />
       </div>
 
       <div className="grid grid-cols-12 gap-6">

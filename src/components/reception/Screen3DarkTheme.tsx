@@ -48,13 +48,23 @@ export default function Screen3DarkTheme({ data, settings }: ScreenProps) {
 
   // Helper to get doctor info
   const getDoctor = () => {
+    if (data?.doctors && data.doctors.length > 0) {
+      const d = data.doctors[0];
+      return {
+        name: d.name,
+        specialty: d.specialization || "General",
+        image: d.profile_image || doctors[2].image,
+        room: d.room_number || "101",
+        avgTime: d.avg_consultation_time ? parseInt(d.avg_consultation_time) : 15
+      };
+    }
     if (data?.activeConsultations && data.activeConsultations.length > 0) {
       const d = data.activeConsultations[0];
       return {
         name: d.doctor_name,
-        specialty: d.department_name,
-        image: d.doc_img || doctors[2].image,
-        room: "101", // Not in API
+        specialty: d.specialization || "General",
+        image: d.doctor_image || doctors[2].image,
+        room: "101",
         avgTime: 15
       };
     }

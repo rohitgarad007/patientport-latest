@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { receptionService } from "@/services/ReceptionService";
+import { receptionService, ReceptionDashboardData } from "@/services/ReceptionService";
 import { useSearchParams, Link } from "react-router-dom";
 import { 
   ArrowLeft, 
@@ -44,8 +44,11 @@ import Screen1ClassicBlue from "@/components/reception/Screen1ClassicBlue"
 import Screen2SplitView from "@/components/reception/Screen2SplitView"
 import Screen3DarkTheme from "@/components/reception/Screen3DarkTheme"
 import Screen4CardLayout from "@/components/reception/Screen4CardLayout"
+import Screen5MinimalWhite from "@/components/reception/Screen5MinimalWhite"
+import Screen6MultiCounter from "@/components/reception/Screen6MultiCounter"
 import Screen7FullScreenToken from "@/components/reception/Screen7FullScreenToken"
 import Screen8TimelineView from "@/components/reception/Screen8TimelineView"
+import Screen9Dashboard from "@/components/reception/Screen9Dashboard"
 import Screen10GradientModern from "@/components/reception/Screen10GradientModern"
 
 
@@ -143,9 +146,12 @@ const ReceptionSettings = () => {
     { id: 2, name: "Split View", description: "Doctor info left, queue right", component: Screen2SplitView },
     { id: 3, name: "Dark Theme", description: "Modern dark UI design", component: Screen3DarkTheme },
     { id: 4, name: "Card Layout", description: "Card-based token display", component: Screen4CardLayout },
-    { id: 5, name: "Full Screen Token", description: "Giant token display", component: Screen7FullScreenToken },
-    { id: 6, name: "Timeline View", description: "Vertical timeline queue", component: Screen8TimelineView },
-    { id: 7, name: "Gradient Modern", description: "Contemporary gradient design", component: Screen10GradientModern },
+    { id: 5, name: "Minimal White", description: "Clean and minimal design", component: Screen5MinimalWhite },
+    { id: 6, name: "Multi Counter", description: "Multiple counter display", component: Screen6MultiCounter },
+    { id: 7, name: "Full Screen Token", description: "Giant token display", component: Screen7FullScreenToken },
+    { id: 8, name: "Timeline View", description: "Vertical timeline queue", component: Screen8TimelineView },
+    { id: 9, name: "Dashboard View", description: "Comprehensive dashboard view", component: Screen9Dashboard },
+    { id: 10, name: "Gradient Modern", description: "Contemporary gradient design", component: Screen10GradientModern },
   ];
 
   const [currentScreen, setCurrentScreen] = useState(0);
@@ -156,14 +162,21 @@ const ReceptionSettings = () => {
 
   const [isFlashOnCall, setIsFlashOnCall] = useState(true);
   const [isEmergencyMode, setIsEmergencyMode] = useState(false);
+  const [displayView, setDisplayView] = useState("single");
+  const [displayTimer, setDisplayTimer] = useState("30");
+  const [dashboardData, setDashboardData] = useState<ReceptionDashboardData | null>(null);
 
   useEffect(() => {
     const loadSettings = async () => {
         setIsLoading(true);
         try {
-            const response = await receptionService.fetchScreenSettings();
-            if (response && response.success && response.data) {
-                const settings = response.data;
+            const [settingsResponse, dataResponse] = await Promise.all([
+                receptionService.fetchScreenSettings(),
+                receptionService.fetchDashboardStats()
+            ]);
+
+            if (settingsResponse && settingsResponse.success && settingsResponse.data) {
+                const settings = settingsResponse.data;
                 
                 if (settings.screen_layout_id) {
                     const index = screens.findIndex(s => s.id.toString() === settings.screen_layout_id.toString());
@@ -180,6 +193,8 @@ const ReceptionSettings = () => {
                 if (settings.is_paused !== undefined) setIsPaused(settings.is_paused == 1);
                 if (settings.flash_on_call !== undefined) setIsFlashOnCall(settings.flash_on_call == 1);
                 if (settings.emergency_mode !== undefined) setIsEmergencyMode(settings.emergency_mode == 1);
+                if (settings.display_view !== undefined) setDisplayView(settings.display_view);
+                if (settings.display_timer !== undefined) setDisplayTimer(settings.display_timer.toString());
 
                 // Fallback to JSON blob if needed (for backward compatibility or missing columns)
                 if (settings.settings && !settings.volume) {
@@ -191,10 +206,16 @@ const ReceptionSettings = () => {
                     if (extra.isPaused !== undefined) setIsPaused(extra.isPaused);
                     if (extra.flashOnCall !== undefined) setIsFlashOnCall(extra.flashOnCall);
                     if (extra.emergencyMode !== undefined) setIsEmergencyMode(extra.emergencyMode);
+                    if (extra.displayView !== undefined) setDisplayView(extra.displayView);
+                    if (extra.displayTimer !== undefined) setDisplayTimer(extra.displayTimer);
                 }
             }
+
+            if (dataResponse) {
+                setDashboardData(dataResponse);
+            }
         } catch (error) {
-            console.error("Failed to load settings", error);
+            console.error("Failed to load settings or data", error);
         } finally {
             setIsLoading(false);
         }
@@ -214,7 +235,9 @@ const ReceptionSettings = () => {
             isAnnouncing,
             isPaused,
             flashOnCall: isFlashOnCall,
-            emergencyMode: isEmergencyMode
+            emergencyMode: isEmergencyMode,
+            displayView,
+            displayTimer
         }
     };
         
@@ -236,6 +259,17 @@ const ReceptionSettings = () => {
   };
 
   const CurrentComponent = screens[currentScreen].component;
+
+  const currentSettings = {
+    screen_layout_id: screens[currentScreen].id,
+    volume: Array.isArray(volume) ? volume[0] : volume,
+    is_muted: isMuted ? 1 : 0,
+    repeat_count: parseInt(repeatCount),
+    is_announcing: isAnnouncing ? 1 : 0,
+    is_paused: isPaused ? 1 : 0,
+    flash_on_call: isFlashOnCall ? 1 : 0,
+    emergency_mode: isEmergencyMode ? 1 : 0
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -288,28 +322,31 @@ const ReceptionSettings = () => {
               <div className="bg-card rounded-2xl shadow-xl overflow-hidden border border-border">
                 <div className="aspect-video overflow-hidden">
                   <div className="w-full h-full overflow-auto">
-                    <CurrentComponent />
+                    <CurrentComponent data={dashboardData} settings={currentSettings} />
                   </div>
                 </div>
               </div>
             </div>
         
             <div className="grid grid-cols-5 gap-4">
-              {screens.map((screen, index) => (
+              {screens.map((screenItem, index) => (
                 <button
-                  key={screen.id}
+                  key={screenItem.id}
                   onClick={() => setCurrentScreen(index)}
-                  className={`relative rounded-xl overflow-hidden border-2 transition-all aspect-video ${
+                  className={`relative rounded-xl overflow-hidden border-2 transition-all aspect-video group ${
                     index === currentScreen
                       ? 'border-primary shadow-lg ring-2 ring-primary/20'
                       : 'border-border hover:border-primary/50'
                   }`}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="token-number text-2xl font-bold text-primary">{screen.id}</div>
-                      <p className="text-xs text-muted-foreground mt-1">{screen.name}</p>
+                  <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                    <div className="origin-top-left transform scale-[0.2] w-[500%] h-[500%] [&_.min-h-screen]:h-full [&_.min-h-screen]:min-h-0 [&_.h-screen]:h-full [&_.h-screen]:min-h-0">
+                      <screenItem.component />
                     </div>
+                  </div>
+                  <div className="absolute inset-0 bg-transparent group-hover:bg-primary/5 transition-colors" />
+                  <div className="absolute bottom-0 left-0 right-0 p-2 bg-background/90 backdrop-blur-sm border-t border-border">
+                    <p className="text-xs font-medium text-center truncate">{screenItem.name}</p>
                   </div>
                 </button>
               ))}
@@ -391,7 +428,34 @@ const ReceptionSettings = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <span className="text-sm text-muted-foreground">Display View</span>
+                  <Select value={displayView} onValueChange={setDisplayView}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="single">Single Screen</SelectItem>
+                      <SelectItem value="split">Split Screen</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <span className="text-sm text-muted-foreground">Display Timer</span>
+                  <Select value={displayTimer} onValueChange={setDisplayTimer}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 12 }, (_, i) => (i + 1) * 10).map((sec) => (
+                        <SelectItem key={sec} value={sec.toString()}>{sec} seconds</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t">
                   <div className="flex items-center gap-2">
                     {isPaused ? <Pause className="h-5 w-5 text-warning" /> : <Play className="h-5 w-5 text-success" />}
                     <span className="text-sm font-medium">Display Status</span>

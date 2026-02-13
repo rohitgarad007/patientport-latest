@@ -1,96 +1,174 @@
-import { useState, useEffect } from "react";
-import { receptionService, ReceptionDashboardData } from "@/services/ReceptionService";
-import Screen1ClassicBlue from "@/components/reception/Screen1ClassicBlue";
-import Screen2SplitView from "@/components/reception/Screen2SplitView";
-import Screen3DarkTheme from "@/components/reception/Screen3DarkTheme";
-import Screen4CardLayout from "@/components/reception/Screen4CardLayout";
-import Screen7FullScreenToken from "@/components/reception/Screen7FullScreenToken";
-import Screen8TimelineView from "@/components/reception/Screen8TimelineView";
-import Screen10GradientModern from "@/components/reception/Screen10GradientModern";
+import React, { useMemo, useState, useEffect } from 'react';
+import { ReceptionDashboardData } from '@/services/ReceptionService';
+import Screen1ClassicBlue from './Screen1ClassicBlue';
+import Screen2SplitView from './Screen2SplitView';
+import Screen3DarkTheme from './Screen3DarkTheme';
+import Screen4CardLayout from './Screen4CardLayout';
+import Screen5MinimalWhite from './Screen5MinimalWhite';
+import Screen6MultiCounter from './Screen6MultiCounter';
+import Screen7FullScreenToken from './Screen7FullScreenToken';
+import Screen8TimelineView from './Screen8TimelineView';
+import Screen9Dashboard from './Screen9Dashboard';
+import Screen10GradientModern from './Screen10GradientModern';
 
-const LiveScreenContainer = () => {
-  const [settings, setSettings] = useState<any>(null);
-  const [data, setData] = useState<ReceptionDashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+interface LiveScreenContainerProps {
+  screen: any; // Using any for the screen object from fetchScreensList
+  data: ReceptionDashboardData | null;
+}
 
-  const fetchSettings = async () => {
-    try {
-      const response = await receptionService.fetchScreenSettings();
-      if (response && response.success && response.data) {
-        setSettings(response.data);
-      }
-    } catch (err) {
-      console.error("Failed to fetch settings", err);
-    }
-  };
+const LiveScreenContainer: React.FC<LiveScreenContainerProps> = ({ screen, data }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
 
-  const fetchData = async () => {
-    try {
-      const result = await receptionService.fetchDashboardStats();
-      setData(result);
-      setError(null);
-    } catch (err: any) {
-      console.error("Failed to fetch dashboard data", err);
-      setError(err.message || "Failed to load data");
-    }
-  };
+  // Extract settings
+  const displayView = screen.display_view || 'single';
+  const displayTimer = (parseInt(screen.display_timer) || 30) * 1000; // Convert to ms
+  const doctors = screen.doctors || [];
 
+  // Rotation Logic
   useEffect(() => {
-    const init = async () => {
-      setLoading(true);
-      await fetchSettings();
-      await fetchData();
-      setLoading(false);
+    if (displayView === 'single' && doctors.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentIndex((prev) => (prev + 1) % doctors.length);
+      }, displayTimer);
+      return () => clearInterval(interval);
+    } else {
+      // Reset index if switching views
+      setCurrentIndex(0);
+    }
+  }, [displayView, displayTimer, doctors.length]);
+
+  // Helper to filter data for a specific doctor
+  const getDoctorData = (doctorId: string) => {
+    if (!data) return null;
+    return {
+        ...data,
+        doctors: data.doctors.filter(d => d.id === doctorId),
+        activeConsultations: data.activeConsultations.filter(c => c.doctor_id === doctorId),
+        waitingQueue: data.waitingQueue.filter(q => q.doctor_id === doctorId)
     };
+  };
 
-    init();
+  // Map layout string to component
+  const renderScreenComponent = (layout: string, props: any) => {
+    switch (layout) {
+      case '1':
+      case 'standard':
+      case 'classic':
+        return <Screen1ClassicBlue {...props} />;
+      case '2':
+      case 'split':
+      case 'split-view':
+        return <Screen2SplitView {...props} />;
+      case '3':
+      case 'dark':
+      case 'dark-theme':
+        return <Screen3DarkTheme {...props} />;
+      case '4':
+      case 'card':
+      case 'card-layout':
+        return <Screen4CardLayout {...props} />;
+      case '5':
+      case 'minimal':
+      case 'minimal-white':
+        return <Screen5MinimalWhite {...props} />;
+      case '6':
+      case 'counter':
+      case 'multi-counter':
+        return <Screen6MultiCounter {...props} />;
+      case '7':
+      case 'fullscreen':
+      case 'fullscreen-token':
+        return <Screen7FullScreenToken {...props} />;
+      case '8':
+      case 'timeline':
+      case 'timeline-view':
+        return <Screen8TimelineView {...props} />;
+      case '9':
+      case 'dashboard':
+        return <Screen9Dashboard {...props} />;
+      case '10':
+      case 'modern':
+      case 'gradient':
+      case 'gradient-modern':
+      case 'emergency': 
+        return <Screen10GradientModern {...props} />;
+      default:
+        return <Screen1ClassicBlue {...props} />;
+    }
+  };
 
-    // Poll for data every 30 seconds
-    const interval = setInterval(fetchData, 30000);
-    return () => clearInterval(interval);
-  }, []);
+  const renderContent = () => {
+    const layout = screen.layout?.toString().toLowerCase() || '1';
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
+    // If no doctors or empty data, just render with passed data (fallback)
+    if (!doctors.length) {
+       return renderScreenComponent(layout, { data, settings: screen });
+    }
 
-  if (error && !data) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 text-red-500">
-        {error}
-      </div>
-    );
-  }
+    if (displayView === 'single') {
+        const currentDoctor = doctors[currentIndex];
+        // If current doctor is invalid (e.g. removed), fallback to first or null
+        const targetDoctor = currentDoctor || doctors[0];
+        if (!targetDoctor) return null;
 
-  const layoutId = settings?.screen_layout_id ? parseInt(settings.screen_layout_id.toString()) : 1;
+        const singleData = getDoctorData(targetDoctor.id);
+        return renderScreenComponent(layout, { data: singleData, settings: screen });
+    } else {
+        // Split View
+        let gridClass = "grid h-full w-full gap-4 p-4 bg-muted/20";
+        // Logic: 2 doctors -> 2 cols (50% each)
+        // > 2 doctors -> 2x2 grid (25% area each)
+        if (doctors.length === 2) {
+            gridClass += " grid-cols-2"; 
+        } else if (doctors.length > 2) {
+             gridClass += " grid-cols-2 grid-rows-2";
+        } else {
+             gridClass += " grid-cols-1";
+        }
 
-  // Map layoutId to component
-  const renderScreen = () => {
-    const props = {
-      data: data,
-      settings: settings
-    };
+        // Limit to 4 doctors for grid view to prevent overcrowding
+        const visibleDoctors = doctors.slice(0, 4);
 
-    switch (layoutId) {
-      case 1: return <Screen1ClassicBlue {...props} />;
-      case 2: return <Screen2SplitView {...props} />;
-      case 3: return <Screen3DarkTheme {...props} />;
-      case 4: return <Screen4CardLayout {...props} />;
-      case 7: return <Screen7FullScreenToken {...props} />;
-      case 8: return <Screen8TimelineView {...props} />;
-      case 10: return <Screen10GradientModern {...props} />;
-      default: return <Screen1ClassicBlue {...props} />;
+        return (
+            <div className={gridClass}>
+                <style>{`
+                  .split-cell > div { 
+                    height: 100% !important; 
+                    width: 100% !important;
+                    border-radius: 0 !important;
+                  }
+                  /* Scale down content slightly if needed, or rely on responsive design */
+                  .split-cell header {
+                    padding: 0.5rem 1rem !important;
+                  }
+                  .split-cell main {
+                    padding: 1rem !important;
+                  }
+                `}</style>
+                {visibleDoctors.map((doc: any) => (
+                    <div key={doc.id} className="w-full h-full overflow-hidden relative split-cell bg-background rounded-xl border shadow-sm">
+                        {renderScreenComponent(layout, { 
+                          data: getDoctorData(doc.id), 
+                          settings: screen 
+                        })}
+                    </div>
+                ))}
+            </div>
+        );
     }
   };
 
   return (
-    <div className="live-screen-container">
-      {renderScreen()}
+    <div className="w-full h-full overflow-hidden border rounded-lg shadow-sm bg-background relative group">
+      {/* Overlay for screen name - only show on hover and if not in clean mode */}
+      <div className="absolute top-2 left-2 z-50 bg-black/50 text-white px-2 py-1 rounded text-xs backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+        {screen.name} ({displayView === 'split' ? 'Split View' : 'Single View'})
+      </div>
+      
+      {/* The actual screen component */}
+      <div className="w-full h-full origin-top-left transform scale-[1] overflow-hidden">
+         {renderContent()}
+      </div>
     </div>
   );
 };

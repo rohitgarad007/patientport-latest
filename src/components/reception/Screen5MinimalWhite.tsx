@@ -1,10 +1,39 @@
-import { doctors, patients } from "@/data/hospitalData";
+import { doctors, patients } from "@/data/hospitalData-2";
 import { Clock, ArrowRight } from "lucide-react";
+import { ReceptionDashboardData } from "@/services/ReceptionService";
 
-export const Screen5MinimalWhite = () => {
-  const doctor = doctors[4];
-  const currentPatient = patients[2];
-  const waitingPatients = patients.filter(p => p.status === 'waiting').slice(0, 4);
+interface ScreenProps {
+  data?: ReceptionDashboardData | null;
+  settings?: any;
+}
+
+export default function Screen5MinimalWhite({ data, settings }: ScreenProps) {
+  // Map dynamic data or fallback
+  const doctor = data?.doctors && data.doctors.length > 0 
+    ? {
+        name: data.doctors[0].name,
+        specialty: data.doctors[0].specialization || "General",
+        image: data.doctors[0].profile_image || "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&h=400&fit=crop",
+        room: "Room 5"
+      }
+    : doctors[4];
+
+  const currentPatient = data?.activeConsultations && data.activeConsultations.length > 0
+    ? {
+        tokenNumber: data.activeConsultations[0].token_no,
+        name: data.activeConsultations[0].patient_name,
+        visitType: 'Consultation'
+      }
+    : patients[2];
+
+  const waitingPatients = data?.waitingQueue
+    ? data.waitingQueue.slice(0, 4).map(p => ({
+        id: p.id,
+        tokenNumber: p.token_no,
+        name: p.patient_name,
+        appointmentTime: p.start_time || '10:00 AM'
+      }))
+    : patients.filter(p => p.status === 'waiting').slice(0, 4);
 
   return (
     <div className="min-h-screen bg-background p-12">

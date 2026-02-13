@@ -153,6 +153,7 @@ $route['laboratories_approve_generate_report'] = 'LaboratoriesController/Approve
 $route['reception_dashboard_stats'] = 'ReceptionController/getDashboardStats';
 $route['save_screen_settings'] = 'ReceptionController/save_screen_settings';
 $route['get_screen_settings'] = 'ReceptionController/get_screen_settings';
+$route['reception_screens_list'] = 'ReceptionController/getReceptionScreensList';
 $route['ms_doctor_specializations']					= 'SADoctorsController/GetSpecializationsList';
 $route['ms_doctors_list']							= 'SADoctorsController/ManageDoctorList';
 $route['ms_doctors_add']							= 'SADoctorsController/AddDoctorInformation';

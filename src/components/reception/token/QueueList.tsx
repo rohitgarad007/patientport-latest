@@ -135,25 +135,31 @@ export const QueueList = ({ patients, title = "Waiting Queue", variant = "defaul
         <Badge variant="secondary" className="text-xs">{waitingPatients.length} WAITING</Badge>
       </div>
       <div className="space-y-2">
-        {waitingPatients.map((patient, index) => (
-          <div
-            key={patient.id}
-            className={`flex items-center justify-between py-3 px-4 rounded-xl transition-colors ${
-              index === 0 ? 'bg-warning/10 border border-warning/20' : 'bg-card hover:bg-muted'
-            }`}
-          >
-            <div className="flex items-center gap-4">
-              <span className={`token-number font-bold ${index === 0 ? 'text-token-active' : 'text-primary'}`}>
-                {patient.tokenNumber}
-              </span>
-              <div className="flex items-center gap-2">
-                <span className="font-medium text-foreground">{patient.name}</span>
-                {patient.priority && priorityIcons[patient.priority]}
-              </div>
-            </div>
-            <span className="text-sm text-muted-foreground">{patient.appointmentTime}</span>
+        {waitingPatients.length === 0 ? (
+          <div className="text-center text-muted-foreground py-8 border border-dashed rounded-xl">
+            Queue is empty
           </div>
-        ))}
+        ) : (
+          waitingPatients.map((patient, index) => (
+            <div
+              key={patient.id}
+              className={`flex items-center justify-between py-3 px-4 rounded-xl transition-colors ${
+                index === 0 ? 'bg-warning/10 border border-warning/20' : 'bg-card hover:bg-muted'
+              }`}
+            >
+              <div className="flex items-center gap-4">
+                <span className={`token-number font-bold ${index === 0 ? 'text-token-active' : 'text-primary'}`}>
+                  {patient.tokenNumber}
+                </span>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-foreground">{patient.name}</span>
+                  {patient.priority && priorityIcons[patient.priority]}
+                </div>
+              </div>
+              <span className="text-sm text-muted-foreground">{patient.appointmentTime}</span>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

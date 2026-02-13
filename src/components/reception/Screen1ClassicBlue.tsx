@@ -21,9 +21,9 @@ export default function Screen1ClassicBlue ({ data, settings }: ScreenProps) {
         id: d.id,
         name: d.name,
         specialty: d.specialization || "General",
-        room: (d as any).room || "Room 1",
+        room: d.room_number || "Room 1",
         image: d.profile_image || defaultDoctors[0].image,
-        avgTime: parseInt((d as any).avgTime) || 15,
+        avgTime: d.avg_consultation_time ? parseInt(d.avg_consultation_time) : 15,
         status: d.status === "1" ? 'available' : 'busy'
       };
     }
@@ -64,16 +64,35 @@ export default function Screen1ClassicBlue ({ data, settings }: ScreenProps) {
 
   const getWaitingPatients = (): Patient[] => {
     if (data?.waitingQueue) {
-      return data.waitingQueue.map(p => ({
-        id: p.id,
-        tokenNumber: p.token_no,
-        name: p.patient_name,
-        age: 0,
-        gender: 'M',
-        visitType: 'consultation',
-        appointmentTime: p.start_time || '',
-        status: 'waiting'
-      }));
+      return data.waitingQueue.map(p => {
+        // Format time to "09:30 am"
+        let timeStr = p.created_at || p.start_time || '';
+        if (timeStr) {
+           try {
+             const date = new Date(timeStr.includes(' ') || timeStr.includes('T') ? timeStr : `2000-01-01 ${timeStr}`);
+             if (!isNaN(date.getTime())) {
+               timeStr = date.toLocaleTimeString('en-US', { 
+                 hour: '2-digit', 
+                 minute: '2-digit', 
+                 hour12: true 
+               }).toLowerCase();
+             }
+           } catch (e) {
+             // fallback to original string
+           }
+        }
+
+        return {
+          id: p.id,
+          tokenNumber: p.token_no,
+          name: p.patient_name,
+          age: 0,
+          gender: 'M',
+          visitType: 'consultation',
+          appointmentTime: timeStr,
+          status: 'waiting'
+        };
+      });
     }
     return defaultPatients.filter(p => p.status === 'waiting');
   };
@@ -83,9 +102,9 @@ export default function Screen1ClassicBlue ({ data, settings }: ScreenProps) {
   const waitingPatients = getWaitingPatients();
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="h-screen bg-background flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="bg-[#EBF3F9] p-6 shadow-sm rounded-b-3xl mx-4 mt-4">
+      <header className="bg-[#EBF3F9] p-6 shadow-sm rounded-b-3xl mx-4 mt-4 shrink-0">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <DoctorCard doctor={doctor} variant="header" />
           <div className="text-slate-700">
@@ -95,9 +114,9 @@ export default function Screen1ClassicBlue ({ data, settings }: ScreenProps) {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-7xl mx-auto w-full p-8">
+      <main className="flex-1 max-w-7xl mx-auto w-full p-8 overflow-y-auto">
         {/* Current Token */}
-        <div className="mb-8">
+        <div className="mb-4">
           <TokenDisplay patient={currentPatient} variant="hero" />
         </div>
 

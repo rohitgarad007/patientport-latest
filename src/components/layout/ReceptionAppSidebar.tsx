@@ -68,13 +68,13 @@ export function ReceptionAppSidebar() {
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-48">
                 <DropdownMenuItem asChild>
-                  <NavLink to="/reception-screen-live">
-                    Live Screen
+                  <NavLink to="/reception-screen-design">
+                    Screen Design
                   </NavLink>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <NavLink to="/reception-screen-split">
-                    Split Screen
+                  <NavLink to="/reception-screen-live">
+                    Live Screen
                   </NavLink>
                 </DropdownMenuItem>
               </DropdownMenuContent>

@@ -380,19 +380,19 @@ class HospitalCommonModel extends CI_Model{
     public function get_ActiveConsultations($hospital_id) {
         $today = date('Y-m-d');
         
-        $this->db->select('mpa.id, mpa.token_no, mpa.patient_name, md.name as doctor_name, md.profile_image as doctor_image, hs.name as specialization');
+        $this->db->select('mpa.id, mpa.token_no, mpa.patient_name, mpa.doctor_id, md.name as doctor_name, md.profile_image as doctor_image, hs.name as specialization');
         $this->db->from('ms_patient_appointment mpa');
         $this->db->join('ms_doctors md', 'md.id = mpa.doctor_id', 'left');
         $this->db->join('ms_hospitals_specialization hs', 'md.specialization_id = hs.speuid', 'left');
         $this->db->where('mpa.hospital_id', $hospital_id);
         $this->db->where('mpa.date', $today);
-        $this->db->where('mpa.status', 'in_progress'); // Assuming 'in_progress' status
+        $this->db->where_in('mpa.status', ['active', 'in_progress', 'in-consultation']);
         $query = $this->db->get();
         return $query->result_array();
     }
 
     public function get_DashboardDoctors($hosuid) {
-        $this->db->select('md.id, md.name, md.profile_image, md.status, hs.name as specialization');
+        $this->db->select('md.id, md.name, md.profile_image, md.status, hs.name as specialization, md.room_number, md.avg_consultation_time');
         $this->db->from('ms_doctors md');
         $this->db->join('ms_hospitals_specialization hs', 'md.specialization_id = hs.speuid', 'left');
         $this->db->where('md.hosuid', $hosuid);
@@ -404,12 +404,12 @@ class HospitalCommonModel extends CI_Model{
     public function get_WaitingQueue($hospital_id) {
         $today = date('Y-m-d');
         
-        $this->db->select('mpa.id, mpa.token_no, mpa.patient_name, md.name as doctor_name, mpa.start_time, mpa.source');
+        $this->db->select('mpa.id, mpa.token_no, mpa.patient_name, mpa.doctor_id, md.name as doctor_name, mpa.start_time, mpa.created_at, mpa.source');
         $this->db->from('ms_patient_appointment mpa');
         $this->db->join('ms_doctors md', 'md.id = mpa.doctor_id', 'left');
         $this->db->where('mpa.hospital_id', $hospital_id);
         $this->db->where('mpa.date', $today);
-        $this->db->where('mpa.status', 'waiting'); // Assuming 'waiting' status
+        $this->db->where_in('mpa.status', ['waiting', 'booked']);
         $this->db->order_by('mpa.token_no', 'ASC');
         $this->db->limit(10);
         $query = $this->db->get();
@@ -550,6 +550,9 @@ class HospitalCommonModel extends CI_Model{
             d.name as doctor_name, 
             d.profile_image, 
             d.gender,
+            d.room_number,
+            d.avg_consultation_time,
+            d.consultation_fee,
             hs.name as specialization
         ');
         $this->db->from('ms_hospitals_screens s');
@@ -588,7 +591,10 @@ class HospitalCommonModel extends CI_Model{
                     'name' => $row['doctor_name'],
                     'specialization' => $row['specialization'] ? $row['specialization'] : 'General',
                     'gender' => $row['gender'],
-                    'image' => $row['profile_image']
+                    'image' => $row['profile_image'],
+                    'room_number' => $row['room_number'],
+                    'avg_consultation_time' => $row['avg_consultation_time'],
+                    'consultation_fee' => $row['consultation_fee']
                 ];
             }
         }

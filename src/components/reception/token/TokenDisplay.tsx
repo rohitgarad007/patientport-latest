@@ -24,18 +24,16 @@ export const TokenDisplay = ({ patient, variant = "hero", showDetails = true }: 
 
   if (variant === "hero") {
     return (
-      <div className="text-center py-8">
-        <p className="text-sm font-semibold tracking-widest text-primary uppercase mb-2">Now Serving</p>
-        <div className="token-number text-8xl md:text-9xl font-bold text-token-active tracking-tight leading-none mb-4 shadow-token rounded-2xl inline-block px-8 py-4 bg-token-active/5">
+      <div className="text-center py-1">
+        <p className="text-[10px] font-bold tracking-[0.15em] text-primary uppercase mb-1">Now Serving</p>
+        <div className="token-number text-4xl md:text-6xl font-bold text-token-active tracking-tight leading-none mb-2 shadow-sm rounded-xl inline-block px-6 py-2 bg-token-active/5 border border-token-active/10">
           {patient.tokenNumber}
         </div>
         {showDetails && (
-          <div className="space-y-2 mt-6">
-            <h3 className="text-3xl font-semibold text-foreground">{patient.name}</h3>
-            <div className="flex items-center justify-center gap-3">
-              <span className="text-lg text-muted-foreground">{patient.age} yrs</span>
-              <span className="text-muted-foreground">•</span>
-              <Badge className={visitTypeColors[patient.visitType]}>
+          <div className="space-y-0.5 mt-1">
+            <h3 className="text-lg font-semibold text-foreground">{patient.name}</h3>
+            <div className="flex items-center justify-center gap-2">
+              <Badge className={`${visitTypeColors[patient.visitType]} px-1.5 py-0 text-[10px] font-medium h-4`}>
                 {visitTypeLabels[patient.visitType]}
               </Badge>
             </div>

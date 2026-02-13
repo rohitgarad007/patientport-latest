@@ -1,9 +1,20 @@
-import { counters, hospitalStats } from "@/data/hospitalData";
-import { CounterDisplay } from "@/components/token/CounterDisplay";
+import { counters, hospitalStats } from "@/data/hospitalData-2";
+import { CounterDisplay } from "@/components/reception/token/CounterDisplay";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Users, Activity, Pill, CreditCard, ClipboardList } from "lucide-react";
+import { ReceptionDashboardData } from "@/services/ReceptionService";
 
-export const Screen6MultiCounter = () => {
+interface ScreenProps {
+  data?: ReceptionDashboardData | null;
+  settings?: any;
+}
+
+export default function Screen6MultiCounter({ data, settings }: ScreenProps) {
+  // Use dynamic stats if available, otherwise fallback to static
+  const stats = data?.stats || hospitalStats;
+  
+  // For counters, we might need to map from data.doctors or similar if available
+  // For now, we keep the static counters structure but could update the "Active" count based on live data
   const registrationCounters = counters.filter(c => c.type === 'registration');
   const billingCounters = counters.filter(c => c.type === 'billing');
   const pharmacyCounters = counters.filter(c => c.type === 'pharmacy');
@@ -56,14 +67,14 @@ export const Screen6MultiCounter = () => {
             <div className="text-center text-primary-foreground">
               <div className="flex items-center gap-2 justify-center">
                 <Users className="w-5 h-5" />
-                <span className="text-2xl font-bold">{hospitalStats.totalPatients}</span>
+                <span className="text-2xl font-bold">{stats.totalPatients}</span>
               </div>
               <p className="text-xs text-primary-foreground/70">Total Today</p>
             </div>
             <div className="text-center text-primary-foreground">
               <div className="flex items-center gap-2 justify-center">
                 <Clock className="w-5 h-5" />
-                <span className="text-2xl font-bold">{hospitalStats.avgWaitTime}m</span>
+                <span className="text-2xl font-bold">{stats.avgWaitTime}m</span>
               </div>
               <p className="text-xs text-primary-foreground/70">Avg Wait</p>
             </div>

@@ -1,4 +1,4 @@
-import { Counter } from "@/data/hospitalData";
+import { Counter } from "@/data/hospitalData-2";
 import { Badge } from "@/components/ui/badge";
 
 interface CounterDisplayProps {
