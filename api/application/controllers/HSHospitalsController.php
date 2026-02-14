@@ -54,6 +54,7 @@ class HSHospitalsController  extends CI_Controller {
             echo json_encode([
                 "success" => true,
                 "data"    => $encryptedData,
+                "RowData" => $doctorsList,
             ]);
 
         } catch (Exception $e) {
@@ -64,6 +65,58 @@ class HSHospitalsController  extends CI_Controller {
         }
     }
     /* ===== Doctors List Code End Here ===== */
+
+    public function getSpecializationList() {
+        if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
+            exit;
+        }
+        $userToken = $this->input->get_request_header('Authorization');
+        $splitToken = explode(" ", $userToken);
+        $token = isset($splitToken[1]) ? $splitToken[1] : '';
+        try {
+            $token = verifyAuthToken($token);
+            if (!$token) throw new Exception("Unauthorized");
+
+            $tokenData = is_string($token) ? json_decode($token, true) : $token;
+            $hrole = $tokenData['role'] ?? null;
+            $loguid = $tokenData['loguid'] ?? null;
+
+            if (!$loguid) {
+                throw new Exception("Invalid token data");
+            }
+
+            $AES_KEY = "RohitGaradHos@173414";
+            $data = [];
+
+            if ($hrole === 'doctor') {
+                // Fetch master doctor specializations
+                $data = $this->HospitalCommonModel->get_DoctorSpecializationsList();
+            } else if ($hrole === 'hospital_admin') {
+                // Fetch hospital specific specializations
+                 $hospitalInfo = $this->HospitalCommonModel->get_logHospitalInfo($loguid);
+                 $hospital_id = isset($hospitalInfo['id']) ? $hospitalInfo['id'] : 0;
+                 // get_HospitalSpecializationList uses hosuid (loguid) not hospital_id?
+                 // Let's check get_HospitalSpecializationList definition in Model.
+                 // It uses hosuid.
+                 $data = $this->HospitalCommonModel->get_HospitalSpecializationList($loguid);
+            } else {
+                 throw new Exception("Insufficient privileges");
+            }
+
+            $encryptedData = $this->encrypt_aes_for_js(json_encode($data), $AES_KEY);
+
+            echo json_encode([
+                "success" => true,
+                "data"    => $encryptedData
+            ]);
+
+        } catch (Exception $e) {
+            echo json_encode([
+                "success" => false,
+                "message" => "Error: " . $e->getMessage()
+            ]);
+        }
+    }
 
     /* ===== Screen Management Code Start Here ===== */
     public function saveScreen(){

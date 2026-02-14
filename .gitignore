@@ -18,3 +18,7 @@ api/application/logs/*
 # Build artifacts
 dist/
 api/uploads/
+ 
+# Uploaded doctor images (runtime content)
+api/assets/images/doctors/*
+!api/assets/images/doctors/.gitkeep
