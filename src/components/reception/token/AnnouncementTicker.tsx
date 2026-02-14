@@ -1,12 +1,30 @@
+import { useEffect, useState } from "react";
 import { Phone, Volume2 } from "lucide-react";
 import { announcements } from "@/data/hospitalData-2";
+import { receptionService } from "@/services/ReceptionService";
 
 interface AnnouncementTickerProps {
   variant?: "default" | "dark" | "minimal";
+  doctorId?: string;
 }
 
-export const AnnouncementTicker = ({ variant = "default" }: AnnouncementTickerProps) => {
-  const tickerContent = announcements.map(a => a.message).join(' • ');
+export const AnnouncementTicker = ({ variant = "default", doctorId }: AnnouncementTickerProps) => {
+  const [message, setMessage] = useState<string>("");
+  const fallback = announcements.map(a => a.message).join(' • ');
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const msg = await receptionService.fetchAnnouncementMessage(doctorId);
+        if (!cancelled) setMessage(msg || "Now Coming...");
+      } catch {
+        if (!cancelled) setMessage("Now Coming...");
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [doctorId]);
   
   const variantClasses = {
     default: "bg-warning/10 text-warning-foreground border-t border-warning/20",
@@ -23,7 +41,7 @@ export const AnnouncementTicker = ({ variant = "default" }: AnnouncementTickerPr
         </div>
         <div className="flex-1 overflow-hidden mx-4 announcement-ticker">
           <div className="animate-marquee whitespace-nowrap inline-block">
-             {tickerContent} • {tickerContent} • {tickerContent} • 
+             {(message || fallback)} • {(message || fallback)} • {(message || fallback)} • 
           </div>
         </div>
         <div className="flex-shrink-0 px-4 flex items-center gap-2 bg-destructive text-destructive-foreground py-2 px-4 rounded-l-full font-semibold text-sm">

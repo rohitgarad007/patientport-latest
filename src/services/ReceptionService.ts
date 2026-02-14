@@ -201,5 +201,38 @@ export const receptionService = {
       }
     }
     return [];
+  },
+
+  fetchAnnouncementMessage: async (doctorId?: string): Promise<string> => {
+    const { headers, apiUrl } = await getAuthHeaders();
+    const url = new URL(`${apiUrl.replace(/\/$/, "")}/get_screen_announcement`);
+    if (doctorId) url.searchParams.set("doctor_id", doctorId);
+    const response = await fetch(url.toString(), {
+      method: "GET",
+      headers,
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to fetch screen announcement: ${response.statusText}`);
+    }
+    const json = await response.json();
+    if (!json.success || !json.data) {
+      // Some endpoints wrap in data always; attempt decrypt if present
+    }
+    const AES_KEY = await configService.getAesSecretKey();
+    const decryptedString = decryptAESFromPHP(json.data, AES_KEY);
+    if (!decryptedString) {
+      throw new Error("Failed to decrypt announcement");
+    }
+    try {
+      const parsed = JSON.parse(decryptedString);
+      if (parsed && parsed.message) return parsed.message as string;
+      // In some error flows, server returns {success:false,...} encrypted
+      if (parsed && parsed.success === false && parsed.message) {
+        throw new Error(parsed.message);
+      }
+      return "Now Coming...";
+    } catch {
+      return "Now Coming...";
+    }
   }
 };

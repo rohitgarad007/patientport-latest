@@ -316,4 +316,64 @@ class ReceptionController extends CI_Controller {
              echo json_encode(['data' => $this->encrypt_aes_for_js($response, "RohitGaradHos@173414")]);
         }
     }
+
+    public function get_screen_announcement() {
+        if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') { exit; }
+        try {
+            $userToken = $this->input->get_request_header('Authorization');
+            if (empty($userToken) && isset($_SERVER['HTTP_AUTHORIZATION'])) {
+                $userToken = $_SERVER['HTTP_AUTHORIZATION'];
+            }
+            if (empty($userToken) && function_exists('apache_request_headers')) {
+                $headers = apache_request_headers();
+                if (isset($headers['Authorization'])) {
+                    $userToken = $headers['Authorization'];
+                } elseif (isset($headers['authorization'])) {
+                    $userToken = $headers['authorization'];
+                }
+            }
+
+            $splitToken = explode(" ", $userToken);
+            $token = isset($splitToken[1]) ? $splitToken[1] : '';
+            $token = verifyAuthToken($token);
+            if (!$token) throw new Exception("Unauthorized");
+
+            $tokenData = is_string($token) ? json_decode($token, true) : $token;
+            $hrole = $tokenData['role'] ?? null;
+            $loguid = $tokenData['loguid'] ?? null;
+
+            if (!$loguid || ($hrole !== "hospital_admin" && $hrole !== "Receptionist")) {
+                throw new Exception("Unauthorized access");
+            }
+
+            if ($hrole === "hospital_admin") {
+                $hospitalInfo = $this->HospitalCommonModel->get_logHospitalInfo($loguid);
+                $hospital_id = $hospitalInfo['id'] ?? 0;
+            } else {
+                $staffInfo = $this->HospitalCommonModel->get_StaffHospitalInfo($loguid);
+                $hospital_id = $staffInfo['hospital_id'] ?? 0;
+            }
+            if (!$hospital_id) throw new Exception("Hospital not found");
+
+            $doctor_id = $this->input->get('doctor_id');
+            $message = '';
+            if (!empty($doctor_id)) {
+                $message = $this->HospitalCommonModel->get_DoctorScreenMessage($doctor_id);
+            }
+            if (empty($message)) {
+                $message = $this->HospitalCommonModel->get_HospitalScreenMessage($hospital_id);
+            }
+            if (empty($message)) {
+                $message = "Now Coming...";
+            }
+
+            $AES_KEY = "RohitGaradHos@173414";
+            $payload = json_encode(['message' => $message]);
+            $encryptedData = $this->encrypt_aes_for_js($payload, $AES_KEY);
+            echo json_encode([ "success" => true, "data" => $encryptedData ]);
+        } catch (Throwable $e) {
+            $response = json_encode(['success' => false, 'message' => $e->getMessage()]);
+            echo json_encode(['data' => $this->encrypt_aes_for_js($response, "RohitGaradHos@173414")]);
+        }
+    }
 }

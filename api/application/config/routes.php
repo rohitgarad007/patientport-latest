@@ -154,6 +154,7 @@ $route['reception_dashboard_stats'] = 'ReceptionController/getDashboardStats';
 $route['save_screen_settings'] = 'ReceptionController/save_screen_settings';
 $route['get_screen_settings'] = 'ReceptionController/get_screen_settings';
 $route['reception_screens_list'] = 'ReceptionController/getReceptionScreensList';
+$route['get_screen_announcement'] = 'ReceptionController/get_screen_announcement';
 $route['ms_doctor_specializations']					= 'SADoctorsController/GetSpecializationsList';
 $route['ms_doctors_list']							= 'SADoctorsController/ManageDoctorList';
 $route['ms_doctors_add']							= 'SADoctorsController/AddDoctorInformation';
@@ -597,6 +598,10 @@ $route['dc_doctor_getProcedureAISuggestions']       = 'SFDoctorController/getPro
 $route['dc_doctor_getProcedureSuggestions']         = 'SFDoctorController/getProcedureSuggestions';
 
 $route['dc_doctor_getPatientHistoryCategories']     = 'SFDoctorController/getPatientHistoryCategories';
+
+// Doctor Profile Routes
+$route['doctor_profile_get'] = 'DoctorProfileController/get_profile';
+$route['doctor_profile_update'] = 'DoctorProfileController/update_profile';
 $route['dc_doctor_getCommonComplaintsGrouped']      = 'SFDoctorController/getCommonComplaintsGrouped';
 $route['dc_doctor_getMedicationUnitSuggestions']    = 'SFDoctorController/getMedicationUnitSuggestions';
 

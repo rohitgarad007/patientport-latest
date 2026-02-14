@@ -127,7 +127,7 @@ export default function Screen1ClassicBlue ({ data, settings }: ScreenProps) {
       </main>
 
       {/* Announcement Ticker */}
-      <AnnouncementTicker variant="default" />
+      <AnnouncementTicker variant="default" doctorId={doctor.id} />
     </div>
   );
 };

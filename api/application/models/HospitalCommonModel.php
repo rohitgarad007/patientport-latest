@@ -4,7 +4,14 @@ class HospitalCommonModel extends CI_Model{
 
 
 
-	public function get_logHospitalInfo($loguid){
+	public function get_DoctorSpecializationsList() {
+        $this->db->select('id, specialization_name as name');
+        $this->db->from('ms_doctor_specializations');
+        $query = $this->db->get();
+        return $query->result_array();
+    }
+
+    public function get_logHospitalInfo($loguid){
     	$this->db->select('mh.id, mh.hosuid, mh.name, mh.email, mh.phone');
 	    $this->db->from('ms_hospitals mh');
 	    $this->db->where('mh.hosuid', $loguid);
@@ -13,10 +20,27 @@ class HospitalCommonModel extends CI_Model{
     }
 
     public function get_HospitalDoctorsList($loguid){
-        $this->db->select('id, docuid, name, email, phone, status, gender');
-        $this->db->from('ms_doctors');
-        $this->db->where('hosuid', $loguid);
-        $this->db->where('isdelete', 0); // Only non-deleted
+        $this->db->select('
+            md.id, 
+            md.docuid, 
+            md.name as doctorName, 
+            md.email as doctorEmail, 
+            md.phone, 
+            md.status, 
+            md.gender, 
+            md.profile_image,
+            md.experience_year as expYear,
+            md.experience_month as expMonth,
+            md.consultation_fee as doctorFees,
+            md.specialization_id as specialization,
+            mhs.specialization_name as specialization_name,
+            mh.name as hospitalName
+        ');
+        $this->db->from('ms_doctors md');
+        $this->db->join('ms_doctor_specializations mhs', 'mhs.id = md.specialization_id', 'left');
+        $this->db->join('ms_hospitals mh', 'mh.hosuid = md.hosuid', 'left');
+        $this->db->where('md.hosuid', $loguid);
+        $this->db->where('md.isdelete', 0); // Only non-deleted
         $query = $this->db->get();
         return $query->result_array();
     }
@@ -716,5 +740,24 @@ class HospitalCommonModel extends CI_Model{
             'activeDoctors' => $activeDoctors,
             'recentActivity' => $recentActivity
         ];
+    }
+
+    public function get_DoctorScreenMessage($doctor_id) {
+        $this->db->select('screen_default_message');
+        $this->db->from('ms_doctors');
+        $this->db->where('id', $doctor_id);
+        $this->db->where('isdelete', 0);
+        $query = $this->db->get();
+        $row = $query->row_array();
+        return $row && isset($row['screen_default_message']) ? trim($row['screen_default_message']) : '';
+    }
+
+    public function get_HospitalScreenMessage($hospital_id) {
+        $this->db->select('screen_default_message');
+        $this->db->from('ms_hospitals');
+        $this->db->where('id', $hospital_id);
+        $query = $this->db->get();
+        $row = $query->row_array();
+        return $row && isset($row['screen_default_message']) ? trim($row['screen_default_message']) : '';
     }
 }
