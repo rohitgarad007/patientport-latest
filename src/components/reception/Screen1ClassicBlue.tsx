@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { doctors as defaultDoctors, patients as defaultPatients, Doctor, Patient } from "@/data/hospitalData-2";
 import { DoctorCard } from "@/components/reception/token/DoctorCard";
 import { TokenDisplay } from "@/components/reception/token/TokenDisplay";
@@ -5,6 +6,9 @@ import { QueueList } from "@/components/reception/token/QueueList";
 import { AnnouncementTicker } from "@/components/reception/token/AnnouncementTicker";
 import { TimeDisplay } from "@/components/reception/token/TimeDisplay";
 import { ReceptionDashboardData } from "@/services/ReceptionService";
+import { configService } from "@/services/configService";
+import maleImg from "@/assets/images/male.png";
+import femaleImg from "@/assets/images/female.png";
 
 interface ScreenProps {
   data?: ReceptionDashboardData | null;
@@ -13,16 +17,42 @@ interface ScreenProps {
 
 export default function Screen1ClassicBlue ({ data, settings }: ScreenProps) {
   
+  const [apiBase, setApiBase] = useState<string>("");
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const url = await configService.getApiUrl();
+        if (mounted) {
+          const base = url.endsWith("/") ? url : `${url}/`;
+          setApiBase(base);
+        }
+      } catch {
+        // ignore, fallback will use relative which may fail until reload
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
+
   // Helper to map backend doctor to frontend Doctor interface
   const getDoctor = (): Doctor => {
     if (data?.doctors && data.doctors.length > 0) {
       const d = data.doctors[0];
+      const raw = d.profile_image || "";
+      let resolvedImage = raw;
+      if (!raw) {
+        resolvedImage = (d.gender && d.gender.toString().toUpperCase() === "F") ? femaleImg : maleImg;
+      } else if (!(raw.startsWith("http://") || raw.startsWith("https://") || raw.startsWith("data:"))) {
+        const prefix = apiBase || "";
+        resolvedImage = prefix + (raw.startsWith("/") ? raw.slice(1) : raw);
+      }
       return {
         id: d.id,
         name: d.name,
         specialty: d.specialization || "General",
         room: d.room_number || "Room 1",
-        image: d.profile_image || defaultDoctors[0].image,
+        image: resolvedImage || defaultDoctors[0].image,
         avgTime: d.avg_consultation_time ? parseInt(d.avg_consultation_time) : 15,
         status: d.status === "1" ? 'available' : 'busy'
       };
