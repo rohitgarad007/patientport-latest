@@ -95,6 +95,26 @@ class HospitalProfileController extends CI_Controller {
             return;
         }
 
+        $screen_default_message = $data['screen_default_message'] ?? null;
+        $hospital_qr_code = $data['hospital_qr_code'] ?? null;
+        
+        // Handle QR Code Upload (Base64)
+        if ($hospital_qr_code && strpos($hospital_qr_code, 'data:image') === 0) {
+            $uploadDir = FCPATH . 'uploads/hospitals/qr/';
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+            
+            list($type, $dataRaw) = explode(';', $hospital_qr_code);
+            list(, $dataRaw)      = explode(',', $dataRaw);
+            $decodedData = base64_decode($dataRaw);
+            
+            $fileName = 'qr_' . $hosuid . '_' . time() . '.png';
+            file_put_contents($uploadDir . $fileName, $decodedData);
+            
+            $hospital_qr_code = 'uploads/hospitals/qr/' . $fileName;
+        }
+
         $updateData = [
             'name' => $data['name'] ?? null,
             'phone' => $data['phone'] ?? null,
@@ -102,7 +122,9 @@ class HospitalProfileController extends CI_Controller {
             'state' => $data['state'] ?? null,
             'city' => $data['city'] ?? null,
             'appointment_day_limit' => $data['appointment_day_limit'] ?? null,
-            'book_appointment_status' => $data['book_appointment_status'] ?? null
+            'book_appointment_status' => $data['book_appointment_status'] ?? null,
+            'screen_default_message' => $screen_default_message,
+            'hospital_qr_code' => $hospital_qr_code
         ];
 
         // Remove null values (preserve 0 for status)

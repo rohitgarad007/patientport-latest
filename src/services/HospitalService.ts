@@ -12,6 +12,8 @@ export interface HospitalProfile {
   city: string;
   appointment_day_limit?: string;
   book_appointment_status?: string | number;
+  screen_default_message?: string;
+  hospital_qr_code?: string;
 }
 
 class HospitalService {

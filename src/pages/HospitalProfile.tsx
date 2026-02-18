@@ -24,7 +24,9 @@ import { Eye, EyeOff, Info } from "lucide-react";
 import Cookies from "js-cookie";
 import { locationService, State, City } from "@/services/LocationService";
 import { hospitalService } from "@/services/HospitalService";
+import { configService } from "@/services/configService";
 import Swal from "sweetalert2";
+import QRCode from "qrcode";
 
 export default function HospitalProfile() {
   const userInfo = Cookies.get("userInfo");
@@ -39,6 +41,8 @@ export default function HospitalProfile() {
     address: "",
     state: "",
     city: "",
+    screenDefaultMessage: "",
+    hospitalQrCode: "",
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -53,11 +57,13 @@ export default function HospitalProfile() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [apiUrl, setApiUrl] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      console.log("Current User:", currentUser); // Debug log
+      const url = await configService.getApiUrl();
+      setApiUrl(url);
       
       // Handle hosuid vs loguid mismatch from login response
       const hospitalId = currentUser?.hosuid || currentUser?.loguid;
@@ -80,6 +86,8 @@ export default function HospitalProfile() {
               city: profile.city,
               appointmentDayLimit: profile.appointment_day_limit || "30",
               bookAppointmentStatus: profile.book_appointment_status?.toString() || "0",
+              screenDefaultMessage: profile.screen_default_message || "",
+              hospitalQrCode: profile.hospital_qr_code || "",
             });
             // Fetch cities if state is already selected
             if (profile.state) {
@@ -101,6 +109,27 @@ export default function HospitalProfile() {
 
     fetchData();
   }, [currentUser?.hosuid, currentUser?.loguid]);
+
+  const handleGenerateQR = async () => {
+    const hospitalId = currentUser?.hosuid || currentUser?.loguid;
+    if (!hospitalId) return;
+
+    try {
+      // Get Live_URL from config service
+      const liveUrl = await configService.getLiveUrl();
+      
+      // Construct the full URL: Live_URL/hospital/hospital_id
+      const qrData = `${liveUrl}/hospital/${hospitalId}`;
+      
+      // Generate QR as Data URL
+      const url = await QRCode.toDataURL(qrData, { width: 300, margin: 2 });
+      setProfileData((prev) => ({ ...prev, hospitalQrCode: url }));
+      Swal.fire("Success", "QR Code Generated! Please click 'Save Changes' to apply.", "success");
+    } catch (err) {
+      console.error(err);
+      Swal.fire("Error", "Failed to generate QR Code", "error");
+    }
+  };
 
   const handleStateChange = async (value: string) => {
     setProfileData({ ...profileData, state: value, city: "" });
@@ -132,7 +161,9 @@ export default function HospitalProfile() {
           state: profileData.state,
           city: profileData.city,
           appointment_day_limit: profileData.appointmentDayLimit,
-          book_appointment_status: profileData.bookAppointmentStatus
+          book_appointment_status: profileData.bookAppointmentStatus,
+          screen_default_message: profileData.screenDefaultMessage,
+          hospital_qr_code: profileData.hospitalQrCode
         });
 
         if (result.status) {
@@ -323,6 +354,47 @@ export default function HospitalProfile() {
                     </Select>
                   </div>
                 </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Screen Default Message */}
+                  <div className="space-y-2">
+                    <Label htmlFor="screenDefaultMessage">Screen Default Message</Label>
+                    <Textarea
+                      id="screenDefaultMessage"
+                      value={profileData.screenDefaultMessage}
+                      onChange={(e) => setProfileData({ ...profileData, screenDefaultMessage: e.target.value })}
+                      placeholder="Enter default message for screens..."
+                      className="min-h-[100px]"
+                    />
+                  </div>
+
+                  {/* QR Code Section */}
+                  <div className="space-y-2">
+                    <Label>Hospital QR Code</Label>
+                    <div className="flex flex-col items-center justify-center border rounded-md p-4 bg-muted/20 min-h-[100px]">
+                      {profileData.hospitalQrCode ? (
+                        <div className="flex flex-col items-center gap-2">
+                          <img 
+                            src={profileData.hospitalQrCode.startsWith('data:') ? profileData.hospitalQrCode : `${apiUrl}${profileData.hospitalQrCode}`} 
+                            alt="Hospital QR Code" 
+                            className="w-32 h-32 object-contain bg-white p-2 rounded border"
+                          />
+                          <Button variant="outline" size="sm" type="button" onClick={handleGenerateQR}>
+                            Regenerate QR
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="text-center">
+                          <p className="text-muted-foreground text-sm mb-2">No QR Code available</p>
+                          <Button type="button" size="sm" onClick={handleGenerateQR}>
+                            Generate QR Option
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6"> 
                   {/* State Selection */}
                   <div className="space-y-2">

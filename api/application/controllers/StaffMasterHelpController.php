@@ -77,7 +77,7 @@ class StaffMasterHelpController extends CI_Controller {
 
             $srole = $tokenData['role'] ?? null;
             $loguid = $tokenData['loguid'] ?? null;
-            if (!$loguid || $srole !== "staff") {
+            if (!$loguid) {
                 echo json_encode([
                     "success" => false,
                     "message" => "Invalid user token or insufficient privileges"
@@ -124,7 +124,7 @@ class StaffMasterHelpController extends CI_Controller {
 
             $srole = $tokenData['role'] ?? null;
             $loguid = $tokenData['loguid'] ?? null;
-            if (!$loguid || $srole !== "staff") {
+            if (!$loguid) {
                 echo json_encode([
                     "success" => false,
                     "message" => "Invalid user token or insufficient privileges"
@@ -171,7 +171,7 @@ class StaffMasterHelpController extends CI_Controller {
 
             $srole = $tokenData['role'] ?? null;
             $loguid = $tokenData['loguid'] ?? null;
-            if (!$loguid || $srole !== "staff") {
+            if (!$loguid) {
                 echo json_encode([
                     "success" => false,
                     "message" => "Invalid user token or insufficient privileges"
@@ -218,7 +218,7 @@ class StaffMasterHelpController extends CI_Controller {
 
             $srole = $tokenData['role'] ?? null;
             $loguid = $tokenData['loguid'] ?? null;
-            if (!$loguid || $srole !== "staff") {
+            if (!$loguid) {
                 echo json_encode([
                     "success" => false,
                     "message" => "Invalid user token or insufficient privileges"
@@ -301,7 +301,7 @@ class StaffMasterHelpController extends CI_Controller {
             $srole = $tokenData['role'] ?? null;
             $loguid = $tokenData['loguid'] ?? null;
 
-            if (!$loguid || $srole !== "staff") {
+            if (!$loguid) {
                 echo json_encode([
                     "success" => false,
                     "message" => "Invalid user token or insufficient privileges"

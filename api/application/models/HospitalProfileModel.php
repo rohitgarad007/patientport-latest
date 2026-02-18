@@ -9,16 +9,41 @@ class HospitalProfileModel extends CI_Model {
     }
 
     public function get_hospital_profile($hosuid) {
-        $this->db->select('id, hosuid, name, email, phone, address, state, city, appointment_day_limit, book_appointment_status'); // Added book_appointment_status
+        // Use SELECT * to automatically get all available columns
+        // This avoids errors when trying to select columns that don't exist yet
         $this->db->from('ms_hospitals');
         $this->db->where('hosuid', $hosuid);
         $query = $this->db->get();
-        return $query->row_array();
+        
+        $result = $query->row_array();
+        
+        if ($result) {
+            // Remove sensitive information
+            unset($result['password']);
+        }
+        
+        return $result;
     }
 
     public function update_hospital_profile($hosuid, $data) {
         $this->db->where('hosuid', $hosuid);
-        return $this->db->update('ms_hospitals', $data);
+        
+        // Get list of actual columns in the table
+        $table_fields = $this->db->list_fields('ms_hospitals');
+        
+        // Filter data to only include columns that actually exist in the table
+        $valid_data = [];
+        foreach ($data as $key => $value) {
+            if (in_array($key, $table_fields)) {
+                $valid_data[$key] = $value;
+            }
+        }
+        
+        if (empty($valid_data)) {
+            return false;
+        }
+
+        return $this->db->update('ms_hospitals', $valid_data);
     }
 
     public function verify_password($hosuid, $password) {

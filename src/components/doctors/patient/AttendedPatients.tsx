@@ -4,7 +4,7 @@ import { CheckCircle2, Eye, FileEdit } from "lucide-react";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { getMyTodaysAppointmentsGrouped } from "@/services/doctorService";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export function AttendedPatients() {
   const [attendedAppointments, setAttendedAppointments] = useState<any[]>([]);
@@ -39,21 +39,30 @@ export function AttendedPatients() {
 
   return (
     <Card className="shadow-card">
-      <CardHeader>
-        <CardTitle className="text-xl flex items-center gap-2">
+      <CardHeader className="flex flex-row items-center justify-between px-4 py-3 md:px-6 md:py-4">
+        <CardTitle className="text-base md:text-xl flex items-center gap-2">
           <CheckCircle2 className="h-5 w-5 text-success" />
-          Today's Attended Patients
+          Completed Today
         </CardTitle>
+        <span className="text-xs font-semibold text-emerald-600">
+          {attendedAppointments.length > 0
+            ? `${attendedAppointments.length} Done`
+            : "0 Done"}
+        </span>
       </CardHeader>
-      <CardContent>
-        <div className="mb-4">
-          <p className="text-3xl font-bold text-success">{attendedAppointments.length}</p>
-          <p className="text-sm text-muted-foreground">patients attended today</p>
-        </div>
-        <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
-          {attendedAppointments.length === 0 ? (
-             <p className="text-muted-foreground text-center py-4">No patients attended yet.</p>
-          ) : (
+      <CardContent className="px-4 pb-4 pt-0 md:px-6 md:pb-6">
+        {/* Desktop layout */}
+        <div className="hidden md:block">
+          <div className="mb-4">
+            <p className="text-3xl font-bold text-success">{attendedAppointments.length}</p>
+            <p className="text-sm text-muted-foreground">patients attended today</p>
+          </div>
+          <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
+            {attendedAppointments.length === 0 ? (
+              <p className="text-muted-foreground text-center py-4">
+                No patients attended yet.
+              </p>
+            ) : (
               attendedAppointments.map((appointment, index) => (
                 <motion.div
                   key={appointment.id}
@@ -63,14 +72,16 @@ export function AttendedPatients() {
                   className="flex items-center justify-between gap-3 p-3 rounded-lg bg-success/5 border border-success/20"
                 >
                   <div className="flex items-center gap-3">
-                    {appointment.status === 'draft' ? (
-                        <FileEdit className="h-5 w-5 text-warning flex-shrink-0" />
+                    {appointment.status === "draft" ? (
+                      <FileEdit className="h-5 w-5 text-warning flex-shrink-0" />
                     ) : (
-                        <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0" />
+                      <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0" />
                     )}
-                    
+
                     <div>
-                      <p className="font-medium text-foreground">{appointment.patient.name}</p>
+                      <p className="font-medium text-foreground">
+                        {appointment.patient.name}
+                      </p>
                       <p className="text-sm text-muted-foreground">
                         {appointment.timeSlot.startTime} - {appointment.displayStatus}
                       </p>
@@ -87,6 +98,55 @@ export function AttendedPatients() {
                   </Button>
                 </motion.div>
               ))
+            )}
+          </div>
+        </div>
+
+        {/* Mobile layout */}
+        <div className="md:hidden space-y-2">
+          {attendedAppointments.length === 0 ? (
+            <p className="text-muted-foreground text-center py-4">
+              No patients attended yet.
+            </p>
+          ) : (
+            attendedAppointments.map((appointment, index) => {
+              const initial =
+                appointment.patient.name && appointment.patient.name.length > 0
+                  ? appointment.patient.name.charAt(0).toUpperCase()
+                  : "P";
+
+              return (
+                <Link
+                  key={appointment.id}
+                  to={`/doctor-view-patient/${appointment.patient.id}`}
+                  className="block"
+                >
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="flex items-center justify-between rounded-2xl bg-emerald-50/40 px-3 py-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500/10 text-[13px] font-semibold text-emerald-700">
+                        {initial}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">
+                          {appointment.patient.name}
+                        </p>
+                        <p className="text-[11px] text-slate-500">
+                          {appointment.timeSlot.startTime} · Age {appointment.patient.age}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full border border-emerald-400 bg-white">
+                      <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                    </div>
+                  </motion.div>
+                </Link>
+              );
+            })
           )}
         </div>
       </CardContent>

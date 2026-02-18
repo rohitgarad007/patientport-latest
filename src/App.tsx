@@ -133,6 +133,7 @@ import CompletedPatientsList from "@/components/doctors/patient/CompletedPatient
 import DoctorPatientTreatment from "@/components/doctors/patient/DoctorPatientTreatment";
 import DoctorMedicationSuggList from "@/pages/DoctorMedicationSuggList";
 import DoctorMedicationAddSugg from "@/pages/DoctorMedicationAddSugg";
+import DoctorProfilePage from "@/pages/DoctorProfile";
 import DoctorTreatmentSuggestionEdit from "@/components/doctors/consultation/DoctorTreatmentSuggestionEdit";
 import DoctorManageReceipts from "@/components/doctors/receipt/DoctorManageReceipts";
 import DoctorManageReceiptsContent from "@/components/doctors/receipt/DoctorManageReceiptsContent";
@@ -380,6 +381,7 @@ const App = () => {
               <Route path="/doctor-view-patient/:patientId" element={<DoctorLayout><DoctorPatientView /></DoctorLayout>} />
               <Route path="/doctor-completed-list" element={<DoctorLayout><CompletedPatientsList /></DoctorLayout>} />
               
+              <Route path="/doctor-profile" element={<DoctorLayout><DoctorProfilePage /></DoctorLayout>} />
 
               <Route path="/doctor-treatment" element={<DoctorLayout><DoctorPatientTreatment /></DoctorLayout>} />
               <Route path="/doctor-medication-sugg" element={<DoctorLayout><DoctorMedicationSuggList /></DoctorLayout>} />

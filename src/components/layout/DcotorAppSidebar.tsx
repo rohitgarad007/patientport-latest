@@ -75,7 +75,7 @@ export function DcotorAppSidebar() {
       title: "Profile",
       icon: PaIcons.user1,
       children: [
-        //{ title: "Profile Info", url: "/doctor-profile", icon: PaIcons.user1 },
+        { title: "Profile Info", url: "/doctor-profile", icon: PaIcons.user1 },
         { title: "Logout", action: "logout", icon: PaIcons.switch },
       ],
     },
@@ -165,19 +165,33 @@ export function DcotorAppSidebar() {
         <nav className="fixed bottom-0 left-0 w-full bg-white dark:bg-neutral-900 shadow-lg border-t border-gray-200 dark:border-gray-800 z-50">
           <ul className="flex justify-around items-center h-16">
             {menuData.map((item) => {
-              const active = activeCategory === item.title;
+              const hasChildren = !!item.children;
+              const isActive =
+                (item.url && location.pathname === item.url) ||
+                (hasChildren &&
+                  item.children?.some((child: any) => child.url && location.pathname === child.url));
+              const isOpen = activeCategory === item.title;
+
               return (
                 <li key={item.title}>
                   <button
                     onClick={() =>
-                      item.children ? setActiveCategory(active ? null : item.title) : (window.location.href = item.url)
+                      hasChildren
+                        ? setActiveCategory(isOpen ? null : item.title)
+                        : (window.location.href = item.url)
                     }
                     className={`flex flex-col items-center justify-center text-xs ${
-                      active ? "text-violet-600 font-semibold" : "text-gray-500"
+                      isActive ? "text-violet-600" : "text-gray-400"
                     }`}
                   >
-                    <img src={item.icon} alt={item.title} className="w-6 h-6 mb-1" />
-                    {item.title}
+                    <img
+                      src={item.icon}
+                      alt={item.title}
+                      className={`w-6 h-6 mb-1 transition-opacity ${
+                        isActive ? "opacity-100" : "opacity-40"
+                      }`}
+                    />
+                    <span className="sr-only">{item.title}</span>
                   </button>
                 </li>
               );

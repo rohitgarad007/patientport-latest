@@ -37,6 +37,7 @@ export function TodaysAppointments({ onViewPatient }: TodaysAppointmentsProps) {
     booked: Appointment[];
     completed: Appointment[];
   }>({ active: [], waiting: [], arrived: [], booked: [], completed: [] });
+  const navigate = useNavigate();
 
   const today = useMemo(() => {
     const d = new Date();
@@ -140,75 +141,84 @@ export function TodaysAppointments({ onViewPatient }: TodaysAppointmentsProps) {
 
   return (
     <Card className="shadow-card">
-      <CardHeader>
-        <CardTitle className="text-xl">Today's Appointments</CardTitle>
+      <CardHeader className="flex flex-row items-center justify-between px-4 py-3 md:px-6 md:py-4">
+        <CardTitle className="text-base md:text-xl">Today's Appointments</CardTitle>
+        <button
+          type="button"
+          onClick={() => navigate("/doctor-today-visit")}
+          className="hidden text-xs font-semibold text-emerald-600 md:inline-flex"
+        >
+          View All
+        </button>
+        <button
+          type="button"
+          onClick={() => navigate("/doctor-today-visit")}
+          className="md:hidden text-xs font-semibold text-emerald-600"
+        >
+          View All
+        </button>
       </CardHeader>
 
-      <CardContent>
-        <div className="space-y-3">
-          {ordered.map((appointment, index) => (
-            <motion.div
-              key={appointment.id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className={cn(
-                "p-4 rounded-xl border-2 transition-all hover:shadow-md",
-                appointment.status === "active"
-                  ? "bg-status-active/5 border-status-active/20"
-                  : "bg-card border-border"
-              )}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h4 className="font-semibold text-foreground">
-                      {appointment.patient.name}
-                    </h4>
-                    <Badge className={getStatusColor(appointment.status)} variant="outline">
-                      {appointment.status}
-                    </Badge>
-                  </div>
-
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    {/* Time Slot (12-hour format) */}
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-4 w-4" />
-                      <span>
-                        {formatTo12hr(appointment.timeSlot.startTime)} -{" "}
-                        {formatTo12hr(appointment.timeSlot.endTime)}
-                      </span>
+      <CardContent className="px-4 pb-4 pt-0 md:px-6 md:pb-6">
+        {/* Desktop layout */}
+        <div className="hidden md:block">
+          <div className="space-y-3">
+            {ordered.map((appointment, index) => (
+              <motion.div
+                key={appointment.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className={cn(
+                  "p-4 rounded-xl border-2 transition-all hover:shadow-md",
+                  appointment.status === "active"
+                    ? "bg-status-active/5 border-status-active/20"
+                    : "bg-card border-border"
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h4 className="font-semibold text-foreground">
+                        {appointment.patient.name}
+                      </h4>
+                      <Badge className={getStatusColor(appointment.status)} variant="outline">
+                        {appointment.status}
+                      </Badge>
                     </div>
 
-                    <span>•</span>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-4 w-4" />
+                        <span>
+                          {formatTo12hr(appointment.timeSlot.startTime)} -{" "}
+                          {formatTo12hr(appointment.timeSlot.endTime)}
+                        </span>
+                      </div>
 
-                    <span>Token #{appointment.tokenNumber}</span>
+                      <span>•</span>
 
-                    {deriveStatusTime(appointment) && (
-                      <>
-                        <span>•</span>
-                        <span>{deriveStatusTime(appointment)}</span>
-                      </>
-                    )}
+                      <span>Token #{appointment.tokenNumber}</span>
+
+                      {deriveStatusTime(appointment) && (
+                        <>
+                          <span>•</span>
+                          <span>{deriveStatusTime(appointment)}</span>
+                        </>
+                      )}
+                    </div>
                   </div>
+                  <Link to={`/doctor-view-patient/${appointment.patient.id}`}>
+                    <Button size="sm" variant="outline" className="gap-2">
+                      <Eye className="h-4 w-4" />
+                      View
+                    </Button>
+                  </Link>
                 </div>
-                <Link to={`/doctor-view-patient/${appointment.patient.id}`}>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    
-                    className="gap-2"
-                  >
-                    <Eye className="h-4 w-4" />
-                    View
-                  </Button>
-                </Link>
+              </motion.div>
+            ))}
+          </div>
 
-              </div>
-            </motion.div>
-          ))}
-
-          {/* COMPLETED LIST */}
           {grouped.completed.length > 0 && (
             <div className="mt-6">
               <h3 className="text-sm font-medium text-muted-foreground mb-2">
@@ -244,7 +254,7 @@ export function TodaysAppointments({ onViewPatient }: TodaysAppointmentsProps) {
                             {formatTo12hr(appointment.timeSlot.startTime)} -
                             {formatTo12hr(appointment.timeSlot.endTime)}
                           </span>
-                          
+
                           {deriveStatusTime(appointment) && (
                             <>
                               <span>•</span>
@@ -254,12 +264,7 @@ export function TodaysAppointments({ onViewPatient }: TodaysAppointmentsProps) {
                         </div>
                       </div>
                       <Link to={`/doctor-view-patient/${appointment.patient.id}`}>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                        
-                          className="gap-2"
-                        >
+                        <Button size="sm" variant="outline" className="gap-2">
                           <Eye className="h-4 w-4" />
                           View
                         </Button>
@@ -270,6 +275,62 @@ export function TodaysAppointments({ onViewPatient }: TodaysAppointmentsProps) {
               </div>
             </div>
           )}
+        </div>
+
+        {/* Mobile layout */}
+        <div className="md:hidden space-y-3">
+          {ordered.map((appointment, index) => {
+            const initial =
+              appointment.patient.name && appointment.patient.name.length > 0
+                ? appointment.patient.name.charAt(0).toUpperCase()
+                : "P";
+
+            return (
+              <Link
+                key={appointment.id}
+                to={`/doctor-view-patient/${appointment.patient.id}`}
+                className="block"
+              >
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="flex items-center justify-between rounded-2xl bg-emerald-50/40 px-3 py-3"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500/10 text-[13px] font-semibold text-emerald-700">
+                      {initial}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">
+                        {appointment.patient.name}
+                      </p>
+                      <p className="text-[11px] text-slate-500">
+                        {formatTo12hr(appointment.timeSlot.startTime)} · Token #
+                        {appointment.tokenNumber}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "text-[10px] px-2 py-0.5 rounded-full border-0",
+                      appointment.status === "active"
+                        ? "bg-emerald-100 text-emerald-700"
+                        : appointment.status === "waiting" || appointment.status === "arrived"
+                        ? "bg-amber-100 text-amber-700"
+                        : appointment.status === "booked"
+                        ? "bg-sky-100 text-sky-700"
+                        : "bg-muted text-muted-foreground"
+                    )}
+                  >
+                    {appointment.status.charAt(0).toUpperCase() +
+                      appointment.status.slice(1)}
+                  </Badge>
+                </motion.div>
+              </Link>
+            );
+          })}
         </div>
       </CardContent>
     </Card>

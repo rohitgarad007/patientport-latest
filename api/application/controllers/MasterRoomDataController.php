@@ -76,7 +76,7 @@ class MasterRoomDataController extends CI_Controller {
 
             $srole = $tokenData['role'] ?? null;
             $loguid = $tokenData['loguid'] ?? null;
-            if (!$loguid || $srole !== "staff") {
+            if (!$loguid) {
                 echo json_encode([
                     "success" => false,
                     "message" => "Invalid user token or insufficient privileges"
@@ -122,7 +122,7 @@ class MasterRoomDataController extends CI_Controller {
 
             $srole = $tokenData['role'] ?? null;
             $loguid = $tokenData['loguid'] ?? null;
-            if (!$loguid || $srole !== "staff") {
+            if (!$loguid) {
                 echo json_encode([
                     "success" => false,
                     "message" => "Invalid user token or insufficient privileges"
@@ -186,7 +186,7 @@ class MasterRoomDataController extends CI_Controller {
 
             $srole = $tokenData['role'] ?? null;
             $loguid = $tokenData['loguid'] ?? null;
-            if (!$loguid || $srole !== "staff") {
+            if (!$loguid) {
                 echo json_encode([
                     "success" => false,
                     "message" => "Invalid user token or insufficient privileges"
@@ -250,7 +250,7 @@ class MasterRoomDataController extends CI_Controller {
 
             $srole = $tokenData['role'] ?? null;
             $loguid = $tokenData['loguid'] ?? null;
-            if (!$loguid || $srole !== "staff") {
+            if (!$loguid) {
                 echo json_encode([
                     "success" => false,
                     "message" => "Invalid user token or insufficient privileges"
@@ -297,7 +297,7 @@ class MasterRoomDataController extends CI_Controller {
 
             $srole = $tokenData['role'] ?? null;
             $loguid = $tokenData['loguid'] ?? null;
-            if (!$loguid || $srole !== "staff") {
+            if (!$loguid) {
                 echo json_encode([
                     "success" => false,
                     "message" => "Invalid user token or insufficient privileges"
@@ -344,7 +344,7 @@ class MasterRoomDataController extends CI_Controller {
 
             $srole = $tokenData['role'] ?? null;
             $loguid = $tokenData['loguid'] ?? null;
-            if (!$loguid || $srole !== "staff") {
+            if (!$loguid) {
                 echo json_encode([
                     "success" => false,
                     "message" => "Invalid user token or insufficient privileges"
@@ -392,7 +392,7 @@ class MasterRoomDataController extends CI_Controller {
 
             $srole = $tokenData['role'] ?? null;
             $loguid = $tokenData['loguid'] ?? null;
-            if (!$loguid || $srole !== "staff") {
+            if (!$loguid) {
                 echo json_encode([
                     "success" => false,
                     "message" => "Invalid user token or insufficient privileges"
@@ -490,7 +490,7 @@ class MasterRoomDataController extends CI_Controller {
             $loguid = $tokenData['loguid'] ?? null;
 
             // Step 3: Validate Role
-            if (!$loguid || $srole !== "staff") {
+            if (!$loguid) {
                 echo json_encode([
                     "success" => false,
                     "message" => "Invalid user token or insufficient privileges"
@@ -638,7 +638,7 @@ class MasterRoomDataController extends CI_Controller {
             $srole = $tokenData['role'] ?? null;
             $loguid = $tokenData['loguid'] ?? null;
 
-            if (!$loguid || $srole !== "staff") {
+            if (!$loguid) {
                 throw new Exception("Invalid user token or insufficient privileges");
             }
 
