@@ -285,106 +285,119 @@ const DoctorTodayPatientVisit = () => {
           : "border-l-success"
       }`}
     >
-      <div
-        className={`flex ${isGrid ? "flex-col" : "flex-col sm:flex-row"} gap-3 items-start ${
-          isGrid ? "" : "sm:items-center"
-        }`}
-      >
-        {/* Token Number Bubble (mirroring sf-appointment-list) */}
-        <div
-          className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
-            apt.status === "booked"
-              ? "bg-muted text-muted-foreground"
-              : apt.status === "arrived" || apt.status === "waiting"
-              ? "bg-status-arrived/20 text-status-arrived"
-              : (apt.status === "active" || apt.status === "draft")
-              ? "bg-status-consultation/20 text-status-consultation"
-              : "bg-muted text-foreground"
-          }`}
-        >
-          <span className="text-lg font-bold">#{apt.tokenNumber}</span>
+      <div className="flex flex-col gap-3">
+        <div className="flex items-start gap-3 w-full">
+          <div className="flex flex-col items-center gap-1 mt-1">
+            <div
+              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold ${
+                apt.status === "waiting" || apt.status === "arrived"
+                  ? "bg-emerald-600 text-white"
+                  : apt.status === "booked"
+                  ? "bg-muted text-muted-foreground"
+                  : apt.status === "active" || apt.status === "draft"
+                  ? "bg-status-consultation text-white"
+                  : "bg-muted text-foreground"
+              }`}
+            >
+              {apt.tokenNumber}
+            </div>
+            <span className="hidden md:inline-block text-[11px] text-muted-foreground">
+              #{apt.tokenNumber}
+            </span>
+          </div>
+          <div className="flex-1 min-w-0 space-y-0.5">
+            <div className="flex items-start justify-between gap-2">
+              <h4 className="font-semibold text-sm md:text-base truncate">
+                {apt.patient?.name || "Patient"}
+              </h4>
+              <Badge className={getStatusColor(apt.status)}>
+                {getStatusLabel(apt.status)}
+              </Badge>
+            </div>
+            {apt.patient?.age !== undefined && apt.patient?.age !== null && (
+              <p className="text-xs md:text-sm text-muted-foreground">
+                {apt.patient.age} years
+              </p>
+            )}
+            <div className="mt-1 flex flex-wrap items-center gap-3 text-[11px] md:text-xs text-muted-foreground">
+              <span className="inline-flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                <span>{statusTimeLabel(apt)}</span>
+              </span>
+              {apt.patient?.phone && (
+                <span className="inline-flex items-center gap-1">
+                  <Phone className="w-3 h-3" />
+                  <span>{apt.patient.phone}</span>
+                </span>
+              )}
+            </div>
+          </div>
         </div>
 
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2 mb-2">
-            <div>
-              <h4 className="font-semibold text-base">{apt.patient?.name || "Patient"}</h4>
-              <p className="text-sm text-muted-foreground">{apt.patient?.age || ""} years</p>
-            </div>
-            <Badge className={getStatusColor(apt.status)}>{getStatusLabel(apt.status)}</Badge>
-          </div>
-
-          <div className="space-y-1 text-sm text-muted-foreground mb-3">
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4" />
-              <span>{statusTimeLabel(apt)}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Phone className="w-4 h-4" />
-              <span>{apt.patient?.phone || ""}</span>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {apt.status === "booked" && (
-              <Button
-                size="sm"
-                className="gap-1 w-full sm:w-auto bg-yellow-500 text-black hover:bg-yellow-600 focus:ring-yellow-400 focus:ring-2 focus:ring-offset-2"
-                onClick={() => withAction(apt, "arrived")}
-              >
-                <CheckCircle className="w-3 h-3" /> Mark Arrived
-              </Button>
-            )}
-            {apt.status === "arrived" && (
+        <div className="flex flex-wrap gap-2">
+          {apt.status === "booked" && (
+            <Button
+              size="sm"
+              className="gap-1 w-full sm:w-auto bg-yellow-500 text-black hover:bg-yellow-600 focus:ring-yellow-400 focus:ring-2 focus:ring-offset-2"
+              onClick={() => withAction(apt, "arrived")}
+            >
+              <CheckCircle className="w-3 h-3" /> Mark Arrived
+            </Button>
+          )}
+          {apt.status === "arrived" && (
+            <Button
+              size="sm"
+              className="gap-1 w-full sm:w-auto bg-cyan-600 text-white hover:bg-cyan-700 focus:ring-cyan-500 focus:ring-2 focus:ring-offset-2"
+              onClick={() => withAction(apt, "waiting")}
+            >
+              <PauseCircle className="w-3 h-3" /> Mark to Waiting
+            </Button>
+          )}
+          {apt.status === "waiting" && (
+            <>
               <Button
                 size="sm"
                 className="gap-1 w-full sm:w-auto bg-cyan-600 text-white hover:bg-cyan-700 focus:ring-cyan-500 focus:ring-2 focus:ring-offset-2"
-                onClick={() => withAction(apt, "waiting")}
+                onClick={() => withAction(apt, "active")}
               >
-                <PauseCircle className="w-3 h-3" /> Mark to Waiting
+                <PlayCircle className="w-3 h-3" /> Start Consultation
               </Button>
-            )}
-            {apt.status === "waiting" && (
-              <>
-                <Button
-                  size="sm"
-                  className="gap-1 w-full sm:w-auto bg-cyan-600 text-white hover:bg-cyan-700 focus:ring-cyan-500 focus:ring-2 focus:ring-offset-2"
-                  onClick={() => withAction(apt, "active")}
-                >
-                  <PlayCircle className="w-3 h-3" /> Start Consultation
+              <div className="flex gap-2 w-full sm:w-auto">
+                <Button size="sm" variant="outline" className="gap-1" onClick={() => handleReorder(apt, "up")}>
+                  <ArrowUp className="w-3 h-3" /> Move Up
                 </Button>
-                <div className="flex gap-2 w-full sm:w-auto">
-                  <Button size="sm" variant="outline" className="gap-1" onClick={() => handleReorder(apt, "up")}>
-                    <ArrowUp className="w-3 h-3" /> Move Up
-                  </Button>
-                  <Button size="sm" variant="outline" className="gap-1" onClick={() => handleReorder(apt, "down")}>
-                    <ArrowDown className="w-3 h-3" /> Move Down
-                  </Button>
-                </div>
-              </>
-            )}
-            {(apt.status === "active" || apt.status === "draft") && (
-              <>
-                <Button
-                  size="sm"
-                  className="gap-1 w-full sm:w-auto bg-cyan-600 text-white hover:bg-cyan-700 focus:ring-cyan-500 focus:ring-2 focus:ring-offset-2"
-                  onClick={() => navigate("/doctor-treatment", { state: { appointment: apt } })}
-                >
-                  <PlayCircle className="w-3 h-3" /> Continue Treatment
+                <Button size="sm" variant="outline" className="gap-1" onClick={() => handleReorder(apt, "down")}>
+                  <ArrowDown className="w-3 h-3" /> Move Down
                 </Button>
-                <Button
-                  size="sm"
-                  className="gap-1 w-full sm:w-auto bg-green-600 text-white hover:bg-green-700 focus:ring-green-500 focus:ring-2 focus:ring-offset-2"
-                  onClick={() => withAction(apt, "completed")}
-                >
-                  <CheckCheck className="w-3 h-3" /> Finish Treatment
-                </Button>
-              </>
-            )}
-            <Button size="sm" variant="outline" className="gap-1" onClick={() => navigate(`/doctor-view-patient/${apt.patient?.id}`)}>
-              <Eye className="w-3 h-3" /> View Details
-            </Button>
-          </div>
+              </div>
+            </>
+          )}
+          {(apt.status === "active" || apt.status === "draft") && (
+            <>
+              <Button
+                size="sm"
+                className="gap-1 w-full sm:w-auto bg-cyan-600 text-white hover:bg-cyan-700 focus:ring-cyan-500 focus:ring-2 focus:ring-offset-2"
+                onClick={() => navigate("/doctor-treatment", { state: { appointment: apt } })}
+              >
+                <PlayCircle className="w-3 h-3" /> Continue Treatment
+              </Button>
+              <Button
+                size="sm"
+                className="gap-1 w-full sm:w-auto bg-green-600 text-white hover:bg-green-700 focus:ring-green-500 focus:ring-2 focus:ring-offset-2"
+                onClick={() => withAction(apt, "completed")}
+              >
+                <CheckCheck className="w-3 h-3" /> Finish Treatment
+              </Button>
+            </>
+          )}
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1"
+            onClick={() => navigate(`/doctor-view-patient/${apt.patient?.id}`)}
+          >
+            <Eye className="w-3 h-3" /> View Details
+          </Button>
         </div>
       </div>
     </Card>
@@ -412,14 +425,16 @@ const DoctorTodayPatientVisit = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-1">
-        <div className="p-4 md:p-6 lg:p-8 space-y-4 md:space-y-6">
+    <div className="space-y-4 md:space-y-6">
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 pt-1 md:py-6">
+        <div className="p-0 md:p-6 lg:p-8 space-y-4 md:space-y-6">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-foreground pb-4">Patients Schedule</h1>
-              <p className="text-muted-foreground">
+              <h1 className="text-base leading-6 sm:text-lg sm:leading-6 md:text-2xl md:leading-8 font-semibold md:font-bold text-foreground pb-1 md:pb-4">
+                Patients Schedule
+              </h1>
+              <p className="text-xs leading-4 sm:text-sm sm:leading-5 md:text-base md:leading-6 text-muted-foreground">
                 {selectedDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
               </p>
             </div>
@@ -459,9 +474,9 @@ const DoctorTodayPatientVisit = () => {
           </div>
 
           {/* Filters */}
-          <Card className="p-4">
-            <div className="flex flex-col md:flex-row gap-3">
-              <div className="relative flex-1">
+          <Card className="p-3 md:p-4">
+            <div className="grid grid-cols-4 gap-2 md:flex md:flex-row md:gap-3">
+              <div className="relative flex-1 col-span-3">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder="Search by name, ID, or phone..."
@@ -470,11 +485,11 @@ const DoctorTodayPatientVisit = () => {
                   className="pl-10"
                 />
               </div>
-              <div className="flex gap-2">
+              <div className="col-span-1 flex items-stretch">
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-3 py-2 border border-input rounded-md bg-background flex items-center gap-2"
+                  className="w-full px-2 py-2 border border-input rounded-md bg-background text-xs md:text-sm"
                 >
                   <option value="all">All Status</option>
                   <option value="waiting">Waiting</option>
@@ -487,10 +502,10 @@ const DoctorTodayPatientVisit = () => {
           </Card>
 
           {/* Tabs for Time Slots */}
-          <Card className="p-4 md:p-6">
+          <Card className="p-3 md:p-6">
             {daySlots.length > 0 ? (
               <Tabs value={activeSlotValue} onValueChange={setActiveSlotValue} className="w-full">
-                <TabsList className="w-full flex flex-wrap gap-3 mb-6 justify-start sm:justify-start h-auto">
+                <TabsList className="w-full grid grid-cols-2 gap-2 mb-4 sm:flex sm:flex-wrap sm:justify-start h-auto bg-transparent p-0">
                   {daySlots.map((s, idx) => {
                     const val = slotKey(s);
                     const count = getAppointmentsForDaySlot(s).length;
@@ -498,25 +513,22 @@ const DoctorTodayPatientVisit = () => {
                       <TabsTrigger
                         key={`${val}-${idx}`}
                         value={val}
-                        className="flex flex-col items-start px-3 py-2 gap-1 text-left"
+                        className="group flex flex-col items-start px-3 py-3 gap-1 text-left rounded-2xl border border-input bg-background shadow-sm w-full sm:w-auto transition-all
+                          data-[state=active]:border-emerald-500 data-[state=active]:shadow-md
+                          data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500/10 data-[state=active]:to-emerald-500/0"
                       >
-                        {/* First Row: Time + Count */}
-                        <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-muted-foreground" />
-                          <span className="font-medium">
-                            {fmtTime(s.start_time)} - {fmtTime(s.end_time)}
-                          </span>
-
-                          {/* Count Pill */}
-                          <Badge
-                            variant="secondary"
-                            className="ml-1 rounded-full px-2 py-0.5 text-xs font-semibold"
-                          >
+                        <div className="flex flex-col w-full gap-2 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-muted-foreground group-data-[state=active]:text-emerald-600" />
+                            <span className="text-[11px] font-semibold md:text-sm group-data-[state=active]:text-emerald-700">
+                              {fmtTime(s.start_time)} - {fmtTime(s.end_time)}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-center rounded-full bg-muted text-foreground/80 text-[11px] font-semibold min-w-[1.75rem] h-6 px-2 group-data-[state=active]:bg-emerald-500 group-data-[state=active]:text-white">
                             {count}
-                          </Badge>
+                          </div>
                         </div>
 
-                        {/* Second Row: Type Name */}
                         {s.type_name && (
                           <div className="text-xs text-muted-foreground pl-6">
                             {s.type_name}

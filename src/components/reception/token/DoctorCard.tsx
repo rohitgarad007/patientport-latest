@@ -16,23 +16,23 @@ export const DoctorCard = ({ doctor, variant = "header" }: DoctorCardProps) => {
 
   if (variant === "header") {
     return (
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         <div className="relative">
           <img
             src={doctor.image}
             alt={doctor.name}
-            className="w-16 h-16 rounded-full object-cover ring-2 ring-white shadow-sm"
+            className="w-12 h-12 rounded-full object-cover ring-2 ring-white shadow-sm"
           />
-          <span className={`absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-white ${statusColors[doctor.status]}`} />
+          <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${statusColors[doctor.status]}`} />
         </div>
         <div className="text-slate-800">
-          <h2 className="text-xl font-bold">{doctor.name}</h2>
-          <p className="text-slate-600 font-medium">{doctor.specialty}</p>
-          <div className="flex items-center gap-3 mt-1">
-            <Badge variant="secondary" className="bg-white text-slate-700 border border-slate-200 shadow-sm hover:bg-slate-50">
+          <h2 className="text-lg font-bold leading-tight">{doctor.name}</h2>
+          <div className="flex items-center gap-2 mt-0.5">
+            <span className="text-slate-600 font-medium text-sm">{doctor.specialty}</span>
+            <Badge variant="secondary" className="bg-white text-slate-700 border border-slate-200 shadow-sm hover:bg-slate-50 px-2 py-0 h-5 text-[10px]">
               {doctor.room}
             </Badge>
-            <span className="flex items-center gap-1 text-sm text-slate-500">
+            <span className="flex items-center gap-1 text-xs text-slate-500">
               <Clock className="w-3 h-3" />
               ~{doctor.avgTime} min/patient
             </span>

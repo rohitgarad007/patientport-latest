@@ -379,7 +379,7 @@ const DoctorCalendar = () => {
                             className={cn(
                               "flex flex-col items-center justify-center px-1 py-1.5 rounded-xl text-[10px] leading-tight transition-all border",
                               isSelected
-                                ? "bg-emerald-500 text-white border-emerald-500 shadow-md"
+                                ? "bg-emerald-500/15 text-emerald-700 border-emerald-500/30 backdrop-blur-md shadow-sm"
                                 : "bg-muted text-muted-foreground border-transparent"
                             )}
                           >
@@ -405,12 +405,12 @@ const DoctorCalendar = () => {
                           <div
                             key={index}
                             className={cn(
-                              "flex items-center justify-between p-3 rounded-2xl text-xs shadow-sm border",
-                              slot.type_color ? "" : "bg-muted border-border"
+                              "flex items-center justify-between p-3 rounded-2xl text-xs shadow-sm border backdrop-blur-md",
+                              slot.type_color ? "border-white/40" : "bg-muted border-border"
                             )}
                             style={
                               slot.type_color
-                                ? { backgroundColor: lightenColor(slot.type_color, 0.7) }
+                                ? { backgroundColor: lightenColor(slot.type_color, 0.15), color: "#334155" }
                                 : undefined
                             }
                           >
@@ -482,12 +482,12 @@ const DoctorCalendar = () => {
                                     <div
                                       key={`${iso}-${idx}-${s.start_time}-${s.end_time}`}
                                       className={cn(
-                                        "text-xs p-1 rounded truncate",
-                                        s.type_color ? "" : "bg-muted"
+                                        "text-xs p-1 rounded truncate backdrop-blur-md border font-medium",
+                                        s.type_color ? "border-white/40" : "bg-muted border-transparent"
                                       )}
                                       style={
                                         s.type_color
-                                          ? { backgroundColor: lightenColor(s.type_color, 0.55) }
+                                          ? { backgroundColor: lightenColor(s.type_color, 0.15), color: "#334155" }
                                           : undefined
                                       }
                                       onClick={(e) => { e.stopPropagation(); setSelectedDate(iso); setSelectedSlot({ start_time: s.start_time, end_time: s.end_time, type_name: s.type_name, type_color: s.type_color }); }}
@@ -537,31 +537,31 @@ const DoctorCalendar = () => {
                 <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 p-0 bg-transparent h-auto items-stretch">
                   <TabsTrigger
                     value="booked"
-                    className="w-full text-xs py-2 px-4 rounded-2xl border border-slate-200 bg-white text-slate-800 shadow-sm data-[state=active]:bg-emerald-500 data-[state=active]:text-white data-[state=active]:border-emerald-500"
+                    className="w-full text-xs py-2 px-4 rounded-2xl border border-slate-200 bg-white text-slate-800 shadow-sm data-[state=active]:bg-emerald-500/15 data-[state=active]:text-emerald-700 data-[state=active]:border-emerald-500/30 data-[state=active]:backdrop-blur-md"
                   >
                     Booked ({filteredBySlot(grouped.booked).length})
                   </TabsTrigger>
                   <TabsTrigger
                     value="arrived"
-                    className="w-full text-xs py-2 px-4 rounded-2xl border border-slate-200 bg-white text-slate-800 shadow-sm data-[state=active]:bg-emerald-500 data-[state=active]:text-white data-[state=active]:border-emerald-500"
+                    className="w-full text-xs py-2 px-4 rounded-2xl border border-slate-200 bg-white text-slate-800 shadow-sm data-[state=active]:bg-emerald-500/15 data-[state=active]:text-emerald-700 data-[state=active]:border-emerald-500/30 data-[state=active]:backdrop-blur-md"
                   >
                     Arrived ({filteredBySlot(grouped.arrived).length})
                   </TabsTrigger>
                   <TabsTrigger
                     value="waiting"
-                    className="w-full text-xs py-2 px-4 rounded-2xl border border-slate-200 bg-white text-slate-800 shadow-sm data-[state=active]:bg-emerald-500 data-[state=active]:text-white data-[state=active]:border-emerald-500"
+                    className="w-full text-xs py-2 px-4 rounded-2xl border border-slate-200 bg-white text-slate-800 shadow-sm data-[state=active]:bg-emerald-500/15 data-[state=active]:text-emerald-700 data-[state=active]:border-emerald-500/30 data-[state=active]:backdrop-blur-md"
                   >
                     Waiting ({filteredBySlot(grouped.waiting).length})
                   </TabsTrigger>
                   <TabsTrigger
                     value="consultation"
-                    className="w-full text-xs py-2 px-4 rounded-2xl border border-slate-200 bg-white text-slate-800 shadow-sm data-[state=active]:bg-emerald-500 data-[state=active]:text-white data-[state=active]:border-emerald-500"
+                    className="w-full text-xs py-2 px-4 rounded-2xl border border-slate-200 bg-white text-slate-800 shadow-sm data-[state=active]:bg-emerald-500/15 data-[state=active]:text-emerald-700 data-[state=active]:border-emerald-500/30 data-[state=active]:backdrop-blur-md"
                   >
                     Active ({filteredBySlot(grouped.active).length})
                   </TabsTrigger>
                   <TabsTrigger
                     value="completed"
-                    className="w-full text-xs py-2 px-4 rounded-2xl border border-slate-200 bg-white text-slate-800 shadow-sm data-[state=active]:bg-emerald-500 data-[state=active]:text-white data-[state=active]:border-emerald-500"
+                    className="w-full text-xs py-2 px-4 rounded-2xl border border-slate-200 bg-white text-slate-800 shadow-sm data-[state=active]:bg-emerald-500/15 data-[state=active]:text-emerald-700 data-[state=active]:border-emerald-500/30 data-[state=active]:backdrop-blur-md"
                   >
                     Completed ({filteredBySlot(grouped.completed).length})
                   </TabsTrigger>

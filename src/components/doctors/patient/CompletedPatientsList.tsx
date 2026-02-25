@@ -109,21 +109,31 @@ export default function CompletedPatientsList() {
           <div className="container mx-auto px-4 py-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
-                <h1 className="text-2xl font-bold flex items-center gap-2">
+                <h1 className="text-base leading-6 md:text-2xl md:leading-8 font-bold flex items-center gap-2">
                   <CheckCircle2 className="h-6 w-6 text-green-600" />
                   Completed Patients
                 </h1>
-                <p className="text-muted-foreground mt-1">View attended patients by date</p>
+                <p className="text-xs leading-4 md:text-sm md:leading-5 text-muted-foreground mt-1">
+                  View attended patients by date
+                </p>
               </div>
 
               {/* Date Navigation */}
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="icon" onClick={handlePrevDay}>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9 md:h-10 md:w-10"
+                  onClick={handlePrevDay}
+                >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="min-w-[200px] justify-start gap-2">
+                    <Button
+                      variant="outline"
+                      className="h-9 px-3 text-xs md:h-10 md:text-sm min-w-[200px] justify-start gap-2"
+                    >
                       <CalendarIcon className="h-4 w-4" />
                       <span className="font-medium">{getDateLabel(selectedDate)}</span>
                       <span className="text-muted-foreground">• {format(selectedDate, "dd MMM yyyy")}</span>
@@ -142,27 +152,32 @@ export default function CompletedPatientsList() {
                     />
                   </PopoverContent>
                 </Popover>
-                <Button variant="outline" size="icon" onClick={handleNextDay}>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9 md:h-10 md:w-10"
+                  onClick={handleNextDay}
+                >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>
 
         {/* Search */}
-        <div className="mt-4 flex flex-col md:flex-row gap-3 md:items-center">
+        <div className="mt-4 grid grid-cols-2 gap-2 md:flex md:flex-row md:items-center">
           <div className="relative max-w-md flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search by name, ID or phone..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="h-9 text-xs md:h-10 md:text-sm pl-10"
             />
           </div>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-input rounded-md bg-background"
+            className="h-9 text-xs md:h-10 md:text-sm px-3 border border-input rounded-md bg-background"
           >
             <option value="completed">Completed</option>
             <option value="active">Active</option>
@@ -174,9 +189,9 @@ export default function CompletedPatientsList() {
     </div>
 
     {/* Content */}
-    <div className="container mx-auto px-4 py-6">
+    <div className="container mx-auto px-0 pt-0 pb-0 md:px-4 md:pt-6 md:pb-6">
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-3 gap-2 md:grid-cols-3 md:gap-4 mb-6 text-center">
         <Card>
           <CardContent className="p-4">
             <p className="text-sm text-muted-foreground">Total</p>
@@ -213,54 +228,68 @@ export default function CompletedPatientsList() {
           {filteredAppointments.map((apt) => (
             <Card key={apt.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-4">
-                <div className="flex items-center gap-4">
-                  <Avatar className="h-14 w-14 border-2 border-green-200">
-                    <AvatarImage src="" />
-                    <AvatarFallback>{apt.patient.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
-                  </Avatar>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-semibold">{apt.patient.name}</h3>
-                      <Badge variant="outline" className="text-xs">{apt.patient.id}</Badge>
-                      {apt.status === "completed" ? (
-                        <Badge className="bg-green-100 text-green-700 border-green-200">
-                          <CheckCircle2 className="h-3 w-3 mr-1" /> Completed
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-start gap-3">
+                    <Avatar className="h-12 w-12 md:h-14 md:w-14 border-2 border-green-200">
+                      <AvatarImage src="" />
+                      <AvatarFallback>
+                        {apt.patient.name.split(" ").map(n => n[0]).join("")}
+                      </AvatarFallback>
+                    </Avatar>
+
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="text-sm md:text-base font-semibold">
+                          {apt.patient.name}
+                        </h3>
+                        <Badge variant="outline" className="text-[11px] md:text-xs">
+                          {apt.patient.id}
                         </Badge>
-                      ) : (
-                        <Badge variant="secondary" className="text-xs">{apt.status}</Badge>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1 flex-wrap">
-                      <span className="flex items-center gap-1">
-                        <User className="h-3 w-3" /> {apt.patient.age ? `${apt.patient.age}Y` : "" }
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Phone className="h-3 w-3" /> {apt.patient.phone}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-4 text-sm mt-2 flex-wrap">
-                      <span className="flex items-center gap-1">
-                        <Stethoscope className="h-3 w-3 text-primary" /> {apt.doctor?.name || "Doctor"}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" /> {to12Hour((apt.timeSlot.startTime || "").slice(0,5))} → {to12Hour((apt.completedTime || apt.timeSlot.endTime || "").slice(0,5))}
-                      </span>
+                        {apt.status === "completed" ? (
+                          <Badge className="text-[11px] md:text-xs bg-green-100 text-green-700 border-green-200">
+                            <CheckCircle2 className="h-3 w-3 mr-1" /> Completed
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="text-[11px] md:text-xs">
+                            {apt.status}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 text-xs md:text-sm text-muted-foreground flex-wrap">
+                        <span className="flex items-center gap-1">
+                          <User className="h-3 w-3" />{" "}
+                          {apt.patient.age ? `${apt.patient.age}Y` : ""}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Phone className="h-3 w-3" /> {apt.patient.phone}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs md:text-sm flex-wrap">
+                        <span className="flex items-center gap-1">
+                          <Stethoscope className="h-3 w-3 text-primary" />{" "}
+                          {apt.doctor?.name || "Doctor"}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />{" "}
+                          {to12Hour((apt.timeSlot.startTime || "").slice(0, 5))} →{" "}
+                          {to12Hour((apt.completedTime || apt.timeSlot.endTime || "").slice(0, 5))}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
                   <Button
                     variant="outline"
-                    className="gap-2 shrink-0"
+                    className="mt-1 sm:mt-0 w-full sm:w-auto justify-center gap-2 text-xs md:text-sm h-9 md:h-10 shrink-0"
                     onClick={() => navigate(`/doctor-view-patient/${apt.patient.id}`)}
                   >
                     <Eye className="h-4 w-4" /> View
                   </Button>
                 </div>
               </CardContent>
-                </Card>
-              ))}
-            </div>
+            </Card>
+          ))}
+        </div>
           )}
         </div>
       </div>

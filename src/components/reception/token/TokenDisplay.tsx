@@ -26,12 +26,12 @@ export const TokenDisplay = ({ patient, variant = "hero", showDetails = true }: 
     return (
       <div className="text-center py-1">
         <p className="text-[10px] font-bold tracking-[0.15em] text-primary uppercase mb-1">Now Serving</p>
-        <div className="token-number text-4xl md:text-6xl font-bold text-token-active tracking-tight leading-none mb-2 shadow-sm rounded-xl inline-block px-6 py-2 bg-token-active/5 border border-token-active/10">
+        <div className="token-number text-3xl md:text-5xl font-bold text-token-active tracking-tight leading-none mb-2 shadow-sm rounded-xl inline-block px-4 py-1.5 bg-token-active/5 border border-token-active/10">
           {patient.tokenNumber}
         </div>
         {showDetails && (
           <div className="space-y-0.5 mt-1">
-            <h3 className="text-lg font-semibold text-foreground">{patient.name}</h3>
+            <h3 className="text-base font-semibold text-foreground">{patient.name}</h3>
             <div className="flex items-center justify-center gap-2">
               <Badge className={`${visitTypeColors[patient.visitType]} px-1.5 py-0 text-[10px] font-medium h-4`}>
                 {visitTypeLabels[patient.visitType]}

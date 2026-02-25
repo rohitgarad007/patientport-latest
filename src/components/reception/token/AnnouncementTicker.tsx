@@ -33,19 +33,24 @@ export const AnnouncementTicker = ({ variant = "default", doctorId }: Announceme
   };
 
   return (
-    <div className={`relative overflow-hidden py-3 ${variantClasses[variant]}`}>
-      <div className="flex items-center">
-        <div className="flex-shrink-0 px-4 flex items-center gap-2 bg-destructive text-destructive-foreground py-1 px-3 rounded-r-full font-semibold text-sm z-10">
-          <Volume2 className="w-4 h-4" />
-          ANNOUNCEMENT
+    <div className="relative overflow-hidden bg-white/95 backdrop-blur-sm border-t border-slate-200 shadow-[0_-2px_10px_rgba(0,0,0,0.02)]">
+      <div className="flex items-center py-1.5 px-2">
+        <div className="flex-shrink-0 flex items-center gap-2 bg-primary/10 text-primary border border-primary/20 py-1 px-3 rounded-full font-bold text-[10px] uppercase tracking-wider shadow-sm mr-3">
+          <Volume2 className="w-3 h-3" />
+          Announcement
         </div>
-        <div className="flex-1 overflow-hidden mx-4 announcement-ticker">
-          <div className="animate-marquee whitespace-nowrap inline-block">
+        
+        <div className="flex-1 overflow-hidden relative h-6 flex items-center">
+          <div className="animate-marquee whitespace-nowrap inline-block text-sm font-medium text-slate-600">
              {(message || fallback)} • {(message || fallback)} • {(message || fallback)} • 
           </div>
+          {/* Gradients for smooth fade effect */}
+          <div className="absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-white/95 to-transparent z-10"></div>
+          <div className="absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-l from-white/95 to-transparent z-10"></div>
         </div>
-        <div className="flex-shrink-0 px-4 flex items-center gap-2 bg-destructive text-destructive-foreground py-2 px-4 rounded-l-full font-semibold text-sm">
-          <Phone className="w-4 h-4" />
+
+        <div className="flex-shrink-0 ml-3 flex items-center gap-2 bg-destructive/5 text-destructive border border-destructive/10 py-1 px-3 rounded-full font-bold text-[10px] shadow-sm hover:bg-destructive/10 transition-colors">
+          <Phone className="w-3 h-3" />
           Emergency: 911
         </div>
       </div>

@@ -106,12 +106,12 @@ export function WeeklyCalendar() {
                   <div
                     key={i}
                     className={cn(
-                      "p-2 rounded-lg text-xs",
-                      slot.type_color ? "" : "bg-muted"
+                      "p-2 rounded-lg text-xs backdrop-blur-md shadow-sm border",
+                      slot.type_color ? "border-white/40" : "bg-muted border-border"
                     )}
                     style={
                       slot.type_color
-                        ? { backgroundColor: lightenColor(slot.type_color, 0.55) }
+                        ? { backgroundColor: lightenColor(slot.type_color, 0.15) }
                         : undefined
                     }
                   >

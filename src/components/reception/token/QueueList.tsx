@@ -129,12 +129,12 @@ export const QueueList = ({ patients, title = "Waiting Queue", variant = "defaul
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{title}</h3>
         <Badge variant="secondary" className="text-xs">{waitingPatients.length} WAITING</Badge>
       </div>
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         {waitingPatients.length === 0 ? (
           <div className="text-center text-muted-foreground py-8 border border-dashed rounded-xl">
             Queue is empty
@@ -143,8 +143,8 @@ export const QueueList = ({ patients, title = "Waiting Queue", variant = "defaul
           waitingPatients.map((patient, index) => (
             <div
               key={patient.id}
-              className={`flex items-center justify-between py-3 px-4 rounded-xl transition-colors ${
-                index === 0 ? 'bg-warning/10 border border-warning/20' : 'bg-card hover:bg-muted'
+              className={`flex items-center justify-between py-2 px-3 rounded-lg transition-colors ${
+                index === 0 ? 'bg-warning/10 border border-warning/20' : 'bg-card hover:bg-muted border border-transparent'
               }`}
             >
               <div className="flex items-center gap-4">

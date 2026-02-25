@@ -134,7 +134,7 @@ export default function Screen1ClassicBlue ({ data, settings }: ScreenProps) {
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="bg-[#EBF3F9] p-6 shadow-sm rounded-b-3xl mx-4 mt-4 shrink-0">
+      <header className="bg-[#EBF3F9] p-3 shadow-sm rounded-b-2xl mx-4 mt-2 shrink-0">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <DoctorCard doctor={doctor} variant="header" />
           <div className="text-slate-700">
@@ -144,14 +144,14 @@ export default function Screen1ClassicBlue ({ data, settings }: ScreenProps) {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-7xl mx-auto w-full p-8 overflow-y-auto">
+      <main className="flex-1 max-w-7xl mx-auto w-full p-0 overflow-hidden flex gap-4">
         {/* Current Token */}
-        <div className="mb-4">
+        <div className="w-1/4 h-full flex flex-col justify-center">
           <TokenDisplay patient={currentPatient} variant="hero" />
         </div>
 
         {/* Waiting Queue */}
-        <div className="bg-card rounded-2xl p-6 shadow-lg">
+        <div className="flex-1 bg-card rounded-2xl p-4 shadow-lg h-full overflow-y-auto">
           <QueueList patients={waitingPatients} variant="default" maxItems={5} />
         </div>
       </main>

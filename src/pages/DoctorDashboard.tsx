@@ -232,23 +232,44 @@ export default function DoctorDashboard() {
 
             {/* Today stats row */}
             <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-2xl bg-emerald-50 px-3 py-2">
-                <p className="text-[10px] text-emerald-700">Today</p>
-                <p className="text-lg font-semibold text-emerald-900">
-                  {todayStats.total}
-                </p>
+              <div className="rounded-2xl bg-emerald-50 px-3 py-3 flex flex-col items-center justify-center text-center shadow-sm">
+                <img 
+                  src="/src/assets/images/001-doctor-visit.png" 
+                  alt="Today" 
+                  className="w-8 h-8 mb-2 opacity-80"
+                />
+                <div className="flex items-center gap-1 mt-1">
+                  <p className="text-[10px] text-emerald-700 font-medium uppercase tracking-wide">Today</p>
+                  <p className="text-xl font-bold text-emerald-900 leading-none">
+                    {todayStats.total}
+                  </p>
+                </div>
               </div>
-              <div className="rounded-2xl bg-sky-50 px-3 py-2">
-                <p className="text-[10px] text-sky-700">Completed</p>
-                <p className="text-lg font-semibold text-sky-900">
-                  {todayStats.completed}
-                </p>
+              <div className="rounded-2xl bg-sky-50 px-3 py-3 flex flex-col items-center justify-center text-center shadow-sm">
+                <img 
+                  src="/src/assets/images/002-healthy.png" 
+                  alt="Completed" 
+                  className="w-8 h-8 mb-2 opacity-80"
+                />
+                <div className="flex items-center gap-1 mt-1">
+                  <p className="text-[10px] text-sky-700 font-medium uppercase tracking-wide">Done</p>
+                  <p className="text-xl font-bold text-sky-900 leading-none">
+                    {todayStats.completed}
+                  </p>
+                </div>
               </div>
-              <div className="rounded-2xl bg-amber-50 px-3 py-2">
-                <p className="text-[10px] text-amber-700">Waiting</p>
-                <p className="text-lg font-semibold text-amber-900">
-                  {todayStats.waiting}
-                </p>
+              <div className="rounded-2xl bg-amber-50 px-3 py-3 flex flex-col items-center justify-center text-center shadow-sm">
+                <img 
+                  src="/src/assets/images/003-waiting-room.png" 
+                  alt="Waiting" 
+                  className="w-8 h-8 mb-2 opacity-80"
+                />
+                <div className="flex items-center gap-1 mt-1">
+                  <p className="text-[10px] text-amber-700 font-medium uppercase tracking-wide">Waiting</p>
+                  <p className="text-xl font-bold text-amber-900 leading-none">
+                    {todayStats.waiting}
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -282,7 +303,7 @@ export default function DoctorDashboard() {
                       className={cn(
                         "flex flex-col items-center justify-center px-1 py-1.5 rounded-xl text-[10px] leading-tight transition-all border",
                         isSelected
-                          ? "bg-emerald-500 text-white border-emerald-500 shadow-md"
+                          ? "bg-emerald-500/15 text-emerald-700 border-emerald-500/30 backdrop-blur-md shadow-sm"
                           : "bg-muted text-muted-foreground border-transparent"
                       )}
                     >
@@ -308,12 +329,12 @@ export default function DoctorDashboard() {
                     <div
                       key={index}
                       className={cn(
-                        "flex items-center justify-between p-3 rounded-2xl text-xs shadow-sm border",
-                        slot.type_color ? "" : "bg-muted border-border"
+                        "flex items-center justify-between p-3 rounded-2xl text-xs shadow-sm border backdrop-blur-md",
+                        slot.type_color ? "border-white/40" : "bg-muted border-border"
                       )}
                       style={
                         slot.type_color
-                          ? { backgroundColor: lightenColor(slot.type_color, 0.7) }
+                          ? { backgroundColor: lightenColor(slot.type_color, 0.15) }
                           : undefined
                       }
                     >

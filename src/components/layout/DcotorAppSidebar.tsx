@@ -188,7 +188,7 @@ export function DcotorAppSidebar() {
                       src={item.icon}
                       alt={item.title}
                       className={`w-6 h-6 mb-1 transition-opacity ${
-                        isActive ? "opacity-100" : "opacity-40"
+                        isActive ? "opacity-100" : "opacity-85"
                       }`}
                     />
                     <span className="sr-only">{item.title}</span>

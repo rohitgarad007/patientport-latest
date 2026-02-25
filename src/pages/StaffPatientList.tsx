@@ -203,7 +203,9 @@ export default function StaffPatientList() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-1">
         <div>
-          <h1 className="text-2xl font-bold text-foreground pb-4">Patient List</h1>
+          <h1 className="text-base leading-6 sm:text-lg sm:leading-6 md:text-2xl md:leading-8 font-bold text-foreground pb-2 md:pb-4">
+            Patient List
+          </h1>
         </div>
 
         {/* Search and Filters */}
