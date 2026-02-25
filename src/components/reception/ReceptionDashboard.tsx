@@ -142,10 +142,10 @@ export default function ReceptionDashboard() {
               </h2>
               <div className="flex gap-2">
                 <Badge variant="outline" className="border-success/50 text-success">
-                  {doctors?.filter((d) => d.status === "1").length || 0} Online
+                  {doctors?.filter((d) => Number(d.is_online) === 1).length || 0} Online
                 </Badge>
                 <Badge variant="outline" className="border-muted-foreground text-muted-foreground">
-                  {doctors?.filter((d) => d.status === "0").length || 0} Offline
+                  {doctors?.filter((d) => Number(d.is_online) !== 1).length || 0} Offline
                 </Badge>
               </div>
             </div>
@@ -174,7 +174,7 @@ export default function ReceptionDashboard() {
                         )}
                         <span 
                           className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-background ${
-                            doctor.status === "1" ? "bg-success" : "bg-muted-foreground"
+                            Number(doctor.is_online) === 1 ? "bg-success" : "bg-muted-foreground"
                           }`} 
                         />
                       </div>
@@ -190,13 +190,13 @@ export default function ReceptionDashboard() {
 
                     <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/50">
                       <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                        doctor.status === "1" 
+                        Number(doctor.is_online) === 1 
                           ? "bg-success/10 text-success" 
                           : "bg-muted/50 text-muted-foreground"
                       }`}>
-                        {doctor.status === "1" ? "Available" : "Offline"}
+                        {Number(doctor.is_online) === 1 ? "Available" : "Offline"}
                       </span>
-                      {doctor.status === "1" && (
+                      {Number(doctor.is_online) === 1 && (
                          <span className="text-xs text-muted-foreground">
                            Accepting Patients
                          </span>

@@ -51,6 +51,9 @@ export interface DashboardDoctor {
   name: string;
   profile_image?: string;
   status: string; // "1" for active/online, "0" for inactive/offline
+  is_online?: string | number;
+  back_online_time?: string;
+  away_message?: string;
   specialization?: string;
   room_number?: string;
   avg_consultation_time?: string;

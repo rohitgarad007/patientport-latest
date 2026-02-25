@@ -7,7 +7,10 @@ export interface Doctor {
   room: string;
   image: string;
   avgTime: number;
-  status: 'available' | 'busy' | 'break';
+  status: 'available' | 'busy' | 'break' | 'offline';
+  is_online?: string | number;
+  back_online_time?: string;
+  away_message?: string;
 }
 
 export interface Patient {

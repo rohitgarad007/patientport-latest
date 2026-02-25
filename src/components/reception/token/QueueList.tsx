@@ -1,16 +1,71 @@
-import { Patient } from "@/data/hospitalData-2";
+import { Patient, Doctor } from "@/data/hospitalData-2";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, Crown, Clock } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface QueueListProps {
   patients: Patient[];
+  doctor?: Doctor;
   title?: string;
   variant?: "default" | "compact" | "detailed" | "cards";
   maxItems?: number;
 }
 
-export const QueueList = ({ patients, title = "Waiting Queue", variant = "default", maxItems = 5 }: QueueListProps) => {
+export const QueueList = ({ patients, doctor, title = "Waiting Queue", variant = "default", maxItems = 5 }: QueueListProps) => {
   const waitingPatients = patients.filter(p => p.status === 'waiting').slice(0, maxItems);
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    if (doctor?.status === 'offline' && doctor.back_online_time) {
+      const timer = setInterval(() => setNow(new Date()), 1000);
+      return () => clearInterval(timer);
+    }
+  }, [doctor?.status, doctor?.back_online_time]);
+
+  const getWaitTime = (index: number) => {
+    if (!doctor?.back_online_time || doctor.status !== 'offline') return null;
+    
+    try {
+      // Parse back_online_time as IST (UTC+5:30)
+      let timeString = doctor.back_online_time;
+      if (!timeString.includes(' ')) {
+        // Handle time-only strings if any, assume today
+        const today = new Date().toISOString().split('T')[0];
+        timeString = `${today} ${timeString}`;
+      }
+      
+      // Ensure format is compatible with Date constructor with timezone offset
+      // Expected format: YYYY-MM-DD HH:mm:ss -> YYYY-MM-DDTHH:mm:ss+05:30
+      const isoString = timeString.replace(' ', 'T') + "+05:30";
+      const backTime = new Date(isoString);
+
+      // Base time: back_online_time
+      const baseTime = backTime;
+      // Add time for previous patients (10 mins per patient)
+      const patientTime = new Date(baseTime.getTime() + index * 10 * 60000);
+      
+      const diff = patientTime.getTime() - now.getTime();
+      
+      // Check if the first patient is delayed
+      if (index > 0) {
+        const baseTimeFirst = backTime;
+        const diffFirst = baseTimeFirst.getTime() - now.getTime();
+        if (diffFirst <= 0) {
+          return "Delayed";
+        }
+      }
+
+      if (diff > 0) {
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      }
+      return "Delayed";
+    } catch (e) {
+      return null;
+    }
+  };
   
   const priorityIcons = {
     urgent: <AlertCircle className="w-4 h-4 text-destructive" />,
@@ -153,6 +208,12 @@ export const QueueList = ({ patients, title = "Waiting Queue", variant = "defaul
                 </span>
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-foreground">{patient.name}</span>
+                  {doctor?.status === 'offline' && getWaitTime(index) && (
+                    <span className={`flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full border whitespace-nowrap ${getWaitTime(index) === 'Delayed' ? 'text-red-600 bg-red-50 border-red-200' : 'text-orange-600 bg-orange-50 border-orange-200'}`}>
+                      <Clock className="w-2.5 h-2.5" />
+                      Wait: {getWaitTime(index)}
+                    </span>
+                  )}
                   {patient.priority && priorityIcons[patient.priority]}
                 </div>
               </div>

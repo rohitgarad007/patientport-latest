@@ -4,9 +4,10 @@ import Cookies from "js-cookie";
 import { useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Users, Clock, AlertCircle, Scissors, Calendar } from "lucide-react";
+import { Users, Clock, AlertCircle, Scissors, Calendar, Wifi, WifiOff } from "lucide-react";
 import { todaysAppointments } from "@/lib/dummy-data";
 import { StatsCard } from "@/components/doctors/StatsCard";
+import { DoctorStatusControl } from "@/components/doctors/DoctorStatusControl";
 import { WeeklyCalendar } from "@/components/doctors/calendar/WeeklyCalendar";
 import { TodaysAppointments } from "@/components/doctors/patient/TodaysAppointments";
 import { AttendedPatients } from "@/components/doctors/patient/AttendedPatients";
@@ -15,6 +16,8 @@ import { motion } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getMyEventSchedule, getMyTodaysAppointmentsGrouped } from "@/services/doctorService";
 import { cn } from "@/lib/utils";
+
+import { doctorProfileService } from "@/services/DoctorProfileService";
 
 export default function DoctorDashboard() {
 
@@ -182,21 +185,61 @@ export default function DoctorDashboard() {
       (currentUser.qualification || currentUser.qualifications || currentUser.degree)) ||
     "";
 
+  const [isOnline, setIsOnline] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    const fetchStatus = async () => {
+      try {
+        const profile = await doctorProfileService.getProfile();
+        if (mounted && profile) {
+          setIsOnline(profile.is_online !== 0);
+        }
+      } catch (err) {
+        console.error("Failed to fetch doctor status", err);
+      }
+    };
+    fetchStatus();
+    return () => { mounted = false; };
+  }, []);
+
   return (
     <div className="space-y-0 md:space-y-4 w-full max-w-full overflow-x-hidden">
-      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-0 md:pt-6 pb-4 md:pb-6">
+      <main className="w-full px-4 pt-0 pb-4 md:pb-6">
         {/* Desktop welcome heading */}
-        <div className="hidden md:flex items-center justify-between">
+        <div className="hidden md:flex items-center justify-between mb-4 mt-4">
           {currentUser && (
-            <h1 className="text-2xl font-bold text-foreground pb-4">
+            <h1 className="text-2xl font-bold text-foreground">
               Welcome {currentUser.name}
             </h1>
           )}
         </div>
 
-        {/* Mobile doctor profile + weekly schedule */}
-        {currentUser && (
-          <div className="md:hidden space-y-4 mb-6">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Left Column (25%) - Status Control */}
+          <div className="w-full lg:w-1/4 shrink-0">
+             {currentUser && <DoctorStatusControl isOnline={isOnline} setIsOnline={setIsOnline} />}
+          </div>
+
+          {/* Right Column (Rest) - Dashboard Content */}
+          <div className="flex-1 min-w-0 space-y-8">
+            {!isOnline ? (
+              <div className="w-full h-[600px] flex flex-col items-center justify-center text-center p-8 bg-white/50 backdrop-blur-sm rounded-3xl border border-slate-100 animate-in fade-in zoom-in duration-500">
+                <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mb-6 relative">
+                  <div className="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center shadow-inner">
+                    <WifiOff className="w-8 h-8 text-slate-500" />
+                  </div>
+                </div>
+                <h2 className="text-2xl font-bold text-slate-800 mb-3">You're Currently Offline</h2>
+                <p className="text-slate-500 max-w-md leading-relaxed text-center">
+                  Your patients will see your away message. Configure your availability settings on the left panel, then come back online when you're ready.
+                </p>
+              </div>
+            ) : (
+              <>
+            {/* Mobile doctor profile + weekly schedule */}
+            {currentUser && (
+              <div className="md:hidden space-y-4 mb-6">
             {/* Doctor profile card */}
             <div className="flex items-center gap-4 p-4 rounded-2xl bg-white shadow-md border border-emerald-50 w-full">
               <Avatar className="w-16 h-16 rounded-xl">
@@ -386,8 +429,11 @@ export default function DoctorDashboard() {
           <div>
             <AttendedPatients />
           </div>
+          </div>
+        </>
+            )}
+          </div>
         </div>
-
       </main>
     </div>
     

@@ -1,6 +1,7 @@
 import { Clock } from "lucide-react";
 import { Doctor } from "@/data/hospitalData-2";
 import { Badge } from "@/components/ui/badge";
+import { useEffect, useState } from "react";
 
 interface DoctorCardProps {
   doctor: Doctor;
@@ -8,11 +9,47 @@ interface DoctorCardProps {
 }
 
 export const DoctorCard = ({ doctor, variant = "header" }: DoctorCardProps) => {
+  const [timeLeft, setTimeLeft] = useState<string | null>(null);
+
   const statusColors = {
     available: "bg-success",
     busy: "bg-warning",
     break: "bg-muted-foreground",
+    offline: "bg-gray-400"
   };
+
+  useEffect(() => {
+    if (doctor.status === 'offline' && doctor.back_online_time) {
+      const calculateTimeLeft = () => {
+        try {
+          const backTime = new Date(doctor.back_online_time!.includes(' ') ? doctor.back_online_time! : `2000-01-01 ${doctor.back_online_time}`);
+          // Add 10 minutes as per requirement
+          backTime.setMinutes(backTime.getMinutes() + 10);
+          
+          const now = new Date();
+          const diff = backTime.getTime() - now.getTime();
+          
+          if (diff > 0) {
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            
+            setTimeLeft(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+          } else {
+            setTimeLeft("00:00:00");
+          }
+        } catch (e) {
+          setTimeLeft(null);
+        }
+      };
+
+      calculateTimeLeft();
+      const timer = setInterval(calculateTimeLeft, 1000);
+      return () => clearInterval(timer);
+    } else {
+      setTimeLeft(null);
+    }
+  }, [doctor.status, doctor.back_online_time]);
 
   if (variant === "header") {
     return (
@@ -23,7 +60,7 @@ export const DoctorCard = ({ doctor, variant = "header" }: DoctorCardProps) => {
             alt={doctor.name}
             className="w-12 h-12 rounded-full object-cover ring-2 ring-white shadow-sm"
           />
-          <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${statusColors[doctor.status]}`} />
+          <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${statusColors[doctor.status] || 'bg-gray-400'}`} />
         </div>
         <div className="text-slate-800">
           <h2 className="text-lg font-bold leading-tight">{doctor.name}</h2>
@@ -32,10 +69,17 @@ export const DoctorCard = ({ doctor, variant = "header" }: DoctorCardProps) => {
             <Badge variant="secondary" className="bg-white text-slate-700 border border-slate-200 shadow-sm hover:bg-slate-50 px-2 py-0 h-5 text-[10px]">
               {doctor.room}
             </Badge>
-            <span className="flex items-center gap-1 text-xs text-slate-500">
-              <Clock className="w-3 h-3" />
-              ~{doctor.avgTime} min/patient
-            </span>
+            {/* {doctor.status === 'offline' && timeLeft ? (
+              <span className="flex items-center gap-1 text-xs font-semibold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full border border-orange-200">
+                <Clock className="w-3 h-3" />
+                Wait: {timeLeft}
+              </span>
+            ) : ( */}
+              <span className="flex items-center gap-1 text-xs text-slate-500">
+                <Clock className="w-3 h-3" />
+                ~{doctor.avgTime} min/patient
+              </span>
+            {/* )} */}
           </div>
         </div>
       </div>

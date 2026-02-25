@@ -381,6 +381,7 @@ class HospitalCommonModel extends CI_Model{
 
         // Doctors Online (Active)
         $this->db->where('hosuid', $hosuid);
+        $this->db->where('is_online', 1);
         $this->db->where('status', '1');
         $this->db->where('isdelete', 0);
         $doctorsAvailable = $this->db->count_all_results('ms_doctors');
@@ -416,7 +417,7 @@ class HospitalCommonModel extends CI_Model{
     }
 
     public function get_DashboardDoctors($hosuid) {
-        $this->db->select('md.id, md.name, md.profile_image, md.status, hs.name as specialization, md.room_number, md.avg_consultation_time');
+        $this->db->select('md.id, md.name, md.profile_image, md.status, md.is_online, md.back_online_time, md.away_message, hs.name as specialization, md.room_number, md.avg_consultation_time');
         $this->db->from('ms_doctors md');
         $this->db->join('ms_hospitals_specialization hs', 'md.specialization_id = hs.speuid', 'left');
         $this->db->where('md.hosuid', $hosuid);

@@ -1,13 +1,58 @@
-import { Patient } from "@/data/hospitalData-2";
+import { Patient, Doctor } from "@/data/hospitalData-2";
 import { Badge } from "@/components/ui/badge";
+import { useEffect, useState } from "react";
 
 interface TokenDisplayProps {
   patient: Patient;
+  doctor?: Doctor;
   variant?: "hero" | "large" | "medium" | "compact";
   showDetails?: boolean;
 }
 
-export const TokenDisplay = ({ patient, variant = "hero", showDetails = true }: TokenDisplayProps) => {
+export const TokenDisplay = ({ patient, doctor, variant = "hero", showDetails = true }: TokenDisplayProps) => {
+  const [timeLeft, setTimeLeft] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (doctor?.status === 'offline' && doctor.back_online_time) {
+      const calculateTimeLeft = () => {
+        try {
+          // Parse back_online_time as IST (UTC+5:30)
+          let timeString = doctor.back_online_time!;
+          if (!timeString.includes(' ')) {
+            // Handle time-only strings if any, assume today
+            const today = new Date().toISOString().split('T')[0];
+            timeString = `${today} ${timeString}`;
+          }
+          
+          // Ensure format is compatible with Date constructor with timezone offset
+          // Expected format: YYYY-MM-DD HH:mm:ss -> YYYY-MM-DDTHH:mm:ss+05:30
+          const isoString = timeString.replace(' ', 'T') + "+05:30";
+          const backTime = new Date(isoString);
+          
+          const now = new Date();
+          const diff = backTime.getTime() - now.getTime();
+          
+          if (diff > 0) {
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            setTimeLeft(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+          } else {
+            setTimeLeft("Delayed");
+          }
+        } catch (e) {
+          setTimeLeft(null);
+        }
+      };
+
+      calculateTimeLeft();
+      const timer = setInterval(calculateTimeLeft, 1000);
+      return () => clearInterval(timer);
+    } else {
+      setTimeLeft(null);
+    }
+  }, [doctor?.status, doctor?.back_online_time]);
+
   const visitTypeLabels = {
     new: 'NEW PATIENT',
     'follow-up': 'FOLLOW-UP',
@@ -31,12 +76,32 @@ export const TokenDisplay = ({ patient, variant = "hero", showDetails = true }: 
         </div>
         {showDetails && (
           <div className="space-y-0.5 mt-1">
-            <h3 className="text-base font-semibold text-foreground">{patient.name}</h3>
-            <div className="flex items-center justify-center gap-2">
-              <Badge className={`${visitTypeColors[patient.visitType]} px-1.5 py-0 text-[10px] font-medium h-4`}>
-                {visitTypeLabels[patient.visitType]}
-              </Badge>
-            </div>
+            {timeLeft ? (
+              <div className="mt-3 animate-in fade-in zoom-in duration-300">
+                <h3 className="text-base font-semibold text-foreground mb-2">{doctor?.away_message || "Doctor is away"}</h3>
+                <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border shadow-sm ${timeLeft === 'Delayed' ? 'bg-red-50 text-red-700 border-red-200/60' : 'bg-orange-50 text-orange-700 border-orange-200/60'}`}>
+                   <span className="relative flex h-2 w-2">
+                      <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${timeLeft === 'Delayed' ? 'bg-red-400' : 'bg-orange-400'}`}></span>
+                      <span className={`relative inline-flex rounded-full h-2 w-2 ${timeLeft === 'Delayed' ? 'bg-red-500' : 'bg-orange-500'}`}></span>
+                    </span>
+                   <span className="text-lg font-bold font-mono tracking-widest leading-none">{timeLeft === 'Delayed' ? 'DELAYED' : timeLeft}</span>
+                </div>
+                {timeLeft === 'Delayed' && (
+                  <p className="text-[10px] font-medium text-red-500 mt-1 animate-pulse">
+                    Checking status...
+                  </p>
+                )}
+              </div>
+            ) : (
+              <>
+                <h3 className="text-base font-semibold text-foreground">{patient.name}</h3>
+                <div className="flex items-center justify-center gap-2">
+                  <Badge className={`${visitTypeColors[patient.visitType]} px-1.5 py-0 text-[10px] font-medium h-4`}>
+                    {visitTypeLabels[patient.visitType]}
+                  </Badge>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>

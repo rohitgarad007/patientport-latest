@@ -16,6 +16,11 @@ export interface DoctorProfile {
   consultation_fee: string;
   screen_default_message?: string;
   
+  // Status fields
+  is_online?: number; // 0 or 1
+  away_message?: string;
+  back_online_time?: string;
+
   // For updates
   current_password?: string;
   new_password?: string;
@@ -51,6 +56,14 @@ class DoctorProfileService {
         const decryptedJson = decryptAESFromPHP(result.data, this.AES_KEY);
         if (decryptedJson) {
             const profile = JSON.parse(decryptedJson);
+            
+            // Ensure is_online is a number
+            if (profile.is_online !== undefined && profile.is_online !== null) {
+                profile.is_online = Number(profile.is_online);
+            } else {
+                profile.is_online = 1; // Default to online
+            }
+
             // Prepend API URL to profile_image if it's a relative path (not base64 and not http)
             if (profile.profile_image && 
                 !profile.profile_image.startsWith('data:') && 
@@ -98,6 +111,32 @@ class DoctorProfileService {
     } catch (error) {
       console.error("Error updating profile:", error);
       return { status: false, message: "Failed to update profile" };
+    }
+  }
+
+  async updateStatus(data: { is_online?: number; away_message?: string; back_online_time?: string }): Promise<{ status: boolean; message: string }> {
+    const API_URL = await configService.getApiUrl();
+    const token = Cookies.get("token");
+    if (!token) throw new Error("No auth token found");
+
+    try {
+      // Encrypt data
+      const encryptedData = encryptAESForPHP(JSON.stringify(data), this.AES_KEY);
+      
+      const response = await fetch(`${API_URL}doctor_status_update`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ data: encryptedData }),
+      });
+
+      if (!response.ok) throw new Error("Failed to update status");
+      return await response.json();
+    } catch (error) {
+      console.error("Error updating status:", error);
+      return { status: false, message: "Failed to update status" };
     }
   }
 }

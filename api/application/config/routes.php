@@ -264,6 +264,10 @@ $route['hospital/profile/change_password'] = 'HospitalProfileController/change_p
 $route['hospital/profile/update'] = 'HospitalProfileController/update_profile';
 $route['hospital/profile/(:any)'] = 'HospitalProfileController/get_profile/$1';
 
+$route['doctor_profile_get'] = 'DoctorProfileController/get_profile';
+$route['doctor_profile_update'] = 'DoctorProfileController/update_profile';
+$route['doctor_status_update'] = 'DoctorProfileController/update_status';
+
 $route['adm_specializations_change_status']				= 'AdmSpecializationsController/changeSpecializationsStatus';
 $route['adm_specializations_delete']					= 'AdmSpecializationsController/DeleteSpecializationsInformation';
 

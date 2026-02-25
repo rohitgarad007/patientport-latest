@@ -198,8 +198,63 @@ class DoctorProfileController extends CI_Controller {
                 // Update to new password
                 $this->DoctorProfileModel->update_password($docuid, $data['new_password']);
             }
-
+            
             echo json_encode(['status' => true, 'message' => 'Profile updated successfully']);
+        } catch (Exception $e) {
+            echo json_encode(['status' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function update_status() {
+        try {
+            $docuid = $this->get_doctor_from_token();
+            
+            // Check if request is multipart/form-data or JSON
+            $contentType = isset($_SERVER["CONTENT_TYPE"]) ? trim($_SERVER["CONTENT_TYPE"]) : '';
+            $data = [];
+            
+            if (strpos($contentType, 'application/json') !== false) {
+                // JSON Request
+                $raw = file_get_contents("php://input");
+                $requestData = json_decode($raw, true);
+                if (isset($requestData['data'])) {
+                    $decryptedJson = $this->decrypt_aes_from_js($requestData['data'], $this->AES_KEY);
+                    $data = json_decode($decryptedJson, true);
+                } else {
+                    $data = !empty($requestData) ? $requestData : $_POST;
+                }
+            } else {
+                // Multipart Request (FormData)
+                if (isset($_POST['data'])) {
+                    $decryptedJson = $this->decrypt_aes_from_js($_POST['data'], $this->AES_KEY);
+                    $data = json_decode($decryptedJson, true);
+                } else {
+                    $data = $_POST;
+                }
+            }
+
+            // Prepare update data
+            $updateData = [];
+            
+            if (isset($data['is_online'])) {
+                $updateData['is_online'] = intval($data['is_online']); // 0 or 1
+            }
+            
+            if (isset($data['away_message'])) {
+                $updateData['away_message'] = trim($data['away_message']);
+            }
+            
+            if (isset($data['back_online_time'])) {
+                // Validate datetime format if needed, or just pass it
+                $updateData['back_online_time'] = $data['back_online_time'] ? trim($data['back_online_time']) : null;
+            }
+            
+            if (!empty($updateData)) {
+                $this->DoctorProfileModel->update_doctor_profile($docuid, $updateData);
+                echo json_encode(['status' => true, 'message' => 'Status updated successfully']);
+            } else {
+                echo json_encode(['status' => false, 'message' => 'No data to update']);
+            }
 
         } catch (Exception $e) {
             echo json_encode(['status' => false, 'message' => $e->getMessage()]);
