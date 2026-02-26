@@ -66,20 +66,6 @@ export const DoctorCard = ({ doctor, variant = "header" }: DoctorCardProps) => {
           <h2 className="text-lg font-bold leading-tight">{doctor.name}</h2>
           <div className="flex items-center gap-2 mt-0.5">
             <span className="text-slate-600 font-medium text-sm">{doctor.specialty}</span>
-            <Badge variant="secondary" className="bg-white text-slate-700 border border-slate-200 shadow-sm hover:bg-slate-50 px-2 py-0 h-5 text-[10px]">
-              {doctor.room}
-            </Badge>
-            {/* {doctor.status === 'offline' && timeLeft ? (
-              <span className="flex items-center gap-1 text-xs font-semibold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full border border-orange-200">
-                <Clock className="w-3 h-3" />
-                Wait: {timeLeft}
-              </span>
-            ) : ( */}
-              <span className="flex items-center gap-1 text-xs text-slate-500">
-                <Clock className="w-3 h-3" />
-                ~{doctor.avgTime} min/patient
-              </span>
-            {/* )} */}
           </div>
         </div>
       </div>

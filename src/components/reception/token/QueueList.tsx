@@ -186,38 +186,38 @@ export const QueueList = ({ patients, doctor, title = "Waiting Queue", variant =
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{title}</h3>
-        <Badge variant="secondary" className="text-xs">{waitingPatients.length} WAITING</Badge>
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{title}</h3>
+        <Badge variant="secondary" className="text-[10px] px-1.5 h-4">{waitingPatients.length} WAITING</Badge>
       </div>
-      <div className="space-y-1.5">
+      <div className="space-y-1">
         {waitingPatients.length === 0 ? (
-          <div className="text-center text-muted-foreground py-8 border border-dashed rounded-xl">
+          <div className="text-center text-muted-foreground py-6 border border-dashed rounded-xl text-xs">
             Queue is empty
           </div>
         ) : (
           waitingPatients.map((patient, index) => (
             <div
               key={patient.id}
-              className={`flex items-center justify-between py-2 px-3 rounded-lg transition-colors ${
+              className={`flex items-center justify-between py-1.5 px-2.5 rounded-lg transition-colors ${
                 index === 0 ? 'bg-warning/10 border border-warning/20' : 'bg-card hover:bg-muted border border-transparent'
               }`}
             >
-              <div className="flex items-center gap-4">
-                <span className={`token-number font-bold ${index === 0 ? 'text-token-active' : 'text-primary'}`}>
+              <div className="flex items-center gap-3">
+                <span className={`token-number text-sm font-bold ${index === 0 ? 'text-token-active' : 'text-primary'}`}>
                   {patient.tokenNumber}
                 </span>
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-foreground">{patient.name}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm font-medium text-foreground">{patient.name}</span>
                   {doctor?.status === 'offline' && getWaitTime(index) && (
-                    <span className={`flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full border whitespace-nowrap ${getWaitTime(index) === 'Delayed' ? 'text-red-600 bg-red-50 border-red-200' : 'text-orange-600 bg-orange-50 border-orange-200'}`}>
-                      <Clock className="w-2.5 h-2.5" />
+                    <span className={`flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full border whitespace-nowrap ${getWaitTime(index) === 'Delayed' ? 'text-red-600 bg-red-50 border-red-200' : 'text-orange-600 bg-orange-50 border-orange-200'}`}>
+                      <Clock className="w-2 h-2" />
                       Wait: {getWaitTime(index)}
                     </span>
                   )}
                   {patient.priority && priorityIcons[patient.priority]}
                 </div>
               </div>
-              <span className="text-sm text-muted-foreground">{patient.appointmentTime}</span>
+              <span className="text-xs text-muted-foreground">{patient.appointmentTime}</span>
             </div>
           ))
         )}

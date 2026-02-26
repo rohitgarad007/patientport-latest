@@ -115,7 +115,8 @@ class ReceptionController extends CI_Controller {
 
             echo json_encode([
                 "success" => true,
-                "data" => $encryptedData
+                "data" => $encryptedData,
+                "rowData" => $responseData
             ]);
 
         } catch (Exception $e) {
@@ -370,7 +371,7 @@ class ReceptionController extends CI_Controller {
             $AES_KEY = "RohitGaradHos@173414";
             $payload = json_encode(['message' => $message]);
             $encryptedData = $this->encrypt_aes_for_js($payload, $AES_KEY);
-            echo json_encode([ "success" => true, "data" => $encryptedData ]);
+            echo json_encode([ "success" => true, "data" => $encryptedData  ]);
         } catch (Throwable $e) {
             $response = json_encode(['success' => false, 'message' => $e->getMessage()]);
             echo json_encode(['data' => $this->encrypt_aes_for_js($response, "RohitGaradHos@173414")]);

@@ -71,30 +71,30 @@ export const TokenDisplay = ({ patient, doctor, variant = "hero", showDetails = 
     return (
       <div className="text-center py-1">
         <p className="text-[10px] font-bold tracking-[0.15em] text-primary uppercase mb-1">Now Serving</p>
-        <div className="token-number text-3xl md:text-5xl font-bold text-token-active tracking-tight leading-none mb-2 shadow-sm rounded-xl inline-block px-4 py-1.5 bg-token-active/5 border border-token-active/10">
+        <div className="token-number text-2xl md:text-4xl font-bold text-token-active tracking-tight leading-none mb-1.5 shadow-sm rounded-xl inline-block px-3 py-1 bg-token-active/5 border border-token-active/10">
           {patient.tokenNumber}
         </div>
         {showDetails && (
           <div className="space-y-0.5 mt-1">
             {timeLeft ? (
-              <div className="mt-3 animate-in fade-in zoom-in duration-300">
-                <h3 className="text-base font-semibold text-foreground mb-2">{doctor?.away_message || "Doctor is away"}</h3>
-                <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border shadow-sm ${timeLeft === 'Delayed' ? 'bg-red-50 text-red-700 border-red-200/60' : 'bg-orange-50 text-orange-700 border-orange-200/60'}`}>
-                   <span className="relative flex h-2 w-2">
+              <div className="mt-2 animate-in fade-in zoom-in duration-300">
+                <h3 className="text-sm font-semibold text-foreground mb-1.5">{doctor?.away_message || "Doctor is away"}</h3>
+                <div className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-lg border shadow-sm ${timeLeft === 'Delayed' ? 'bg-red-50 text-red-700 border-red-200/60' : 'bg-orange-50 text-orange-700 border-orange-200/60'}`}>
+                   <span className="relative flex h-1.5 w-1.5">
                       <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${timeLeft === 'Delayed' ? 'bg-red-400' : 'bg-orange-400'}`}></span>
-                      <span className={`relative inline-flex rounded-full h-2 w-2 ${timeLeft === 'Delayed' ? 'bg-red-500' : 'bg-orange-500'}`}></span>
+                      <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${timeLeft === 'Delayed' ? 'bg-red-500' : 'bg-orange-500'}`}></span>
                     </span>
-                   <span className="text-lg font-bold font-mono tracking-widest leading-none">{timeLeft === 'Delayed' ? 'DELAYED' : timeLeft}</span>
+                   <span className="text-base font-bold font-mono tracking-widest leading-none">{timeLeft === 'Delayed' ? 'DELAYED' : timeLeft}</span>
                 </div>
                 {timeLeft === 'Delayed' && (
-                  <p className="text-[10px] font-medium text-red-500 mt-1 animate-pulse">
+                  <p className="text-[9px] font-medium text-red-500 mt-0.5 animate-pulse">
                     Checking status...
                   </p>
                 )}
               </div>
             ) : (
               <>
-                <h3 className="text-base font-semibold text-foreground">{patient.name}</h3>
+                <h3 className="text-sm font-semibold text-foreground">{patient.name}</h3>
                 <div className="flex items-center justify-center gap-2">
                   <Badge className={`${visitTypeColors[patient.visitType]} px-1.5 py-0 text-[10px] font-medium h-4`}>
                     {visitTypeLabels[patient.visitType]}

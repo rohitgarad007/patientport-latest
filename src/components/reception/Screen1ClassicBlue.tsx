@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AlertCircle, Crown, Clock, WifiOff } from "lucide-react";
+import { AlertCircle, Crown, Clock, WifiOff, Home } from "lucide-react";
 import { doctors as defaultDoctors, patients as defaultPatients, Doctor, Patient } from "@/data/hospitalData-2";
 import { DoctorCard } from "@/components/reception/token/DoctorCard";
 import { TokenDisplay } from "@/components/reception/token/TokenDisplay";
@@ -144,7 +144,12 @@ export default function Screen1ClassicBlue ({ data, settings }: ScreenProps) {
       {/* Header */}
       <header className="bg-[#EBF3F9] p-3 shadow-sm rounded-b-2xl mx-4 mt-2 shrink-0">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <DoctorCard doctor={doctor} variant="header" />
+          <div className="flex items-center gap-4">
+            <a href="/reception-screen-live" className="p-2 bg-white rounded-full shadow-sm hover:bg-slate-50 transition-colors">
+              <Home className="w-5 h-5 text-slate-600" />
+            </a>
+            <DoctorCard doctor={doctor} variant="header" />
+          </div>
           <div className="text-slate-700">
             <TimeDisplay variant="compact" />
           </div>
