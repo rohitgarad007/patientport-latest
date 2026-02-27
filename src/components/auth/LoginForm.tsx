@@ -280,11 +280,13 @@
                   type="button"
                   variant="ghost"
                   className="w-full"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.preventDefault();
                     setShowOtpScreen(false);
                     setOtp("");
                     setTempLoguid(null);
                     setTempRole(null);
+                    setLoading(false);
                   }}
                 >
                   Back to Login
