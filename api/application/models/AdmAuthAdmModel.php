@@ -12,7 +12,7 @@ class AdmAuthAdmModel extends CI_Model{
             $this->db->where("ui.uid", $sluid);
             $query = $this->db->get();
             return $query->row_array();
-        }*/
+        }
 
         public function verify_otp($loguid, $role, $otp) {
         $table = '';
@@ -156,7 +156,7 @@ class AdmAuthAdmModel extends CI_Model{
                 'failed' => true,
                 'remaining_attempts' => $remaining
             ];
-        }*/
+        }
 
         public function check_adminLogin($username, $plainPassword){
        

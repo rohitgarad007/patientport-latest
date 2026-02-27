@@ -25,4 +25,3 @@ if (basename($_SERVER['PHP_SELF']) === basename(__FILE__)) {
 
 // Firebase Config (if needed on backend)
 // putenv("VITE_FIREBASE_API_KEY=YOUR_FIREBASE_API_KEY");
-?>
