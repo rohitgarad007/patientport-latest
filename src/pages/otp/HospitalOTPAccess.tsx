@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
@@ -22,17 +22,17 @@ import {
 import { Search, RefreshCw, Users, ArrowLeft, Shield, LayoutGrid, List } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Employee, EmployeeRole } from '@/types/employee';
-import { initialEmployees, generateNewOtp } from '@/data/employeeData';
 import { EmployeeOtpTable } from '@/components/employee/EmployeeOtpTable';
 import { EmployeeOtpCard } from '@/components/employee/EmployeeOtpCard';
 import { EmployeeDetailsDialog } from '@/components/employee/EmployeeDetailsDialog';
+import { fetchEmployeeOTPList, resetEmployeeOTP, toggleEmployee2FA } from '@/services/HospitalOTPService';
 
-const roles: EmployeeRole[] = ['Doctor', 'Nurse', 'Staff', 'Technician', 'Receptionist', 'Pharmacist'];
+const roles: EmployeeRole[] = ['Doctor', 'Staff'];
 
 const HospitalOTPAccess = () => {
-  const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState<string>('all');
+  const [roleFilter, setRoleFilter] = useState<string>('Doctor');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
@@ -50,6 +50,24 @@ const HospitalOTPAccess = () => {
     employee: null,
   });
 
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const res = await fetchEmployeeOTPList(roleFilter);
+        if (res.success && res.data) {
+          setEmployees(res.data);
+        } else {
+          setEmployees([]);
+          toast.error(res.message || 'Failed to fetch data');
+        }
+      } catch (error) {
+        toast.error('Error loading employee data');
+        console.error(error);
+      }
+    };
+    loadData();
+  }, [roleFilter]);
+
   const filteredEmployees = useMemo(() => {
     return employees.filter((emp) => {
       const matchesSearch =
@@ -58,7 +76,12 @@ const HospitalOTPAccess = () => {
         emp.employeeId.toLowerCase().includes(searchQuery.toLowerCase()) ||
         emp.department.toLowerCase().includes(searchQuery.toLowerCase());
 
-      const matchesRole = roleFilter === 'all' || emp.role === roleFilter;
+      const matchesRole = 
+        roleFilter === 'all' 
+          ? true 
+          : roleFilter === 'Staff' 
+            ? emp.role !== 'Doctor'
+            : emp.role === roleFilter;
       const matchesStatus = statusFilter === 'all' || emp.status === statusFilter;
 
       return matchesSearch && matchesRole && matchesStatus;
@@ -81,64 +104,78 @@ const HospitalOTPAccess = () => {
     setResetDialog({ open: true, type: 'all', employee: null });
   };
 
-  const confirmReset = () => {
+  const confirmReset = async () => {
     const { type, employee } = resetDialog;
-    const newOtpData = generateNewOtp();
 
     if (type === 'single' && employee) {
-      setEmployees((prev) =>
-        prev.map((emp) =>
-          emp.id === employee.id
-            ? {
-                ...emp,
-                currentOtp: newOtpData.otp,
-                otpGeneratedAt: newOtpData.generatedAt,
-                otpExpiresAt: newOtpData.expiresAt,
-              }
-            : emp
-        )
-      );
-      toast.success(`OTP reset for ${employee.name}`);
+      try {
+        const res = await resetEmployeeOTP(employee.employeeId, employee.role);
+        if (res.success) {
+            toast.success(`OTP reset for ${employee.name}`);
+            const updatedRes = await fetchEmployeeOTPList(roleFilter);
+            if (updatedRes.success && updatedRes.data) setEmployees(updatedRes.data);
+        } else {
+            toast.error(res.message || 'Failed to reset OTP');
+        }
+      } catch (error) {
+        toast.error('Error resetting OTP');
+      }
     } else if (type === 'selected') {
-      setEmployees((prev) =>
-        prev.map((emp) => {
-          if (selectedIds.includes(emp.id)) {
-            const otpData = generateNewOtp();
-            return {
-              ...emp,
-              currentOtp: otpData.otp,
-              otpGeneratedAt: otpData.generatedAt,
-              otpExpiresAt: otpData.expiresAt,
-            };
-          }
-          return emp;
-        })
-      );
-      toast.success(`OTP reset for ${selectedIds.length} employees`);
+      // Bulk reset not fully implemented in backend yet, doing loop
+      let successCount = 0;
+      for (const id of selectedIds) {
+        const emp = employees.find(e => e.id === id);
+        if (emp) {
+            try {
+                await resetEmployeeOTP(emp.employeeId, emp.role);
+                successCount++;
+            } catch (e) {
+                console.error(e);
+            }
+        }
+      }
+      toast.success(`OTP reset initiated for ${successCount} employees`);
+      const updatedRes = await fetchEmployeeOTPList(roleFilter);
+      if (updatedRes.success && updatedRes.data) setEmployees(updatedRes.data);
       setSelectedIds([]);
     } else if (type === 'all') {
-      setEmployees((prev) =>
-        prev.map((emp) => {
-          const otpData = generateNewOtp();
-          return {
-            ...emp,
-            currentOtp: otpData.otp,
-            otpGeneratedAt: otpData.generatedAt,
-            otpExpiresAt: otpData.expiresAt,
-          };
-        })
-      );
-      toast.success('OTP reset for all employees');
+       // Bulk reset for all
+      let successCount = 0;
+      for (const emp of employees) {
+        try {
+            await resetEmployeeOTP(emp.employeeId, emp.role);
+            successCount++;
+        } catch (e) {
+            console.error(e);
+        }
+      }
+      toast.success(`OTP reset initiated for all employees`);
+      const updatedRes = await fetchEmployeeOTPList(roleFilter);
+      if (updatedRes.success && updatedRes.data) setEmployees(updatedRes.data);
     }
 
     setResetDialog({ open: false, type: 'single', employee: null });
+  };
+
+  const handleToggle2FA = async (employee: Employee, status: number) => {
+    try {
+        const res = await toggleEmployee2FA(employee.employeeId, employee.role, status);
+        if (res.success) {
+            toast.success(`Two-factor authentication ${status ? 'enabled' : 'disabled'} for ${employee.name}`);
+            setEmployees(prev => prev.map(e => e.id === employee.id ? { ...e, twoFactorAuth: status } : e));
+        } else {
+            toast.error(res.message || 'Failed to update 2FA settings');
+        }
+    } catch (error) {
+        toast.error('Error updating 2FA settings');
+    }
   };
 
   const stats = useMemo(() => ({
     total: employees.length,
     active: employees.filter((e) => e.status === 'Active').length,
     doctors: employees.filter((e) => e.role === 'Doctor').length,
-    nurses: employees.filter((e) => e.role === 'Nurse').length,
+    staff: employees.filter((e) => e.role !== 'Doctor').length,
   }), [employees]);
 
   return (
@@ -223,8 +260,8 @@ const HospitalOTPAccess = () => {
                 <Users className="w-5 h-5 text-pink-600" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-foreground">{stats.nurses}</div>
-                <div className="text-sm text-muted-foreground">Nurses</div>
+                <div className="text-2xl font-bold text-foreground">{stats.staff}</div>
+                <div className="text-sm text-muted-foreground">Staff</div>
               </div>
             </div>
           </div>
@@ -246,7 +283,6 @@ const HospitalOTPAccess = () => {
               <SelectValue placeholder="Filter by role" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Roles</SelectItem>
               {roles.map((role) => (
                 <SelectItem key={role} value={role}>
                   {role}
@@ -292,6 +328,7 @@ const HospitalOTPAccess = () => {
             onSelectionChange={setSelectedIds}
             onResetOtp={handleResetSingle}
             onViewDetails={(emp) => setDetailsDialog({ open: true, employee: emp })}
+            onToggle2FA={handleToggle2FA}
           />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -309,6 +346,7 @@ const HospitalOTPAccess = () => {
                 }}
                 onResetOtp={handleResetSingle}
                 onViewDetails={(emp) => setDetailsDialog({ open: true, employee: emp })}
+                onToggle2FA={handleToggle2FA}
               />
             ))}
             {filteredEmployees.length === 0 && (

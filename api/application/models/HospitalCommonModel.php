@@ -509,6 +509,79 @@ class HospitalCommonModel extends CI_Model{
 	    return $query->result_array();
 	}
 
+    /* ===== OTP Management Functions ===== */
+
+    public function get_HospitalDoctorsOTPList($loguid){
+        $this->db->select('
+            md.id, 
+            md.docuid as employeeId, 
+            md.name, 
+            md.email, 
+            md.phone, 
+            "Doctor" as role,
+            mhs.specialization_name as department,
+            md.current_otp,
+            md.otp_generated_at,
+            md.otp_expires_at,
+            md.two_factor_auth
+        ');
+        $this->db->from('ms_doctors md');
+        $this->db->join('ms_doctor_specializations mhs', 'mhs.id = md.specialization_id', 'left');
+        $this->db->where('md.hosuid', $loguid);
+        $this->db->where('md.isdelete', 0);
+        $query = $this->db->get();
+        return $query->result_array();
+    }
+
+    public function get_HospitalStaffOTPList($hospital_id){
+        $this->db->select('
+            ms.id, 
+            ms.staff_uid as employeeId, 
+            ms.name, 
+            ms.email, 
+            ms.phone, 
+            ms.role, 
+            ms.department,
+            ms.current_otp,
+            ms.otp_generated_at,
+            ms.otp_expires_at,
+            ms.two_factor_auth
+        ');
+        $this->db->from('ms_staff ms');
+        $this->db->where('ms.hospital_id', $hospital_id);
+        $this->db->where('ms.isdelete', 0);
+        $query = $this->db->get();
+        return $query->result_array();
+    }
+
+    public function update_DoctorOTP($docId, $otp, $generatedAt, $expiresAt) {
+        $this->db->where('docuid', $docId);
+        return $this->db->update('ms_doctors', [
+            'current_otp' => $otp,
+            'otp_generated_at' => $generatedAt,
+            'otp_expires_at' => $expiresAt
+        ]);
+    }
+    
+    public function update_StaffOTP($staffId, $otp, $generatedAt, $expiresAt) {
+        $this->db->where('staff_uid', $staffId);
+        return $this->db->update('ms_staff', [
+            'current_otp' => $otp,
+            'otp_generated_at' => $generatedAt,
+            'otp_expires_at' => $expiresAt
+        ]);
+    }
+
+    public function toggle_Doctor2FA($docId, $status) {
+        $this->db->where('docuid', $docId);
+        return $this->db->update('ms_doctors', ['two_factor_auth' => $status]);
+    }
+
+    public function toggle_Staff2FA($staffId, $status) {
+        $this->db->where('staff_uid', $staffId);
+        return $this->db->update('ms_staff', ['two_factor_auth' => $status]);
+    }
+
 	public function get_activityOptionListById($hospital_id = ''){
 		//$this->db->select('mpa.activityuid as id,  mpa.title, mpa.category, mpa.color_code');
 		$this->db->select('mpa.id,  mpa.title, mpa.category, mpa.color_code');

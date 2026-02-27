@@ -79,18 +79,22 @@ class Migration_Add_whatsapp_tables extends CI_Migration {
             ),
         ));
         $this->dbforge->add_key('id', TRUE);
-        $this->dbforge->create_table('ms_whatsapp_config');
+        $this->dbforge->create_table('ms_whatsapp_config', TRUE);
 
         // Insert default placeholders with provided info
-        $data = array(
-            array('config_key' => 'verify_token', 'config_value' => 'YOUR_VERIFY_TOKEN', 'updated_at' => date('Y-m-d H:i:s')),
-            array('config_key' => 'access_token', 'config_value' => 'YOUR_ACCESS_TOKEN', 'updated_at' => date('Y-m-d H:i:s')),
-            array('config_key' => 'phone_number_id', 'config_value' => 'YOUR_PHONE_NUMBER_ID', 'updated_at' => date('Y-m-d H:i:s')),
-            array('config_key' => 'app_id', 'config_value' => '1308838484596357', 'updated_at' => date('Y-m-d H:i:s')),
-            array('config_key' => 'business_id', 'config_value' => '1645960139724883', 'updated_at' => date('Y-m-d H:i:s')),
-            array('config_key' => 'whatsapp_number', 'config_value' => '9503493993', 'updated_at' => date('Y-m-d H:i:s')),
-        );
-        $this->db->insert_batch('ms_whatsapp_config', $data);
+        // Check if data exists first
+        $exists = $this->db->get('ms_whatsapp_config')->num_rows() > 0;
+        if (!$exists) {
+            $data = array(
+                array('config_key' => 'verify_token', 'config_value' => 'YOUR_VERIFY_TOKEN', 'updated_at' => date('Y-m-d H:i:s')),
+                array('config_key' => 'access_token', 'config_value' => 'YOUR_ACCESS_TOKEN', 'updated_at' => date('Y-m-d H:i:s')),
+                array('config_key' => 'phone_number_id', 'config_value' => 'YOUR_PHONE_NUMBER_ID', 'updated_at' => date('Y-m-d H:i:s')),
+                array('config_key' => 'app_id', 'config_value' => '1308838484596357', 'updated_at' => date('Y-m-d H:i:s')),
+                array('config_key' => 'business_id', 'config_value' => '1645960139724883', 'updated_at' => date('Y-m-d H:i:s')),
+                array('config_key' => 'whatsapp_number', 'config_value' => '9503493993', 'updated_at' => date('Y-m-d H:i:s')),
+            );
+            $this->db->insert_batch('ms_whatsapp_config', $data);
+        }
     }
 
     public function down() {

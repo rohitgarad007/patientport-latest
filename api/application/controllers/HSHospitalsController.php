@@ -402,6 +402,164 @@ class HSHospitalsController  extends CI_Controller {
         }
     }
 
+    /* ===== Employee OTP Management Code Start Here ===== */
+    
+    public function getEmployeeOTPList() {
+        if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
+            exit;
+        }
+        $userToken = $this->input->get_request_header('Authorization');
+        $splitToken = explode(" ", $userToken);
+        $token = isset($splitToken[1]) ? $splitToken[1] : '';
+        try {
+            $token = verifyAuthToken($token);
+            if (!$token) throw new Exception("Unauthorized");
+
+            $tokenData = is_string($token) ? json_decode($token, true) : $token;
+            $hrole = $tokenData['role'] ?? null;
+            $loguid = $tokenData['loguid'] ?? null;
+
+            if (!$loguid || $hrole !== "hospital_admin") {
+                echo json_encode(["success" => false, "message" => "Invalid user token"]);
+                return;
+            }
+
+            $role = $this->input->get('role'); // Doctor or Staff
+            $AES_KEY = "RohitGaradHos@173414";
+            
+            $data = [];
+            if ($role === 'Doctor') {
+                $data = $this->HospitalCommonModel->get_HospitalDoctorsOTPList($loguid);
+            } else {
+                // For Staff, we need hospital_id
+                $hospitalInfo = $this->HospitalCommonModel->get_logHospitalInfo($loguid);
+                $hospital_id = isset($hospitalInfo['id']) ? $hospitalInfo['id'] : 0;
+                $data = $this->HospitalCommonModel->get_HospitalStaffOTPList($hospital_id);
+            }
+
+            $encryptedData = $this->encrypt_aes_for_js(json_encode($data), $AES_KEY);
+
+            echo json_encode([
+                "success" => true,
+                "data" => $encryptedData
+            ]);
+
+        } catch (Exception $e) {
+            log_message('error', 'getEmployeeOTPList Error: ' . $e->getMessage());
+            echo json_encode(["success" => false, "message" => "Error: " . $e->getMessage()]);
+        }
+    }
+
+    public function resetEmployeeOTP() {
+        if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
+            exit;
+        }
+        $userToken = $this->input->get_request_header('Authorization');
+        $splitToken = explode(" ", $userToken);
+        $token = isset($splitToken[1]) ? $splitToken[1] : '';
+        try {
+            $token = verifyAuthToken($token);
+            if (!$token) throw new Exception("Unauthorized");
+
+            $tokenData = is_string($token) ? json_decode($token, true) : $token;
+            $hrole = $tokenData['role'] ?? null;
+            $loguid = $tokenData['loguid'] ?? null;
+
+            if (!$loguid || $hrole !== "hospital_admin") {
+                echo json_encode(["success" => false, "message" => "Invalid user token"]);
+                return;
+            }
+
+            $rawData = json_decode(file_get_contents("php://input"), true);
+            $employeeId = isset($rawData['employeeId']) ? $rawData['employeeId'] : '';
+            $role = isset($rawData['role']) ? $rawData['role'] : '';
+
+            if (!$employeeId || !$role) {
+                echo json_encode(["success" => false, "message" => "Missing parameters"]);
+                return;
+            }
+
+            // Generate OTP
+            $otp = rand(100000, 999999);
+            $generatedAt = date('Y-m-d H:i:s');
+            $expiresAt = date('Y-m-d H:i:s', strtotime('+1 day')); // 24 hours expiry as per usual or custom
+
+            $result = false;
+            if ($role === 'Doctor') {
+                $result = $this->HospitalCommonModel->update_DoctorOTP($employeeId, $otp, $generatedAt, $expiresAt);
+            } else {
+                $result = $this->HospitalCommonModel->update_StaffOTP($employeeId, $otp, $generatedAt, $expiresAt);
+            }
+
+            if ($result) {
+                echo json_encode([
+                    "success" => true, 
+                    "message" => "OTP Reset Successfully",
+                    "otp" => $otp,
+                    "generatedAt" => $generatedAt,
+                    "expiresAt" => $expiresAt
+                ]);
+            } else {
+                echo json_encode(["success" => false, "message" => "Failed to update OTP"]);
+            }
+
+        } catch (Exception $e) {
+            log_message('error', 'resetEmployeeOTP Error: ' . $e->getMessage());
+            echo json_encode(["success" => false, "message" => "Error: " . $e->getMessage()]);
+        }
+    }
+
+    public function toggleEmployee2FA() {
+        if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
+            exit;
+        }
+        $userToken = $this->input->get_request_header('Authorization');
+        $splitToken = explode(" ", $userToken);
+        $token = isset($splitToken[1]) ? $splitToken[1] : '';
+        try {
+            $token = verifyAuthToken($token);
+            if (!$token) throw new Exception("Unauthorized");
+
+            $tokenData = is_string($token) ? json_decode($token, true) : $token;
+            $hrole = $tokenData['role'] ?? null;
+            $loguid = $tokenData['loguid'] ?? null;
+
+            if (!$loguid || $hrole !== "hospital_admin") {
+                echo json_encode(["success" => false, "message" => "Invalid user token"]);
+                return;
+            }
+
+            $rawData = json_decode(file_get_contents("php://input"), true);
+            $employeeId = isset($rawData['employeeId']) ? $rawData['employeeId'] : '';
+            $role = isset($rawData['role']) ? $rawData['role'] : '';
+            $status = isset($rawData['status']) ? $rawData['status'] : 0; // 0 or 1
+
+            if (!$employeeId || !$role) {
+                echo json_encode(["success" => false, "message" => "Missing parameters"]);
+                return;
+            }
+
+            $result = false;
+            if ($role === 'Doctor') {
+                $result = $this->HospitalCommonModel->toggle_Doctor2FA($employeeId, $status);
+            } else {
+                $result = $this->HospitalCommonModel->toggle_Staff2FA($employeeId, $status);
+            }
+
+            if ($result) {
+                echo json_encode(["success" => true, "message" => "2FA Status Updated"]);
+            } else {
+                echo json_encode(["success" => false, "message" => "Failed to update 2FA status"]);
+            }
+
+        } catch (Exception $e) {
+            log_message('error', 'toggleEmployee2FA Error: ' . $e->getMessage());
+            echo json_encode(["success" => false, "message" => "Error: " . $e->getMessage()]);
+        }
+    }
+    
+    /* ===== Employee OTP Management Code End Here ===== */
+
     /* ===== Screen Management Code End Here ===== */
 
     // AES Encryption function compatible with JS decryption

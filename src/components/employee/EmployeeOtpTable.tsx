@@ -2,6 +2,7 @@ import { Employee } from '@/types/employee';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import { RefreshCw, Eye, EyeOff, Copy, User } from 'lucide-react';
 import { useState } from 'react';
 import {
@@ -25,6 +26,7 @@ interface EmployeeOtpTableProps {
   onSelectionChange: (ids: string[]) => void;
   onResetOtp: (employee: Employee) => void;
   onViewDetails: (employee: Employee) => void;
+  onToggle2FA: (employee: Employee, status: number) => void;
 }
 
 export const EmployeeOtpTable = ({
@@ -33,6 +35,7 @@ export const EmployeeOtpTable = ({
   onSelectionChange,
   onResetOtp,
   onViewDetails,
+  onToggle2FA,
 }: EmployeeOtpTableProps) => {
   const [visibleOtps, setVisibleOtps] = useState<Set<string>>(new Set());
 
@@ -82,7 +85,10 @@ export const EmployeeOtpTable = ({
   };
 
   const formatTime = (isoString: string) => {
-    return new Date(isoString).toLocaleTimeString('en-IN', {
+    if (!isoString) return '-';
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return '-';
+    return date.toLocaleTimeString('en-IN', {
       hour: '2-digit',
       minute: '2-digit',
     });
@@ -104,6 +110,8 @@ export const EmployeeOtpTable = ({
             <TableHead className="font-semibold">Department</TableHead>
             <TableHead className="font-semibold">Current OTP</TableHead>
             <TableHead className="font-semibold">Generated At</TableHead>
+            <TableHead className="font-semibold">OTP Expired</TableHead>
+            <TableHead className="font-semibold">Two-Factor</TableHead>
             <TableHead className="font-semibold">Status</TableHead>
             <TableHead className="font-semibold text-right">Actions</TableHead>
           </TableRow>
@@ -175,6 +183,15 @@ export const EmployeeOtpTable = ({
               </TableCell>
               <TableCell className="text-muted-foreground">
                 {formatTime(employee.otpGeneratedAt)}
+              </TableCell>
+              <TableCell className="text-muted-foreground">
+                {formatTime(employee.otpExpiresAt)}
+              </TableCell>
+              <TableCell>
+                <Switch
+                  checked={employee.twoFactorAuth === 1}
+                  onCheckedChange={(checked) => onToggle2FA(employee, checked ? 1 : 0)}
+                />
               </TableCell>
               <TableCell>
                 <Badge

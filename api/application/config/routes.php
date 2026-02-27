@@ -286,6 +286,9 @@ $route['hs_specializations_delete']						= 'HSHospitalsController/DeleteSpeciali
 $route['get_specializations_list']						= 'HSDoctorsController/GetSpecializationsList';
 
 $route['hs_doctors_list'] = 'HSHospitalsController/getDoctorsList';
+$route['hs_employee_otp_list'] = 'HSHospitalsController/getEmployeeOTPList';
+$route['hs_employee_otp_reset'] = 'HSHospitalsController/resetEmployeeOTP';
+$route['hs_employee_otp_2fa_toggle'] = 'HSHospitalsController/toggleEmployee2FA';
 $route['hs_save_screen'] = 'HSHospitalsController/saveScreen';
 $route['hs_screens_list'] = 'HSHospitalsController/getScreensList';
 $route['hs_screens_appointments'] = 'HSHospitalsController/getScreenPreviewAppointments';

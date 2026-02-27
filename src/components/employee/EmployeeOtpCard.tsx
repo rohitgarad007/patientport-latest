@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent } from '@/components/ui/card';
-import { RefreshCw, Eye, EyeOff, Copy, User } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { RefreshCw, Eye, EyeOff, Copy, User, Shield } from 'lucide-react';
 import { useState } from 'react';
 import {
   Tooltip,
@@ -18,6 +19,7 @@ interface EmployeeOtpCardProps {
   onToggleSelect: (id: string) => void;
   onResetOtp: (employee: Employee) => void;
   onViewDetails: (employee: Employee) => void;
+  onToggle2FA: (employee: Employee, status: number) => void;
 }
 
 export const EmployeeOtpCard = ({
@@ -26,6 +28,7 @@ export const EmployeeOtpCard = ({
   onToggleSelect,
   onResetOtp,
   onViewDetails,
+  onToggle2FA,
 }: EmployeeOtpCardProps) => {
   const [showOtp, setShowOtp] = useState(false);
 
@@ -91,10 +94,16 @@ export const EmployeeOtpCard = ({
 
         <div className="p-3 rounded-lg bg-muted/50 border border-border/30 mb-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Current OTP</span>
-            <span className="text-xs text-muted-foreground">{formatTime(employee.otpGeneratedAt)}</span>
+            <div className="flex flex-col">
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Generated</span>
+              <span className="text-xs text-muted-foreground">{formatTime(employee.otpGeneratedAt)}</span>
+            </div>
+            <div className="flex flex-col items-end">
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Expires</span>
+              <span className="text-xs text-muted-foreground">{formatTime(employee.otpExpiresAt)}</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 mb-3">
             <code className="flex-1 px-3 py-2 rounded-md bg-background font-mono text-xl tracking-[0.3em] text-center">
               {showOtp ? employee.currentOtp : '••••••'}
             </code>
@@ -124,6 +133,17 @@ export const EmployeeOtpCard = ({
               </TooltipTrigger>
               <TooltipContent>Copy OTP</TooltipContent>
             </Tooltip>
+          </div>
+          <div className="flex items-center justify-between pt-2 border-t border-border/30">
+             <div className="flex items-center gap-2">
+               <Shield className="w-3.5 h-3.5 text-muted-foreground" />
+               <span className="text-xs font-medium text-muted-foreground">Two-Factor Auth</span>
+             </div>
+             <Switch
+                checked={employee.twoFactorAuth === 1}
+                onCheckedChange={(checked) => onToggle2FA(employee, checked ? 1 : 0)}
+                className="scale-75 origin-right"
+             />
           </div>
         </div>
 
