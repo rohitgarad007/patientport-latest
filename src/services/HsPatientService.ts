@@ -17,7 +17,7 @@ const getAuthHeaders = async () => {
 
 export const fetchPatients = async (page = 1, limit = 10, search = "") => {
   const { apiUrl, headers } = await getAuthHeaders();
-  const res = await fetch(`${apiUrl}hs_patients_list`, {
+  const res = await fetch(`${apiUrl}/hs_patients_list`, {
     method: "POST",
     headers,
     body: JSON.stringify({ page, limit, search }),
@@ -38,7 +38,7 @@ export const addPatient = async (data: any) => {
   const AES_KEY = await configService.getAesSecretKey();
   const encryptedData: any = {};
   for (const key in data) encryptedData[key] = CryptoJS.AES.encrypt(String(data[key] ?? ""), AES_KEY).toString();
-  const res = await fetch(`${apiUrl}hs_patients_add`, { method: "POST", headers, body: JSON.stringify(encryptedData) });
+  const res = await fetch(`${apiUrl}/hs_patients_add`, { method: "POST", headers, body: JSON.stringify(encryptedData) });
   if (!res.ok) throw new Error("Failed to add patient");
   return res.json();
 };
@@ -48,7 +48,7 @@ export const addPatient = async (data: any) => {
   const AES_KEY = await configService.getAesSecretKey();
   const encryptedData: any = { id };
   for (const key in data) if (data.hasOwnProperty(key)) encryptedData[key] = CryptoJS.AES.encrypt(String(data[key] ?? ""), AES_KEY).toString();
-  const res = await fetch(`${apiUrl}hs_patients_update`, { method: "POST", headers, body: JSON.stringify(encryptedData) });
+  const res = await fetch(`${apiUrl}/hs_patients_update`, { method: "POST", headers, body: JSON.stringify(encryptedData) });
   if (!res.ok) throw new Error("Failed to update patient");
   return res.json();
 };*/
@@ -67,7 +67,7 @@ export const updatePatient = async (id: string, data: any) => {
     }
   }
 
-  const res = await fetch(`${apiUrl}hs_patients_update`, {
+  const res = await fetch(`${apiUrl}/hs_patients_update`, {
     method: "POST",
     headers,
     body: JSON.stringify(encryptedData),
@@ -83,7 +83,7 @@ export const getPatientDetails = async (id: string) => {
   const AES_KEY = await configService.getAesSecretKey();
   const encryptedId = CryptoJS.AES.encrypt(String(id), AES_KEY).toString();
   
-  const res = await fetch(`${apiUrl}/hs_patients_details`, { 
+  const res = await fetch(`${apiUrl}//hs_patients_details`, { 
     method: "POST", 
     headers, 
     body: JSON.stringify({ id: encryptedId }) 
@@ -109,7 +109,7 @@ export const changePatientStatus = async (id: string, status: string) => {
     status: CryptoJS.AES.encrypt(String(status), AES_KEY).toString(),
   };
 
-  const res = await fetch(`${apiUrl}ms_patients_change_status`, {
+  const res = await fetch(`${apiUrl}/ms_patients_change_status`, {
     method: "POST",
     headers,
     body: JSON.stringify(encryptedData),
@@ -129,7 +129,7 @@ export const deletePatient = async (id: string) => {
     id: CryptoJS.AES.encrypt(String(id), AES_KEY).toString(),
   };
 
-  const res = await fetch(`${apiUrl}hs_patients_change_status`, {
+  const res = await fetch(`${apiUrl}/hs_patients_change_status`, {
     method: "POST",
     headers,
     body: JSON.stringify(encryptedData),
@@ -145,7 +145,7 @@ export const getPatientVisitHistory = async (id: string) => {
   const AES_KEY = await configService.getAesSecretKey();
   const encryptedId = CryptoJS.AES.encrypt(String(id), AES_KEY).toString();
 
-  const res = await fetch(`${apiUrl}hs_patients_visit_history`, {
+  const res = await fetch(`${apiUrl}/hs_patients_visit_history`, {
     method: "POST",
     headers,
     body: JSON.stringify({ id: encryptedId }),
@@ -166,7 +166,7 @@ export const getTreatment = async (id: string) => {
   const AES_KEY = await configService.getAesSecretKey();
   const encryptedId = CryptoJS.AES.encrypt(String(id), AES_KEY).toString();
 
-  const res = await fetch(`${apiUrl}hs_patients_treatment_details`, {
+  const res = await fetch(`${apiUrl}/hs_patients_treatment_details`, {
     method: "POST",
     headers,
     body: JSON.stringify({ id: encryptedId }),
@@ -185,7 +185,7 @@ export const getTreatment = async (id: string) => {
 export const fetchPatientShares = async (page = 1, limit = 10) => {
   const { apiUrl, headers } = await getAuthHeaders();
   const AES_KEY = await configService.getAesSecretKey();
-  const res = await fetch(`${apiUrl}hs_patient_info_share_list`, {
+  const res = await fetch(`${apiUrl}/hs_patient_info_share_list`, {
     method: "POST",
     headers,
     body: JSON.stringify({ page, limit }),
@@ -213,7 +213,7 @@ export const createPatientShare = async (payload: CreatePatientSharePayload) => 
     share_to: CryptoJS.AES.encrypt(String(payload.share_to), AES_KEY).toString(),
     fields: payload.fields,
   };
-  const res = await fetch(`${apiUrl}hs_patient_info_share_create`, {
+  const res = await fetch(`${apiUrl}/hs_patient_info_share_create`, {
     method: "POST",
     headers,
     body: JSON.stringify(body),
@@ -226,7 +226,7 @@ export const revokePatientShare = async (id: string) => {
   const { apiUrl, headers } = await getAuthHeaders();
   const AES_KEY = await configService.getAesSecretKey();
   const body = { id: CryptoJS.AES.encrypt(String(id), AES_KEY).toString() };
-  const res = await fetch(`${apiUrl}hs_patient_info_share_revoke`, {
+  const res = await fetch(`${apiUrl}/hs_patient_info_share_revoke`, {
     method: "POST",
     headers,
     body: JSON.stringify(body),
@@ -238,7 +238,7 @@ export const revokePatientShare = async (id: string) => {
 export const fetchPatientInfoContentSettings = async () => {
   const { apiUrl, headers } = await getAuthHeaders();
   const AES_KEY = await configService.getAesSecretKey();
-  const res = await fetch(`${apiUrl}hs_patient_info_content_get`, {
+  const res = await fetch(`${apiUrl}/hs_patient_info_content_get`, {
     method: "GET",
     headers,
   });
@@ -259,7 +259,7 @@ export const fetchPatientInfoContentSettings = async () => {
 
 export const updatePatientInfoContentSettings = async (data: any) => {
   const { apiUrl, headers } = await getAuthHeaders();
-  const res = await fetch(`${apiUrl}hs_patient_info_content_update`, {
+  const res = await fetch(`${apiUrl}/hs_patient_info_content_update`, {
     method: "POST",
     headers,
     body: JSON.stringify(data),

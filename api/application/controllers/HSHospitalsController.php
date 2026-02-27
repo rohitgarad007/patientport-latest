@@ -118,6 +118,298 @@ class HSHospitalsController  extends CI_Controller {
         }
     }
 
+    /* ===== Shift List Code Start Here ===== */
+    public function getShiftList(){
+        if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
+            exit;
+        }
+        $userToken = $this->input->get_request_header('Authorization');
+        $splitToken = explode(" ", $userToken);
+        $token = isset($splitToken[1]) ? $splitToken[1] : '';
+        try {
+            $token = verifyAuthToken($token);
+            if (!$token) throw new Exception("Unauthorized");
+
+            $tokenData = is_string($token) ? json_decode($token, true) : $token;
+            $hrole = $tokenData['role'] ?? null;
+            $loguid = $tokenData['loguid'] ?? null;
+
+            if (!$loguid || $hrole !== "hospital_admin") {
+                echo json_encode([
+                    "success" => false,
+                    "message" => "Invalid user token or insufficient privileges"
+                ]);
+                return;
+            }
+
+            $shiftList = $this->HospitalCommonModel->get_HospitalShiftList($loguid);
+            $AES_KEY = "RohitGaradHos@173414";
+            $encryptedData = $this->encrypt_aes_for_js(json_encode($shiftList), $AES_KEY);
+
+            echo json_encode([
+                "success" => true,
+                "data"    => $encryptedData,
+                "rowData" => $shiftList
+            ]);
+
+        } catch (Exception $e) {
+            echo json_encode([
+                "success" => false,
+                "message" => "Authorization failed: " . $e->getMessage()
+            ]);
+        }
+    }
+    /* ===== Shift List Code End Here ===== */
+
+    public function getEventTypeList(){
+        if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
+            exit;
+        }
+        $userToken = $this->input->get_request_header('Authorization');
+        $splitToken = explode(" ", $userToken);
+        $token = isset($splitToken[1]) ? $splitToken[1] : '';
+        try {
+            $token = verifyAuthToken($token);
+            if (!$token) throw new Exception("Unauthorized");
+
+            $tokenData = is_string($token) ? json_decode($token, true) : $token;
+            $hrole = $tokenData['role'] ?? null;
+            $loguid = $tokenData['loguid'] ?? null;
+
+            if (!$loguid || $hrole !== "hospital_admin") {
+                echo json_encode([
+                    "success" => false,
+                    "message" => "Invalid user token or insufficient privileges"
+                ]);
+                return;
+            }
+
+            $eventTypes = $this->HospitalCommonModel->get_HospitalEventTypeList($loguid);
+            $AES_KEY = "RohitGaradHos@173414";
+            $encryptedData = $this->encrypt_aes_for_js(json_encode($eventTypes), $AES_KEY);
+
+            echo json_encode([
+                "success" => true,
+                "data"    => $encryptedData,
+                "rowData" => $eventTypes
+            ]);
+
+        } catch (Exception $e) {
+            echo json_encode([
+                "success" => false,
+                "message" => "Authorization failed: " . $e->getMessage()
+            ]);
+        }
+    }
+
+    public function getDepartmentList(){
+        if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
+            exit;
+        }
+        $userToken = $this->input->get_request_header('Authorization');
+        $splitToken = explode(" ", $userToken);
+        $token = isset($splitToken[1]) ? $splitToken[1] : '';
+        try {
+            $token = verifyAuthToken($token);
+            if (!$token) throw new Exception("Unauthorized");
+
+            $tokenData = is_string($token) ? json_decode($token, true) : $token;
+            $hrole = $tokenData['role'] ?? null;
+            $loguid = $tokenData['loguid'] ?? null;
+
+            if (!$loguid || $hrole !== "hospital_admin") {
+                echo json_encode([
+                    "success" => false,
+                    "message" => "Invalid user token or insufficient privileges"
+                ]);
+                return;
+            }
+
+            $departments = $this->HospitalCommonModel->get_HospitalDepartmentList($loguid);
+            $AES_KEY = "RohitGaradHos@173414";
+            $encryptedData = $this->encrypt_aes_for_js(json_encode($departments), $AES_KEY);
+
+            echo json_encode([
+                "success" => true,
+                "data"    => $encryptedData,
+                "rowData" => $departments
+            ]);
+
+        } catch (Exception $e) {
+            echo json_encode([
+                "success" => false,
+                "message" => "Authorization failed: " . $e->getMessage()
+            ]);
+        }
+    }
+
+    public function getRoleList(){
+        if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
+            exit;
+        }
+        $userToken = $this->input->get_request_header('Authorization');
+        $splitToken = explode(" ", $userToken);
+        $token = isset($splitToken[1]) ? $splitToken[1] : '';
+        try {
+            $token = verifyAuthToken($token);
+            if (!$token) throw new Exception("Unauthorized");
+
+            $tokenData = is_string($token) ? json_decode($token, true) : $token;
+            $hrole = $tokenData['role'] ?? null;
+            $loguid = $tokenData['loguid'] ?? null;
+
+            if (!$loguid || $hrole !== "hospital_admin") {
+                echo json_encode([
+                    "success" => false,
+                    "message" => "Invalid user token or insufficient privileges"
+                ]);
+                return;
+            }
+
+            $roles = $this->HospitalCommonModel->get_HospitalRoleList($loguid);
+            $AES_KEY = "RohitGaradHos@173414";
+            $encryptedData = $this->encrypt_aes_for_js(json_encode($roles), $AES_KEY);
+
+            echo json_encode([
+                "success" => true,
+                "data"    => $encryptedData,
+                "rowData" => $roles
+            ]);
+
+        } catch (Exception $e) {
+            echo json_encode([
+                "success" => false,
+                "message" => "Authorization failed: " . $e->getMessage()
+            ]);
+        }
+    }
+
+    public function getAmenityList(){
+        if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
+            exit;
+        }
+        $userToken = $this->input->get_request_header('Authorization');
+        $splitToken = explode(" ", $userToken);
+        $token = isset($splitToken[1]) ? $splitToken[1] : '';
+        try {
+            $token = verifyAuthToken($token);
+            if (!$token) throw new Exception("Unauthorized");
+
+            $tokenData = is_string($token) ? json_decode($token, true) : $token;
+            $hrole = $tokenData['role'] ?? null;
+            $loguid = $tokenData['loguid'] ?? null;
+
+            if (!$loguid || $hrole !== "hospital_admin") {
+                echo json_encode([
+                    "success" => false,
+                    "message" => "Invalid user token or insufficient privileges"
+                ]);
+                return;
+            }
+
+            $amenities = $this->HospitalCommonModel->get_HospitalAmenityList($loguid);
+            $AES_KEY = "RohitGaradHos@173414";
+            $encryptedData = $this->encrypt_aes_for_js(json_encode($amenities), $AES_KEY);
+
+            echo json_encode([
+                "success" => true,
+                "data"    => $encryptedData,
+                "rowData" => $amenities
+            ]);
+
+        } catch (Exception $e) {
+            echo json_encode([
+                "success" => false,
+                "message" => "Authorization failed: " . $e->getMessage()
+            ]);
+        }
+    }
+
+    public function getWardTypeList(){
+        if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
+            exit;
+        }
+        $userToken = $this->input->get_request_header('Authorization');
+        $splitToken = explode(" ", $userToken);
+        $token = isset($splitToken[1]) ? $splitToken[1] : '';
+        try {
+            $token = verifyAuthToken($token);
+            if (!$token) throw new Exception("Unauthorized");
+
+            $tokenData = is_string($token) ? json_decode($token, true) : $token;
+            $hrole = $tokenData['role'] ?? null;
+            $loguid = $tokenData['loguid'] ?? null;
+
+            if (!$loguid || $hrole !== "hospital_admin") {
+                echo json_encode([
+                    "success" => false,
+                    "message" => "Invalid user token or insufficient privileges"
+                ]);
+                return;
+            }
+
+            $wardTypes = $this->HospitalCommonModel->get_HospitalWardTypeList($loguid);
+            $AES_KEY = "RohitGaradHos@173414";
+            $encryptedData = $this->encrypt_aes_for_js(json_encode($wardTypes), $AES_KEY);
+
+            echo json_encode([
+                "success" => true,
+                "data"    => $encryptedData,
+                "rowData" => $wardTypes
+            ]);
+
+        } catch (Exception $e) {
+            echo json_encode([
+                "success" => false,
+                "message" => "Authorization failed: " . $e->getMessage()
+            ]);
+        }
+    }
+
+    public function getWardList(){
+        if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
+            exit;
+        }
+        $userToken = $this->input->get_request_header('Authorization');
+        $splitToken = explode(" ", $userToken);
+        $token = isset($splitToken[1]) ? $splitToken[1] : '';
+        try {
+            $token = verifyAuthToken($token);
+            if (!$token) throw new Exception("Unauthorized");
+
+            $tokenData = is_string($token) ? json_decode($token, true) : $token;
+            $hrole = $tokenData['role'] ?? null;
+            $loguid = $tokenData['loguid'] ?? null;
+
+            if (!$loguid || $hrole !== "hospital_admin") {
+                echo json_encode([
+                    "success" => false,
+                    "message" => "Invalid user token or insufficient privileges"
+                ]);
+                return;
+            }
+
+            $hospitalInfo = $this->HospitalCommonModel->get_logHospitalInfo($loguid);
+            $hospital_id = isset($hospitalInfo['id']) ? $hospitalInfo['id'] : 0;
+
+            $wards = $this->HospitalCommonModel->get_HospitalWardList($hospital_id);
+            $AES_KEY = "RohitGaradHos@173414";
+            $encryptedData = $this->encrypt_aes_for_js(json_encode($wards), $AES_KEY);
+
+            echo json_encode([
+                "success" => true,
+                "data"    => $encryptedData,
+                "rowData" => $wards
+            ]);
+
+        } catch (Exception $e) {
+            echo json_encode([
+                "success" => false,
+                "message" => "Authorization failed: " . $e->getMessage()
+            ]);
+        }
+    }
+
     /* ===== Screen Management Code Start Here ===== */
     public function saveScreen(){
         $userToken = $this->input->get_request_header('Authorization');
@@ -561,6 +853,179 @@ class HSHospitalsController  extends CI_Controller {
     /* ===== Employee OTP Management Code End Here ===== */
 
     /* ===== Screen Management Code End Here ===== */
+
+    /* ===== Laboratory Management Code Start Here ===== */
+
+    public function getPreferredLaboratories() {
+        if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
+            exit;
+        }
+        $userToken = $this->input->get_request_header('Authorization');
+        $splitToken = explode(" ", $userToken);
+        $token = isset($splitToken[1]) ? $splitToken[1] : '';
+        try {
+            $token = verifyAuthToken($token);
+            if (!$token) throw new Exception("Unauthorized");
+
+            $tokenData = is_string($token) ? json_decode($token, true) : $token;
+            $hrole = $tokenData['role'] ?? null;
+            $loguid = $tokenData['loguid'] ?? null;
+
+            if (!$loguid || $hrole !== "hospital_admin") {
+                echo json_encode(["success" => false, "message" => "Invalid user token"]);
+                return;
+            }
+
+            $hospitalInfo = $this->HospitalCommonModel->get_logHospitalInfo($loguid);
+            $hospital_id = isset($hospitalInfo['id']) ? $hospitalInfo['id'] : 0;
+
+            $data = $this->HospitalCommonModel->get_PreferredLaboratories($hospital_id);
+            $AES_KEY = "RohitGaradHos@173414";
+            $encryptedData = $this->encrypt_aes_for_js(json_encode($data), $AES_KEY);
+
+            echo json_encode([
+                "success" => true,
+                "data" => $encryptedData
+            ]);
+
+        } catch (Exception $e) {
+            echo json_encode(["success" => false, "message" => "Error: " . $e->getMessage()]);
+        }
+    }
+
+    public function getAvailableLaboratories() {
+        if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
+            exit;
+        }
+        $userToken = $this->input->get_request_header('Authorization');
+        $splitToken = explode(" ", $userToken);
+        $token = isset($splitToken[1]) ? $splitToken[1] : '';
+        try {
+            $token = verifyAuthToken($token);
+            if (!$token) throw new Exception("Unauthorized");
+
+            $tokenData = is_string($token) ? json_decode($token, true) : $token;
+            $hrole = $tokenData['role'] ?? null;
+            $loguid = $tokenData['loguid'] ?? null;
+
+            if (!$loguid || $hrole !== "hospital_admin") {
+                echo json_encode(["success" => false, "message" => "Invalid user token"]);
+                return;
+            }
+
+            $hospitalInfo = $this->HospitalCommonModel->get_logHospitalInfo($loguid);
+            $hospital_id = isset($hospitalInfo['id']) ? $hospitalInfo['id'] : 0;
+
+            $data = $this->HospitalCommonModel->get_AvailableLaboratories($hospital_id);
+            $AES_KEY = "RohitGaradHos@173414";
+            $encryptedData = $this->encrypt_aes_for_js(json_encode($data), $AES_KEY);
+
+            echo json_encode([
+                "success" => true,
+                "data" => $encryptedData
+            ]);
+
+        } catch (Exception $e) {
+            echo json_encode(["success" => false, "message" => "Error: " . $e->getMessage()]);
+        }
+    }
+
+    public function addPreferredLaboratory() {
+        if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
+            exit;
+        }
+        $userToken = $this->input->get_request_header('Authorization');
+        $splitToken = explode(" ", $userToken);
+        $token = isset($splitToken[1]) ? $splitToken[1] : '';
+        try {
+            $token = verifyAuthToken($token);
+            if (!$token) throw new Exception("Unauthorized");
+
+            $tokenData = is_string($token) ? json_decode($token, true) : $token;
+            $hrole = $tokenData['role'] ?? null;
+            $loguid = $tokenData['loguid'] ?? null;
+
+            if (!$loguid || $hrole !== "hospital_admin") {
+                echo json_encode(["success" => false, "message" => "Invalid user token"]);
+                return;
+            }
+
+            $hospitalInfo = $this->HospitalCommonModel->get_logHospitalInfo($loguid);
+            $hospital_id = isset($hospitalInfo['id']) ? $hospitalInfo['id'] : 0;
+
+            $rawData = json_decode(file_get_contents("php://input"), true);
+            $laboratory_id = isset($rawData['laboratory_id']) ? $rawData['laboratory_id'] : '';
+
+            if (!$laboratory_id) {
+                echo json_encode(["success" => false, "message" => "Missing laboratory ID"]);
+                return;
+            }
+
+            $data = [
+                'hospital_id' => $hospital_id,
+                'laboratory_id' => $laboratory_id,
+                'status' => 1,
+                'created_at' => date('Y-m-d H:i:s')
+            ];
+
+            $result = $this->HospitalCommonModel->add_PreferredLaboratory($data);
+
+            if ($result) {
+                echo json_encode(["success" => true, "message" => "Laboratory added successfully"]);
+            } else {
+                echo json_encode(["success" => false, "message" => "Failed to add laboratory"]);
+            }
+
+        } catch (Exception $e) {
+            echo json_encode(["success" => false, "message" => "Error: " . $e->getMessage()]);
+        }
+    }
+
+    public function removePreferredLaboratory() {
+        if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
+            exit;
+        }
+        $userToken = $this->input->get_request_header('Authorization');
+        $splitToken = explode(" ", $userToken);
+        $token = isset($splitToken[1]) ? $splitToken[1] : '';
+        try {
+            $token = verifyAuthToken($token);
+            if (!$token) throw new Exception("Unauthorized");
+
+            $tokenData = is_string($token) ? json_decode($token, true) : $token;
+            $hrole = $tokenData['role'] ?? null;
+            $loguid = $tokenData['loguid'] ?? null;
+
+            if (!$loguid || $hrole !== "hospital_admin") {
+                echo json_encode(["success" => false, "message" => "Invalid user token"]);
+                return;
+            }
+
+            $hospitalInfo = $this->HospitalCommonModel->get_logHospitalInfo($loguid);
+            $hospital_id = isset($hospitalInfo['id']) ? $hospitalInfo['id'] : 0;
+
+            $rawData = json_decode(file_get_contents("php://input"), true);
+            $laboratory_id = isset($rawData['laboratory_id']) ? $rawData['laboratory_id'] : '';
+
+            if (!$laboratory_id) {
+                echo json_encode(["success" => false, "message" => "Missing laboratory ID"]);
+                return;
+            }
+
+            $result = $this->HospitalCommonModel->remove_PreferredLaboratory($hospital_id, $laboratory_id);
+
+            if ($result) {
+                echo json_encode(["success" => true, "message" => "Laboratory removed successfully"]);
+            } else {
+                echo json_encode(["success" => false, "message" => "Failed to remove laboratory"]);
+            }
+
+        } catch (Exception $e) {
+            echo json_encode(["success" => false, "message" => "Error: " . $e->getMessage()]);
+        }
+    }
+
+    /* ===== Laboratory Management Code End Here ===== */
 
     // AES Encryption function compatible with JS decryption
     public function encrypt_aes_for_js($plainText, $passphrase) {

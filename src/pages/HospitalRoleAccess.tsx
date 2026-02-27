@@ -308,35 +308,28 @@ export default function HospitalRoleAccess() {
     if (!role) return null;
 
     return role.permissions.map((group, gIdx) => (
-      
-       <> 
-          
-        <h4 className="font-medium flex items-center">
+      <div key={group.category || gIdx} className="mb-6">
+        <h4 className="font-medium flex items-center mb-2">
           {group.category}
         </h4>
-       
-      
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {group.permissions.map((p) => (
             <div key={p.id} className="flex items-start justify-between p-2 border rounded-lg hover:bg-muted/50">
               <div className="flex items-start gap-3 flex-1">
-
-                {p.icon && <img src={p.icon} alt={p.title} className="w-6 h-6" />}
-
+                {p.icon && <img src={p.icon} alt={p.name} className="w-6 h-6" />}
                 <div>
-                  <h3 className="text-[13px]   font-medium flex items-center gap-2">
+                  <h3 className="text-[13px] font-medium flex items-center gap-2">
                     {p.name} 
                     {p.enabled ? <Eye className="w-4 h-4 text-green-500" /> : <EyeOff className="w-4 h-4 text-muted-foreground" />}
                   </h3>
-                  <p className="text-[11px]  text-muted-foreground">{p.description}</p>
+                  <p className="text-[11px] text-muted-foreground">{p.description}</p>
                 </div>
               </div>
               <Switch checked={p.enabled} onCheckedChange={() => togglePermission(roleId, gIdx, p.id)} />
             </div>
           ))}
-       </div>
-       </> 
-      
+        </div>
+      </div>
     ));
   };
 

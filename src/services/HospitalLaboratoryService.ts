@@ -20,7 +20,7 @@ const getAuthHeaders = async () => {
 export const fetchPreferredLaboratories = async () => {
   const { apiUrl, headers } = await getAuthHeaders();
 
-  const res = await fetch(`${apiUrl}hs_hospital_laboratory_preferred_list`, {
+  const res = await fetch(`${apiUrl}/hs_hospital_laboratory_preferred_list`, {
     method: "GET",
     headers,
   });
@@ -41,7 +41,7 @@ export const fetchPreferredLaboratories = async () => {
 export const fetchAvailableLaboratories = async () => {
   const { apiUrl, headers } = await getAuthHeaders();
 
-  const res = await fetch(`${apiUrl}hs_hospital_laboratory_available_list`, {
+  const res = await fetch(`${apiUrl}/hs_hospital_laboratory_available_list`, {
     method: "GET",
     headers,
   });
@@ -62,7 +62,7 @@ export const fetchAvailableLaboratories = async () => {
 export const addPreferredLaboratory = async (laboratory_id: string) => {
   const { apiUrl, headers } = await getAuthHeaders();
 
-  const res = await fetch(`${apiUrl}hs_hospital_laboratory_add`, {
+  const res = await fetch(`${apiUrl}/hs_hospital_laboratory_add`, {
     method: "POST",
     headers,
     body: JSON.stringify({ laboratory_id }),
@@ -76,7 +76,7 @@ export const addPreferredLaboratory = async (laboratory_id: string) => {
 export const removePreferredLaboratory = async (laboratory_id: string) => {
   const { apiUrl, headers } = await getAuthHeaders();
 
-  const res = await fetch(`${apiUrl}hs_hospital_laboratory_remove`, {
+  const res = await fetch(`${apiUrl}/hs_hospital_laboratory_remove`, {
     method: "POST",
     headers,
     body: JSON.stringify({ laboratory_id }),

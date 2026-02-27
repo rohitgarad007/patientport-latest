@@ -375,7 +375,7 @@ export default function HospitalProfile() {
                       {profileData.hospitalQrCode ? (
                         <div className="flex flex-col items-center gap-2">
                           <img 
-                            src={profileData.hospitalQrCode.startsWith('data:') ? profileData.hospitalQrCode : `${apiUrl}${profileData.hospitalQrCode}`} 
+                            src={profileData.hospitalQrCode.startsWith('data:') ? profileData.hospitalQrCode : `${apiUrl}/${profileData.hospitalQrCode}`} 
                             alt="Hospital QR Code" 
                             className="w-32 h-32 object-contain bg-white p-2 rounded border"
                           />

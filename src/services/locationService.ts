@@ -14,7 +14,7 @@ class LocationService {
   async getStates(): Promise<State[]> {
     const API_URL = await configService.getApiUrl();
     try {
-      const response = await fetch(`${API_URL}locations/states`);
+      const response = await fetch(`${API_URL}/locations/states`);
       if (!response.ok) throw new Error("Failed to fetch states");
       return await response.json();
     } catch (error) {
@@ -26,7 +26,7 @@ class LocationService {
   async getCities(stateId: string): Promise<City[]> {
     const API_URL = await configService.getApiUrl();
     try {
-      const response = await fetch(`${API_URL}locations/cities/${stateId}`);
+      const response = await fetch(`${API_URL}/locations/cities/${stateId}`);
       if (!response.ok) throw new Error("Failed to fetch cities");
       return await response.json();
     } catch (error) {

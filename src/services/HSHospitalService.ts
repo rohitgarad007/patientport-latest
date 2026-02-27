@@ -189,7 +189,7 @@ export interface SpecializationPayload {
 export const fetchSpecializations = async () => {
   const { apiUrl, headers } = await getAuthHeaders();
 
-  const res = await fetch(`${apiUrl}hs_specialization_list`, {
+  const res = await fetch(`${apiUrl}/hs_specialization_list`, {
     method: "POST",
     headers,
     body: JSON.stringify({}),

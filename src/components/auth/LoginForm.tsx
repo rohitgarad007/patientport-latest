@@ -38,6 +38,7 @@
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [otp, setOtp] = useState("");
+    const [otpAttempts, setOtpAttempts] = useState(0);
     const [showOtpScreen, setShowOtpScreen] = useState(false);
     const [tempLoguid, setTempLoguid] = useState<string | null>(null);
     const [tempRole, setTempRole] = useState<string | null>(null);
@@ -154,9 +155,30 @@
         const data = await res.json();
 
         if (data.success) {
+          setOtpAttempts(0); // Reset attempts on success
           handleLoginSuccess(data);
         } else {
-          Swal.fire("OTP Verification Failed", data.message || "Invalid OTP", "error");
+          const newAttempts = otpAttempts + 1;
+          setOtpAttempts(newAttempts);
+
+          if (newAttempts >= 3) {
+            await Swal.fire({
+              title: "Maximum Attempts Reached",
+              text: "You have exceeded the maximum number of OTP attempts. Redirecting to login...",
+              icon: "error",
+              timer: 2000,
+              showConfirmButton: false,
+            });
+            setShowOtpScreen(false);
+            setOtp("");
+            setTempLoguid(null);
+            setTempRole(null);
+            setOtpAttempts(0);
+            setLoading(false);
+            return;
+          }
+
+          Swal.fire("OTP Verification Failed", data.message || `Invalid OTP. Attempts remaining: ${3 - newAttempts}`, "error");
         }
       } catch (err: any) {
         Swal.fire("Error", err.message, "error");

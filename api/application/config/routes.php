@@ -424,7 +424,7 @@ $route['hs_ward_type_delete']						= 'HSHospitalsController/DeleteWardTypeInfo';
 
 	
 
-$route['hs_ward_list']								= 'HSHospitalsController/getWarList';
+$route['hs_ward_list']								= 'HSHospitalsController/getWardList';
 $route['hs_ward_add']								= 'HSHospitalsController/AddWardInformation';
 $route['hs_ward_update']							= 'HSHospitalsController/UpdateWardInformation';
 $route['hs_ward_delete']							= 'HSHospitalsController/DeleteWardInformation';
@@ -497,6 +497,11 @@ $route['hs_inventory_product_add']                  = 'HSHospitalsInventoryContr
 // Inventory batches
 $route['hs_inventory_batch_add']                    = 'HSHospitalsInventoryController/AddIvBatchInformation';
 // Inventory overview (products with stock totals and batch details)
+$route['hs_hospital_laboratory_preferred_list'] = 'HSHospitalsController/getPreferredLaboratories';
+$route['hs_hospital_laboratory_available_list'] = 'HSHospitalsController/getAvailableLaboratories';
+$route['hs_hospital_laboratory_add']            = 'HSHospitalsController/addPreferredLaboratory';
+$route['hs_hospital_laboratory_remove']         = 'HSHospitalsController/removePreferredLaboratory';
+
 $route['hs_inventory_overview_list']                = 'HSHospitalsInventoryController/GetIvInventoryOverview';
 
 

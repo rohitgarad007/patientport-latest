@@ -23,7 +23,7 @@ class HospitalService {
   async getProfile(hosuid: string): Promise<HospitalProfile | null> {
     const API_URL = await configService.getApiUrl();
     try {
-      const response = await fetch(`${API_URL}hospital/profile/${hosuid}`);
+      const response = await fetch(`${API_URL}/hospital/profile/${hosuid}`);
       if (!response.ok) throw new Error("Failed to fetch hospital profile");
       const result = await response.json();
       
@@ -46,7 +46,7 @@ class HospitalService {
       // Encrypt data
       const encryptedData = encryptAESForPHP(JSON.stringify(data), this.AES_KEY);
       
-      const response = await fetch(`${API_URL}hospital/profile/update`, {
+      const response = await fetch(`${API_URL}/hospital/profile/update`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
