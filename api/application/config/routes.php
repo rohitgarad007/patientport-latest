@@ -57,6 +57,7 @@ $route['translate_uri_dashes'] = FALSE;
 $route['super-auth-login']					= 'AdmAdminAuthCtr/adminLogin';
 $route['login_check'] 									= 'AuthController/loginCheck';
 $route['user-auth-login'] 								= 'AdmAdminAuthCtr/userLogin';
+$route['verify-login-otp'] 								= 'AdmAdminAuthCtr/verifyLoginOtp';
 $route['lab-auth-login'] 								= 'LbAuthCtr/labLogin';
 $route['signup_create'] 								= 'AuthController/signupCreate';
 $route['verify_otp'] 									= 'AuthController/verifyOtp';

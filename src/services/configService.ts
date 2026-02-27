@@ -38,9 +38,9 @@ class ConfigService {
         API_KEY_DeepSeek: import.meta.env.VITE_API_KEY_DEEPSEEK || '',
         API_KEY_GEMINI: import.meta.env.VITE_API_KEY_GEMINI || '',
         AES_SECRET_KEY: import.meta.env.VITE_AES_SECRET_KEY || '',
-        API_URL: 'http://localhost/patientport-latest/api/',
+        API_URL: 'http://localhost/patientport-latest/api',
         Live_URL: 'http://localhost/patientport-latest',
-        //API_URL: 'https://umahospital.obwebsite.in/api/',
+        //API_URL: 'https://umahospital.obwebsite.in/api',
         //Live_URL: 'https://umahospital.obwebsite.in',
       };
     }
@@ -75,9 +75,9 @@ class ConfigService {
         API_KEY_DeepSeek: '', // Secure: Moved to backend
         API_KEY_GEMINI: '', // Secure: Moved to backend
         AES_SECRET_KEY: import.meta.env.VITE_AES_SECRET_KEY || '',
-        API_URL: 'http://localhost/patientport-latest/api/',
+        API_URL: 'http://localhost/patientport-latest/api',
         Live_URL: 'http://localhost/patientport-latest',
-        //API_URL: 'https://umahospital.obwebsite.in/api/',
+        //API_URL: 'https://umahospital.obwebsite.in/api',
         //Live_URL: 'https://umahospital.obwebsite.in',
       };
     }

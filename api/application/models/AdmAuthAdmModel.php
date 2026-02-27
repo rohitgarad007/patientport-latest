@@ -12,7 +12,59 @@ class AdmAuthAdmModel extends CI_Model{
             $this->db->where("ui.uid", $sluid);
             $query = $this->db->get();
             return $query->row_array();
+        }*/
+
+        public function verify_otp($loguid, $role, $otp) {
+        $table = '';
+        $uidField = '';
+        
+        switch ($role) {
+            case 'doctor':
+                $table = 'ms_doctors';
+                $uidField = 'docuid';
+                break;
+            case 'staff':
+                $table = 'ms_staff';
+                $uidField = 'staff_uid';
+                break;
+            default:
+                return ['success' => false, 'message' => 'Invalid role'];
         }
+
+        $this->db->select("id, $uidField AS loguid, name, email, phone, role, status, current_otp, otp_expires_at");
+        $this->db->from($table);
+        $this->db->where($uidField, $loguid);
+        $query = $this->db->get();
+
+        if ($query->num_rows() !== 1) {
+            return ['success' => false, 'message' => 'User not found'];
+        }
+
+        $user = $query->row_array();
+
+        if ($user['current_otp'] != $otp) {
+            return ['success' => false, 'message' => 'Invalid OTP'];
+        }
+
+        if (strtotime($user['otp_expires_at']) < time()) {
+            return ['success' => false, 'message' => 'OTP Expired'];
+        }
+
+        // OTP Valid - Clear OTP
+        // $this->db->where($uidField, $loguid);
+        // $this->db->update($table, ['current_otp' => null, 'otp_expires_at' => null]);
+
+        // Return user info for token generation
+        unset($user['current_otp']);
+        unset($user['otp_expires_at']);
+        
+        // Ensure role is set
+        if (!isset($user['role'])) {
+            $user['role'] = $role;
+        }
+
+        return ['success' => true, 'user' => $user];
+    }
 
 
         public function  get_AdmlogUserInfo($muid){
@@ -226,7 +278,9 @@ class AdmAuthAdmModel extends CI_Model{
                 patientCount
             ");
         } elseif ($role === 'staff') {
-             $this->db->select("$uidField AS loguid, id, name, email, password, phone, $statusField AS status, role");
+             $this->db->select("$uidField AS loguid, id, name, email, password, phone, $statusField AS status, role, two_factor_auth");
+        } elseif ($role === 'doctor') {
+             $this->db->select("$uidField AS loguid, id, name, email, password, phone, $statusField AS status, two_factor_auth");
         } else {
             $this->db->select("$uidField AS loguid, id, name, email, password, phone, $statusField AS status");
         }

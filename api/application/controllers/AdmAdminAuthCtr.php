@@ -1,4 +1,4 @@
- <?php
+<?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 class AdmAdminAuthCtr extends CI_Controller {
@@ -9,10 +9,29 @@ class AdmAdminAuthCtr extends CI_Controller {
         error_reporting(0);
         $this->load->model('AdmAuthAdmModel');
         $this->load->helper('verifyauthtoken_helper');
-        header("Access-Control-Allow-Origin: *");
+        
+        // Dynamic CORS handling
+        if (isset($_SERVER['HTTP_ORIGIN'])) {
+            header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
+            header('Access-Control-Allow-Credentials: true');
+            header('Access-Control-Max-Age: 86400');    // cache for 1 day
+        } else {
+            header("Access-Control-Allow-Origin: *");
+        }
+
+        // Access-Control headers are received during OPTIONS requests
+        if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+            if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD']))
+                header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");         
+
+            if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']))
+                header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
+
+            exit(0);
+        }
+
         header("Access-Control-Allow-Methods: POST, GET, OPTIONS, PUT, DELETE");
         header("Access-Control-Allow-Headers: Content-Type, Authorization, Content-Length, Accept-Encoding");
-        header("Access-Control-Allow-Credentials: true");
     }
     
     
@@ -73,6 +92,19 @@ class AdmAdminAuthCtr extends CI_Controller {
             return;
         }
 
+        // Case 3.5: Check for Two-Factor Authentication
+        if (isset($result['two_factor_auth']) && $result['two_factor_auth'] == 1) {
+             echo json_encode([
+                "status" => 202, // Accepted but requires further action
+                "message" => "Two-Factor Authentication Required",
+                "success" => true,
+                "requires_otp" => true,
+                "loguid" => $result['loguid'],
+                "role" => $role
+            ]);
+            return;
+        }
+
         // Case 4: Success -> issue token
         $token = $jwt->encode($result, $JwtSecretKey, 'HS256');
 
@@ -83,6 +115,48 @@ class AdmAdminAuthCtr extends CI_Controller {
             "token" => $token,
             "userInfo" => $result
         ]);
+    }
+
+    public function verifyLoginOtp() {
+        $jwt = new JWT();
+        $JwtSecretKey = "myloginSecret";
+        $AES_KEY = "RohitGaradHos@173414"; 
+
+        $rawData = json_decode(file_get_contents("php://input"), true);
+
+        if (!$rawData || !isset($rawData['loguid']) || !isset($rawData['role']) || !isset($rawData['otp'])) {
+            echo json_encode([
+                "status" => 400,
+                "message" => "Invalid or missing input.",
+                "success" => false
+            ]);
+            return;
+        }
+
+        $loguid = $rawData['loguid'];
+        $role = $rawData['role'];
+        $otp = $rawData['otp'];
+
+        $result = $this->AdmAuthAdmModel->verify_otp($loguid, $role, $otp);
+
+        if ($result['success']) {
+            $user = $result['user'];
+            $token = $jwt->encode($user, $JwtSecretKey, 'HS256');
+
+            echo json_encode([
+                "status" => 200,
+                "message" => "Logged In Successfully",
+                "success" => true,
+                "token" => $token,
+                "userInfo" => $user
+            ]);
+        } else {
+             echo json_encode([
+                "status" => 401,
+                "message" => $result['message'],
+                "success" => false
+            ]);
+        }
     }
 
     public function adminLogin() {
