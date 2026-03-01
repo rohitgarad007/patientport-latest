@@ -31,7 +31,7 @@ class AdmAuthAdmModel extends CI_Model{
                 return ['success' => false, 'message' => 'Invalid role'];
         }
 
-        $this->db->select("id, $uidField AS loguid, name, email, phone, role, status, current_otp, otp_expires_at");
+        $this->db->select("id, $uidField AS loguid, name, email, phone, status, current_otp, otp_expires_at");
         $this->db->from($table);
         $this->db->where($uidField, $loguid);
         $query = $this->db->get();

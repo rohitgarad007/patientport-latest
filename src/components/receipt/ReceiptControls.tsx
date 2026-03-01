@@ -171,7 +171,7 @@ const ReceiptControls = ({
         formData.append('patient_id', patientId);
         formData.append('appointment_id', appointmentId);
 
-        const response = await fetch(`${apiUrl}dc_doctor_uploadSharedReceipt`, {
+        const response = await fetch(`${apiUrl}/dc_doctor_uploadSharedReceipt`, {
           method: 'POST',
           headers: headers,
           body: formData

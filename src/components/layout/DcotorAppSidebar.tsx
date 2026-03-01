@@ -15,7 +15,6 @@ export function DcotorAppSidebar() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
-  // Load doctor info from cookie
   useEffect(() => {
     const userInfo = Cookies.get("userInfo");
     if (userInfo) {
@@ -28,6 +27,7 @@ export function DcotorAppSidebar() {
     Cookies.remove("userInfo");
     window.location.href = "/login";
   };
+
 
   // Doctor Menu Structure
   const menuData = [
@@ -242,6 +242,7 @@ export function DcotorAppSidebar() {
           </div>
         )}
       </div>
+
     </>
   );
 }

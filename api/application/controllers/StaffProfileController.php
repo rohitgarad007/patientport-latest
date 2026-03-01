@@ -1,13 +1,13 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-class DoctorProfileController extends CI_Controller {
+class StaffProfileController extends CI_Controller {
 
     private $AES_KEY = "RohitGaradHos@173414";
 
     public function __construct() {
         parent::__construct();
-        $this->load->model('DoctorProfileModel');
+        $this->load->model('StaffProfileModel');
         $this->load->helper(['verifyauthtoken']);
         
         // Enable CORS
@@ -59,7 +59,7 @@ class DoctorProfileController extends CI_Controller {
         return $decrypted;
     }
 
-    private function get_doctor_from_token() {
+    private function get_staff_from_token() {
         $userToken = $this->input->get_request_header('Authorization');
         $splitToken = explode(" ", $userToken);
         $token = isset($splitToken[1]) ? $splitToken[1] : '';
@@ -75,15 +75,10 @@ class DoctorProfileController extends CI_Controller {
 
         $tokenData = is_string($token) ? json_decode($token, true) : $token;
         $role = $tokenData['role'] ?? null;
-        $loguid = $tokenData['loguid'] ?? null; // For doctor, loguid is docuid usually, or we check loguid mapping
+        $loguid = $tokenData['loguid'] ?? null;
 
-        // Based on SFDoctorController, loguid is docuid
-        // But check SFDoctorController again: $loguid = $tokenData['loguid']; $doctorInfo = $this->DoctorCommonModel->get_logdoctorInfo($loguid);
-        // get_logdoctorInfo uses where('d.docuid', $loguid);
-        // So loguid IS docuid for doctors.
-
-        if ($role !== 'doctor') {
-            throw new Exception("Unauthorized: Not a doctor");
+        if ($role !== 'staff') {
+            throw new Exception("Unauthorized: Not a staff member");
         }
         
         return $loguid;
@@ -91,15 +86,15 @@ class DoctorProfileController extends CI_Controller {
 
     public function get_profile() {
         try {
-            $docuid = $this->get_doctor_from_token();
+            $staff_uid = $this->get_staff_from_token();
             
-            $profile = $this->DoctorProfileModel->get_doctor_profile($docuid);
+            $profile = $this->StaffProfileModel->get_staff_profile($staff_uid);
             
             if ($profile) {
                 $encryptedData = $this->encrypt_aes_for_js(json_encode($profile), $this->AES_KEY);
                 echo json_encode(['status' => true, 'data' => $encryptedData]);
             } else {
-                echo json_encode(['status' => false, 'message' => 'Doctor profile not found']);
+                echo json_encode(['status' => false, 'message' => 'Profile not found']);
             }
         } catch (Exception $e) {
             echo json_encode(['status' => false, 'message' => $e->getMessage()]);
@@ -108,7 +103,7 @@ class DoctorProfileController extends CI_Controller {
 
     public function update_profile() {
         try {
-            $docuid = $this->get_doctor_from_token();
+            $staff_uid = $this->get_staff_from_token();
             
             // Check if request is multipart/form-data or JSON
             $contentType = isset($_SERVER["CONTENT_TYPE"]) ? trim($_SERVER["CONTENT_TYPE"]) : '';
@@ -134,13 +129,17 @@ class DoctorProfileController extends CI_Controller {
                     $data = $_POST;
                 }
             }
-
-            // Update Profile Info
+            
+            if (!$data && empty($_FILES)) {
+                throw new Exception("No data provided");
+            }
+            
+            // Prepare update data
             $updateData = [];
             // Whitelist fields to allow update
             $allowedFields = [
-                'name', 'phone', 'gender', 'specialization_id', 
-                'experience_year', 'experience_month', 'consultation_fee', 'screen_default_message',
+                'name', 'phone', 'gender', 'specialization', 
+                'experience_years', 'experience_months', 
                 'screen_lock_pin', 'screen_sleep_time'
             ];
             
@@ -164,101 +163,73 @@ class DoctorProfileController extends CI_Controller {
                     throw new Exception("File size too large.");
                 }
                 
-                $uploadDir = FCPATH . 'assets/images/doctors/';
+                $uploadDir = FCPATH . 'assets/images/staff/';
                 if (!is_dir($uploadDir)) {
                     mkdir($uploadDir, 0777, true);
                 }
                 
                 $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
-                $filename = 'doc_' . $docuid . '_' . time() . '.' . $extension;
+                $filename = 'staff_' . $staff_uid . '_' . time() . '.' . $extension;
                 $targetPath = $uploadDir . $filename;
                 
                 if (move_uploaded_file($file['tmp_name'], $targetPath)) {
-                    // Save relative path or full URL? usually relative path is better
-                    $updateData['profile_image'] = 'assets/images/doctors/' . $filename;
+                    $updateData['profile_image'] = 'assets/images/staff/' . $filename;
                 } else {
                     throw new Exception("Failed to upload image.");
                 }
             }
             
             if (!empty($updateData)) {
-                $this->DoctorProfileModel->update_doctor_profile($docuid, $updateData);
+                $result = $this->StaffProfileModel->update_staff_profile($staff_uid, $updateData);
+                if ($result) {
+                     echo json_encode(['status' => true, 'message' => 'Profile updated successfully']);
+                } else {
+                     echo json_encode(['status' => false, 'message' => 'No changes made or update failed']);
+                }
+            } else {
+                // If only checking password or nothing to update
+                echo json_encode(['status' => true, 'message' => 'No profile data to update']);
             }
             
-            // Handle Password Change if provided
-            if (!empty($data['new_password'])) {
-                if (empty($data['current_password'])) {
-                    throw new Exception("Current password is required to set new password");
-                }
-                
-                // Verify current password
-                if (!$this->DoctorProfileModel->verify_password($docuid, $data['current_password'])) {
-                    throw new Exception("Incorrect current password");
-                }
-                
-                // Update to new password
-                $this->DoctorProfileModel->update_password($docuid, $data['new_password']);
-            }
-            
-            echo json_encode(['status' => true, 'message' => 'Profile updated successfully']);
         } catch (Exception $e) {
             echo json_encode(['status' => false, 'message' => $e->getMessage()]);
         }
     }
-
-    public function update_status() {
+    
+    public function change_password() {
         try {
-            $docuid = $this->get_doctor_from_token();
+            $staff_uid = $this->get_staff_from_token();
             
-            // Check if request is multipart/form-data or JSON
-            $contentType = isset($_SERVER["CONTENT_TYPE"]) ? trim($_SERVER["CONTENT_TYPE"]) : '';
-            $data = [];
+            $json = file_get_contents('php://input');
+            $data = json_decode($json, true);
             
-            if (strpos($contentType, 'application/json') !== false) {
-                // JSON Request
-                $raw = file_get_contents("php://input");
-                $requestData = json_decode($raw, true);
-                if (isset($requestData['data'])) {
-                    $decryptedJson = $this->decrypt_aes_from_js($requestData['data'], $this->AES_KEY);
-                    $data = json_decode($decryptedJson, true);
-                } else {
-                    $data = !empty($requestData) ? $requestData : $_POST;
-                }
+            if (!$data || !isset($data['data'])) {
+                throw new Exception("Invalid input data");
+            }
+            
+            $decryptedJson = $this->decrypt_aes_from_js($data['data'], $this->AES_KEY);
+            $passwordData = json_decode($decryptedJson, true);
+            
+            if (!isset($passwordData['currentPassword']) || !isset($passwordData['newPassword'])) {
+                throw new Exception("Missing password fields");
+            }
+            
+            // Verify current password
+            if (!$this->StaffProfileModel->verify_password($staff_uid, $passwordData['currentPassword'])) {
+                throw new Exception("Incorrect current password");
+            }
+            
+            // Update to new password
+            $result = $this->StaffProfileModel->update_password($staff_uid, $passwordData['newPassword']);
+            
+            if ($result) {
+                echo json_encode(['status' => true, 'message' => 'Password changed successfully']);
             } else {
-                // Multipart Request (FormData)
-                if (isset($_POST['data'])) {
-                    $decryptedJson = $this->decrypt_aes_from_js($_POST['data'], $this->AES_KEY);
-                    $data = json_decode($decryptedJson, true);
-                } else {
-                    $data = $_POST;
-                }
+                echo json_encode(['status' => false, 'message' => 'Failed to update password']);
             }
-
-            // Prepare update data
-            $updateData = [];
-            
-            if (isset($data['is_online'])) {
-                $updateData['is_online'] = intval($data['is_online']); // 0 or 1
-            }
-            
-            if (isset($data['away_message'])) {
-                $updateData['away_message'] = trim($data['away_message']);
-            }
-            
-            if (isset($data['back_online_time'])) {
-                // Validate datetime format if needed, or just pass it
-                $updateData['back_online_time'] = $data['back_online_time'] ? trim($data['back_online_time']) : null;
-            }
-            
-            if (!empty($updateData)) {
-                $this->DoctorProfileModel->update_doctor_profile($docuid, $updateData);
-                echo json_encode(['status' => true, 'message' => 'Status updated successfully']);
-            } else {
-                echo json_encode(['status' => false, 'message' => 'No data to update']);
-            }
-
         } catch (Exception $e) {
             echo json_encode(['status' => false, 'message' => $e->getMessage()]);
         }
     }
 }
+?>

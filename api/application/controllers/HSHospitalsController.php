@@ -95,12 +95,17 @@ class HSHospitalsController  extends CI_Controller {
                 // Fetch hospital specific specializations
                  $hospitalInfo = $this->HospitalCommonModel->get_logHospitalInfo($loguid);
                  $hospital_id = isset($hospitalInfo['id']) ? $hospitalInfo['id'] : 0;
-                 // get_HospitalSpecializationList uses hosuid (loguid) not hospital_id?
-                 // Let's check get_HospitalSpecializationList definition in Model.
-                 // It uses hosuid.
                  $data = $this->HospitalCommonModel->get_HospitalSpecializationList($loguid);
+            } else if ($hrole === 'staff') {
+                // Fetch hospital specific specializations for staff
+                $staffInfo = $this->HospitalCommonModel->get_StaffHospitalInfo($loguid);
+                if ($staffInfo && isset($staffInfo['hosuid'])) {
+                     $data = $this->HospitalCommonModel->get_HospitalSpecializationList($staffInfo['hosuid']);
+                } else {
+                     $data = [];
+                }
             } else {
-                 throw new Exception("Insufficient privileges");
+                throw new Exception("Insufficient privileges");
             }
 
             $encryptedData = $this->encrypt_aes_for_js(json_encode($data), $AES_KEY);

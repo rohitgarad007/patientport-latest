@@ -26,7 +26,7 @@ export async function submitTreatmentSuggestion(params: {
   doctorId?: number; // optional for staff submissions
 }) {
   const { apiUrl, headers } = await getAuthHeaders();
-  const url = `${apiUrl}SFDoctorController/submitTreatmentSuggestion`;
+  const url = `${apiUrl}/SFDoctorController/submitTreatmentSuggestion`;
 
   const AES_KEY = "RohitGaradHos@173414";
 

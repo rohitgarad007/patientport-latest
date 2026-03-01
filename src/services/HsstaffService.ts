@@ -120,8 +120,130 @@ export const fetchStaffAccess = async (staff_uid: string) => {
   return { ...json, data: {} };
 };
 
-// HsstaffService.ts
+// ======================
+// Staff Profile Operations
+// ======================
+
+export interface StaffProfile {
+  staff_uid?: string;
+  name: string;
+  email: string;
+  phone: string;
+  profile_image: string;
+  gender: string;
+  specialization: string;
+  role: string;
+  role_name?: string; // Display only
+  department: string;
+  department_name?: string; // Display only
+  experience_years: string;
+  experience_months: string;
+  screen_lock_pin?: string;
+  screen_sleep_time?: string;
+
+  // For updates
+  current_password?: string;
+  new_password?: string;
+  confirm_password?: string; // Frontend use
+}
+
+export const fetchStaffProfile = async (): Promise<StaffProfile | null> => {
+  const { apiUrl, headers } = await getAuthHeaders();
+  const AES_KEY = await configService.getAesSecretKey();
+
+  try {
+    const response = await fetch(`${apiUrl}/staff_profile_get`, {
+      method: "GET",
+      headers,
+    });
+
+    if (!response.ok) throw new Error("Failed to fetch staff profile");
+    const result = await response.json();
+
+    if (result.status && result.data) {
+      const decryptedJson = decryptAESFromPHP(result.data, AES_KEY);
+      if (decryptedJson) {
+        const profile = JSON.parse(decryptedJson);
+
+        // Prepend API URL to profile_image if it's a relative path (not base64 and not http)
+        if (
+          profile.profile_image &&
+          !profile.profile_image.startsWith("data:") &&
+          !profile.profile_image.startsWith("http")
+        ) {
+          const baseUrl = apiUrl.endsWith("/") ? apiUrl : apiUrl + "/";
+          profile.profile_image = `${baseUrl}${profile.profile_image}`;
+        }
+        return profile;
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error("Error fetching staff profile:", error);
+    return null;
+  }
+};
+
+export const updateStaffProfile = async (
+  data: Partial<StaffProfile>,
+  imageFile?: File
+): Promise<{ status: boolean; message: string }> => {
+  const { apiUrl, headers } = await getAuthHeaders();
+  const AES_KEY = await configService.getAesSecretKey();
+  const { "Content-Type": _, ...headersWithoutContentType } = headers; // Remove Content-Type for FormData
+
+  try {
+    const { encryptAESForPHP } = await import("@/utils/aesDecrypt");
+    
+    const encryptedData = encryptAESForPHP(JSON.stringify(data), AES_KEY);
+
+    const formData = new FormData();
+    formData.append("data", encryptedData);
+
+    if (imageFile) {
+      formData.append("profile_image", imageFile);
+    }
+
+    const response = await fetch(`${apiUrl}/staff_profile_update`, {
+      method: "POST",
+      headers: headersWithoutContentType,
+      body: formData,
+    });
+
+    if (!response.ok) throw new Error("Failed to update profile");
+    return await response.json();
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    return { status: false, message: "Failed to update profile" };
+  }
+};
+
+export const changeStaffPassword = async (
+  data: { currentPassword: string; newPassword: string }
+): Promise<{ status: boolean; message: string }> => {
+  const { apiUrl, headers } = await getAuthHeaders();
+  const AES_KEY = await configService.getAesSecretKey();
+  const { encryptAESForPHP } = await import("@/utils/aesDecrypt");
+
+  try {
+    const encryptedData = encryptAESForPHP(JSON.stringify(data), AES_KEY);
+
+    const response = await fetch(`${apiUrl}/staff_profile_change_password`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ data: encryptedData }),
+    });
+
+    if (!response.ok) throw new Error("Failed to change password");
+    return await response.json();
+  } catch (error) {
+    console.error("Error changing password:", error);
+    return { status: false, message: "Failed to change password" };
+  }
+};
+
 export const updateStaffAccess = async (staff_uid: string, permissions: any) => {
+
   const { apiUrl, headers } = await getAuthHeaders();
   const AES_KEY = await configService.getAesSecretKey();
 

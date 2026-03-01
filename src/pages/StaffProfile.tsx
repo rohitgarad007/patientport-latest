@@ -1,11 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -14,11 +12,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Eye, EyeOff, Upload } from "lucide-react";
-import Cookies from "js-cookie";
-import { doctorProfileService, DoctorProfile } from "@/services/DoctorProfileService";
+import { fetchStaffProfile, updateStaffProfile, changeStaffPassword, StaffProfile } from "@/services/HsstaffService";
 import Swal from "sweetalert2";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { fetchSpecializations } from "@/services/HSHospitalService";
 
@@ -38,19 +34,18 @@ const sleepTimeOptions = Array.from({ length: 240 }, (_, i) => {
   return { value: seconds.toString(), label };
 });
 
-export default function DoctorProfilePage() {
-  const [profileData, setProfileData] = useState<DoctorProfile>({
+export default function StaffProfilePage() {
+  const [profileData, setProfileData] = useState<StaffProfile>({
     name: "",
     email: "",
     phone: "",
     profile_image: "",
     gender: "",
-    specialization_id: "",
-    specialization_name: "",
-    experience_year: "0",
-    experience_month: "0",
-    consultation_fee: "",
-    screen_default_message: "",
+    specialization: "",
+    role: "",
+    department: "",
+    experience_years: "0",
+    experience_months: "0",
     screen_lock_pin: "",
     screen_sleep_time: "30",
   });
@@ -62,9 +57,7 @@ export default function DoctorProfilePage() {
   });
 
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
-
   const [specializations, setSpecializations] = useState<{ value: string; label: string }[]>([]);
-
   const [loading, setLoading] = useState(true);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -80,8 +73,12 @@ export default function DoctorProfilePage() {
     try {
       const res = await fetchSpecializations();
       if (res.data) {
+        // Assuming we store specialization name or ID. 
+        // Since the column is varchar(100), we can store the name or ID. 
+        // DoctorProfile stores ID. Let's assume we store the ID or Name. 
+        // If the user selects a specialization, we'll store the value (ID) in the specialization field.
         const options = res.data.map((s: any) => ({
-          value: s.id,
+          value: s.id, // Storing ID
           label: s.name,
         }));
         setSpecializations(options);
@@ -94,7 +91,7 @@ export default function DoctorProfilePage() {
   const fetchProfile = async () => {
     setLoading(true);
     try {
-      const data = await doctorProfileService.getProfile();
+      const data = await fetchStaffProfile();
       if (data) {
         setProfileData({
           ...data,
@@ -103,11 +100,11 @@ export default function DoctorProfilePage() {
           phone: data.phone || "",
           profile_image: data.profile_image || "",
           gender: data.gender || "",
-          specialization_id: data.specialization_id || "",
-          experience_year: data.experience_year || "0",
-          experience_month: data.experience_month || "0",
-          consultation_fee: data.consultation_fee || "",
-          screen_default_message: data.screen_default_message || "",
+          specialization: data.specialization || "",
+          role: data.role || "",
+          department: data.department || "",
+          experience_years: data.experience_years || "0",
+          experience_months: data.experience_months || "0",
           screen_lock_pin: data.screen_lock_pin || "",
           screen_sleep_time: data.screen_sleep_time || "30",
         });
@@ -120,14 +117,13 @@ export default function DoctorProfilePage() {
     }
   };
 
-  const handleProfileChange = (field: keyof DoctorProfile, value: string) => {
+  const handleProfileChange = (field: keyof StaffProfile, value: string) => {
     setProfileData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file type
       const validTypes = ["image/png", "image/jpeg", "image/jpg"];
       if (!validTypes.includes(file.type)) {
         Swal.fire("Error", "Only PNG and JPG images are allowed.", "error");
@@ -139,7 +135,6 @@ export default function DoctorProfilePage() {
         const image = new Image();
         image.src = reader.result as string;
         image.onload = () => {
-            // Validate dimensions
             if (image.width > 512 || image.height > 512) {
                 Swal.fire("Error", "Image dimensions must not exceed 512x512 pixels.", "error");
                 return;
@@ -153,17 +148,15 @@ export default function DoctorProfilePage() {
   };
 
   const saveProfile = async () => {
-    // Validate screen lock pin
     if (profileData.screen_lock_pin && profileData.screen_lock_pin.length > 0 && profileData.screen_lock_pin.length < 4) {
       Swal.fire("Error", "Screen Lock PIN must be between 4 and 6 digits.", "error");
       return;
     }
 
     try {
-      const res = await doctorProfileService.updateProfile(profileData, selectedImageFile || undefined);
+      const res = await updateStaffProfile(profileData, selectedImageFile || undefined);
       if (res.status) {
         Swal.fire("Success", "Profile updated successfully", "success");
-        // Clear selected file after successful save
         setSelectedImageFile(null);
       } else {
         Swal.fire("Error", res.message || "Failed to update profile", "error");
@@ -188,10 +181,7 @@ export default function DoctorProfilePage() {
     }
 
     try {
-      const res = await doctorProfileService.updateProfile({
-        current_password: passwordData.currentPassword,
-        new_password: passwordData.newPassword,
-      });
+      const res = await changeStaffPassword(passwordData.currentPassword, passwordData.newPassword);
       if (res.status) {
         Swal.fire("Success", "Password changed successfully", "success");
         setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
@@ -207,7 +197,7 @@ export default function DoctorProfilePage() {
 
   return (
     <div className="container mx-auto p-6 max-w-4xl">
-      <h1 className="text-3xl font-bold mb-6">Doctor Profile</h1>
+      <h1 className="text-3xl font-bold mb-6">Staff Profile</h1>
 
       <Tabs defaultValue="profile" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
@@ -281,8 +271,8 @@ export default function DoctorProfilePage() {
                 <div className="space-y-2">
                   <Label>Specialization</Label>
                   <SearchableSelect
-                    value={profileData.specialization_id}
-                    onChange={(val) => handleProfileChange("specialization_id", val)}
+                    value={profileData.specialization}
+                    onChange={(val) => handleProfileChange("specialization", val)}
                     options={specializations}
                     placeholder="Select Specialization"
                   />
@@ -292,8 +282,8 @@ export default function DoctorProfilePage() {
                   <Label>Experience</Label>
                   <div className="flex gap-2">
                     <Select 
-                      value={profileData.experience_year} 
-                      onValueChange={(val) => handleProfileChange("experience_year", val)}
+                      value={profileData.experience_years} 
+                      onValueChange={(val) => handleProfileChange("experience_years", val)}
                     >
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Years" />
@@ -306,8 +296,8 @@ export default function DoctorProfilePage() {
                     </Select>
 
                     <Select 
-                      value={profileData.experience_month} 
-                      onValueChange={(val) => handleProfileChange("experience_month", val)}
+                      value={profileData.experience_months} 
+                      onValueChange={(val) => handleProfileChange("experience_months", val)}
                     >
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Months" />
@@ -321,13 +311,15 @@ export default function DoctorProfilePage() {
                   </div>
                 </div>
 
+                {/* Read-only Role and Department for context */}
                 <div className="space-y-2">
-                  <Label>Consultation Fees</Label>
-                  <Input 
-                    type="number"
-                    value={profileData.consultation_fee} 
-                    onChange={(e) => handleProfileChange("consultation_fee", e.target.value)} 
-                  />
+                  <Label>Role</Label>
+                  <Input value={profileData.role} disabled className="bg-muted" />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Department</Label>
+                  <Input value={profileData.department} disabled className="bg-muted" />
                 </div>
 
                 <div className="space-y-2">
@@ -370,15 +362,6 @@ export default function DoctorProfilePage() {
                   />
                   <p className="text-xs text-muted-foreground">Time before screen goes to sleep.</p>
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Screen Default Message</Label>
-                <Textarea 
-                  value={profileData.screen_default_message} 
-                  onChange={(e) => handleProfileChange("screen_default_message", e.target.value)} 
-                  placeholder="Message to display on waiting screens..."
-                />
               </div>
 
               <div className="flex justify-end">

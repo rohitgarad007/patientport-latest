@@ -156,6 +156,7 @@ import StaffasDoctorCalendar from "./pages/StaffasDoctorCalendar";
 
 import StaffasRoomAvailable from "./pages/StaffasRoomAvailable";
 import StaffasManageRoomAvailable from "./pages/staff-ward/StaffasManageRoomAvailable";
+import StaffProfilePage from "./pages/StaffProfile";
 
 
 
@@ -318,6 +319,7 @@ const App = () => {
             <Route element={<HospitalProtectedRoute />}>
               <Route path="/hospital-dashboard" element={<HospitalLayout><HospitalDashboard /></HospitalLayout>} />
               <Route path="/hospital-profile" element={<HospitalLayout><HospitalProfile /></HospitalLayout>} />
+              <Route path="/hs-profile" element={<HospitalLayout><HospitalProfile /></HospitalLayout>} />
               <Route path="/hs-doctors" element={<HospitalLayout><HospitalDoctorsPage /></HospitalLayout>} />
               <Route path="/hs-staff" element={<HospitalLayout><HospitalStaffPage /></HospitalLayout>} />
 
@@ -395,7 +397,8 @@ const App = () => {
 
             <Route element={<StaffProtectedRoute />}>
               <Route path="/staff-dashboard" element={<StaffLayout><StaffDashboard /></StaffLayout>} />
-              <Route path="/sf-patient-list" element={<StaffLayout><StaffPatientList /></StaffLayout>} />
+              <Route path="/staff-profile" element={<StaffLayout><StaffProfilePage /></StaffLayout>} />
+              <Route path="/staff-patients" element={<StaffLayout><StaffPatientList /></StaffLayout>} />
               <Route path="/sf-appointment-list" element={<StaffLayout><StaffaAppointmentList /></StaffLayout>} />
               <Route path="/sf-book-appointment" element={<StaffLayout><StaffaAppointmentScheduler /></StaffLayout>} />
               <Route path="/sf-master-scheduler" element={<StaffLayout><StaffasMasterScheduler /></StaffLayout>} />

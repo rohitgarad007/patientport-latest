@@ -15,6 +15,8 @@ export interface DoctorProfile {
   experience_month: string;
   consultation_fee: string;
   screen_default_message?: string;
+  screen_lock_pin?: string;
+  screen_sleep_time?: string;
   
   // Status fields
   is_online?: number; // 0 or 1
@@ -44,7 +46,7 @@ class DoctorProfileService {
     const headers = await this.getAuthHeaders();
 
     try {
-      const response = await fetch(`${API_URL}doctor_profile_get`, {
+      const response = await fetch(`${API_URL}/doctor_profile_get`, {
         method: "GET",
         headers: headers,
       });
@@ -81,6 +83,20 @@ class DoctorProfileService {
     }
   }
 
+  // Event system for profile updates
+  private listeners: (() => void)[] = [];
+
+  subscribe(listener: () => void) {
+    this.listeners.push(listener);
+    return () => {
+      this.listeners = this.listeners.filter(l => l !== listener);
+    };
+  }
+
+  notifyListeners() {
+    this.listeners.forEach(listener => listener());
+  }
+
   async updateProfile(data: Partial<DoctorProfile>, imageFile?: File): Promise<{ status: boolean; message: string }> {
     const API_URL = await configService.getApiUrl();
     const token = Cookies.get("token");
@@ -97,7 +113,7 @@ class DoctorProfileService {
         formData.append("profile_image", imageFile);
       }
       
-      const response = await fetch(`${API_URL}doctor_profile_update`, {
+      const response = await fetch(`${API_URL}/doctor_profile_update`, {
         method: "POST",
         headers: {
             Authorization: `Bearer ${token}`,
@@ -107,7 +123,13 @@ class DoctorProfileService {
       });
 
       if (!response.ok) throw new Error("Failed to update profile");
-      return await response.json();
+      const result = await response.json();
+      
+      if (result.status) {
+        this.notifyListeners(); // Notify listeners on success
+      }
+      
+      return result;
     } catch (error) {
       console.error("Error updating profile:", error);
       return { status: false, message: "Failed to update profile" };
@@ -123,7 +145,7 @@ class DoctorProfileService {
       // Encrypt data
       const encryptedData = encryptAESForPHP(JSON.stringify(data), this.AES_KEY);
       
-      const response = await fetch(`${API_URL}doctor_status_update`, {
+      const response = await fetch(`${API_URL}/doctor_status_update`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

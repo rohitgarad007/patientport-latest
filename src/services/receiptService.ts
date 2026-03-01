@@ -33,7 +33,7 @@ const getAuthHeaders = async () => {
 export async function fetchReceiptTemplates(): Promise<{ success: boolean; data: ReceiptTemplate[]; message?: string; default_receipt_id?: number }> {
   try {
     const { apiUrl, headers } = await getAuthHeaders();
-    const url = `${apiUrl}dc_doctor_getReceiptTemplates`;
+    const url = `${apiUrl}/dc_doctor_getReceiptTemplates`;
     const AES_KEY = "RohitGaradHos@173414";
 
     const res = await fetch(url, {
@@ -66,7 +66,7 @@ export async function fetchReceiptTemplates(): Promise<{ success: boolean; data:
 export async function setDefaultReceipt(receiptId: number): Promise<{ success: boolean; message?: string }> {
   try {
     const { apiUrl, headers } = await getAuthHeaders();
-    const url = `${apiUrl}dc_doctor_set_defaultReceipt`;
+    const url = `${apiUrl}/dc_doctor_set_defaultReceipt`;
 
     const res = await fetch(url, {
       method: "POST",
@@ -84,7 +84,7 @@ export async function setDefaultReceipt(receiptId: number): Promise<{ success: b
 export async function getReceiptContent(): Promise<{ success: boolean; data?: any; message?: string }> {
   try {
     const { apiUrl, headers } = await getAuthHeaders();
-    const url = `${apiUrl}dc_doctor_getReceiptContent`;
+    const url = `${apiUrl}/dc_doctor_getReceiptContent`;
     const AES_KEY = "RohitGaradHos@173414";
 
     const res = await fetch(url, {
@@ -117,7 +117,7 @@ export async function getReceiptContent(): Promise<{ success: boolean; data?: an
 export async function updateReceiptContent(data: any): Promise<{ success: boolean; message?: string }> {
   try {
     const { apiUrl, headers } = await getAuthHeaders();
-    const url = `${apiUrl}dc_doctor_updateReceiptContent`;
+    const url = `${apiUrl}/dc_doctor_updateReceiptContent`;
 
     const res = await fetch(url, {
       method: "POST",

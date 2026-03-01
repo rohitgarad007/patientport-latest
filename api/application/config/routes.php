@@ -269,6 +269,10 @@ $route['doctor_profile_get'] = 'DoctorProfileController/get_profile';
 $route['doctor_profile_update'] = 'DoctorProfileController/update_profile';
 $route['doctor_status_update'] = 'DoctorProfileController/update_status';
 
+$route['staff_profile_get'] = 'StaffProfileController/get_profile';
+$route['staff_profile_update'] = 'StaffProfileController/update_profile';
+$route['staff_profile_change_password'] = 'StaffProfileController/change_password';
+
 $route['adm_specializations_change_status']				= 'AdmSpecializationsController/changeSpecializationsStatus';
 $route['adm_specializations_delete']					= 'AdmSpecializationsController/DeleteSpecializationsInformation';
 

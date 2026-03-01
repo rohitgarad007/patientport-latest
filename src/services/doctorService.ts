@@ -352,7 +352,7 @@ export const updateMyAppointmentStatus = async (payload: {
     }
 
     // Use existing staff endpoint for updates (works for doctor auth tokens)
-    const res = await fetch(`${apiUrl}sf_staff_updateAppointmentStatus`, {
+    const res = await fetch(`${apiUrl}/sf_staff_updateAppointmentStatus`, {
       method: 'POST',
       headers,
       body: JSON.stringify(encryptedPayload),
@@ -397,7 +397,7 @@ export const updateMyQueuePositions = async (payload: {
     }
 
     // Use existing staff endpoint for queue reordering (works for doctor auth tokens)
-    const res = await fetch(`${apiUrl}sf_staff_updateQueuePositions`, {
+    const res = await fetch(`${apiUrl}/sf_staff_updateQueuePositions`, {
       method: 'POST',
       headers,
       body: JSON.stringify(encryptedPayload),
@@ -434,7 +434,7 @@ export const searchDiagnosisSuggestions = async (
   const { apiUrl, headers } = await getAuthHeaders();
   const AES_KEY = await configService.getAesSecretKey();
 
-  const res = await fetch(`${apiUrl}dc_doctor_getDiagnosisSuggestions`, {
+  const res = await fetch(`${apiUrl}/dc_doctor_getDiagnosisSuggestions`, {
     method: "POST",
     headers,
     body: JSON.stringify({ search, page, limit }),
@@ -454,7 +454,7 @@ export const searchDiagnosisAISuggestions = async (search: string) => {
   const { apiUrl, headers } = await getAuthHeaders();
   const AES_KEY = await configService.getAesSecretKey();
 
-  const res = await fetch(`${apiUrl}dc_doctor_getDiagnosisAISuggestions`, {
+  const res = await fetch(`${apiUrl}/dc_doctor_getDiagnosisAISuggestions`, {
     method: "POST",
     headers,
     body: JSON.stringify({ search }),
@@ -482,7 +482,7 @@ export const searchMedicationSuggestions = async (
   const { apiUrl, headers } = await getAuthHeaders();
   const AES_KEY = await configService.getAesSecretKey();
 
-  const res = await fetch(`${apiUrl}dc_doctor_getMedicationSuggestions`, {
+  const res = await fetch(`${apiUrl}/dc_doctor_getMedicationSuggestions`, {
     method: "POST",
     headers,
     body: JSON.stringify({ search, page, limit }),
@@ -506,7 +506,7 @@ export const searchLabTestSuggestions = async (
   const { apiUrl, headers } = await getAuthHeaders();
   const AES_KEY = await configService.getAesSecretKey();
 
-  const res = await fetch(`${apiUrl}dc_doctor_getLabTestSuggestions`, {
+  const res = await fetch(`${apiUrl}/dc_doctor_getLabTestSuggestions`, {
     method: "POST",
     headers,
     body: JSON.stringify({ search, page, limit }),
@@ -530,7 +530,7 @@ export const searchProcedureSuggestions = async (
   const { apiUrl, headers } = await getAuthHeaders();
   const AES_KEY = await configService.getAesSecretKey();
 
-  const res = await fetch(`${apiUrl}dc_doctor_getProcedureSuggestions`, {
+  const res = await fetch(`${apiUrl}/dc_doctor_getProcedureSuggestions`, {
     method: "POST",
     headers,
     body: JSON.stringify({ search, page, limit }),
@@ -554,7 +554,7 @@ export const fetchTreatmentSuggestionsByDiagnosis = async (
   const { apiUrl, headers } = await getAuthHeaders();
   const AES_KEY = await configService.getAesSecretKey();
 
-  const res = await fetch(`${apiUrl}dc_doctor_getTreatmentSuggestionsByDiagnosis`, {
+  const res = await fetch(`${apiUrl}/dc_doctor_getTreatmentSuggestionsByDiagnosis`, {
     method: "POST",
     headers,
     body: JSON.stringify({ diagnosis, medLimit, labLimit }),
@@ -581,7 +581,7 @@ export const searchMedicationUnitOptions = async (
   const { apiUrl, headers } = await getAuthHeaders();
   const AES_KEY = await configService.getAesSecretKey();
 
-  const res = await fetch(`${apiUrl}dc_doctor_getMedicationUnitSuggestions`, {
+  const res = await fetch(`${apiUrl}/dc_doctor_getMedicationUnitSuggestions`, {
     method: "POST",
     headers,
     body: JSON.stringify({ search, page, limit }),
@@ -604,7 +604,7 @@ export const searchMedicationFrequencyOptions = async (
   const { apiUrl, headers } = await getAuthHeaders();
   const AES_KEY = await configService.getAesSecretKey();
 
-  const res = await fetch(`${apiUrl}dc_doctor_getMedicationFrequencySuggestions`, {
+  const res = await fetch(`${apiUrl}/dc_doctor_getMedicationFrequencySuggestions`, {
     method: "POST",
     headers,
     body: JSON.stringify({ search, page, limit }),
@@ -627,7 +627,7 @@ export const searchMedicationDurationOptions = async (
   const { apiUrl, headers } = await getAuthHeaders();
   const AES_KEY = await configService.getAesSecretKey();
 
-  const res = await fetch(`${apiUrl}dc_doctor_getMedicationDurationSuggestions`, {
+  const res = await fetch(`${apiUrl}/dc_doctor_getMedicationDurationSuggestions`, {
     method: "POST",
     headers,
     body: JSON.stringify({ search, page, limit }),
@@ -647,7 +647,7 @@ export const searchMedicationAISuggestions = async (search: string) => {
   const { apiUrl, headers } = await getAuthHeaders();
   const AES_KEY = await configService.getAesSecretKey();
 
-  const res = await fetch(`${apiUrl}dc_doctor_getMedicationAISuggestions`, {
+  const res = await fetch(`${apiUrl}/dc_doctor_getMedicationAISuggestions`, {
     method: "POST",
     headers,
     body: JSON.stringify({ search }),
@@ -667,7 +667,7 @@ export const searchLabTestAISuggestions = async (search: string) => {
   const { apiUrl, headers } = await getAuthHeaders();
   const AES_KEY = await configService.getAesSecretKey();
 
-  const res = await fetch(`${apiUrl}dc_doctor_getLabTestAISuggestions`, {
+  const res = await fetch(`${apiUrl}/dc_doctor_getLabTestAISuggestions`, {
     method: "POST",
     headers,
     body: JSON.stringify({ search }),
@@ -687,7 +687,7 @@ export const searchProcedureAISuggestions = async (search: string) => {
   const { apiUrl, headers } = await getAuthHeaders();
   const AES_KEY = await configService.getAesSecretKey();
 
-  const res = await fetch(`${apiUrl}dc_doctor_getProcedureAISuggestions`, {
+  const res = await fetch(`${apiUrl}/dc_doctor_getProcedureAISuggestions`, {
     method: "POST",
     headers,
     body: JSON.stringify({ search }),
@@ -711,7 +711,7 @@ export const fetchPatientHistoryCategories = async () => {
   const { apiUrl, headers } = await getAuthHeaders();
   const AES_KEY = await configService.getAesSecretKey();
 
-  const res = await fetch(`${apiUrl}dc_doctor_getPatientHistoryCategories`, {
+  const res = await fetch(`${apiUrl}/dc_doctor_getPatientHistoryCategories`, {
     method: "POST",
     headers,
     body: JSON.stringify({}),
@@ -735,7 +735,7 @@ export const fetchCommonComplaintsGrouped = async () => {
   const { apiUrl, headers } = await getAuthHeaders();
   const AES_KEY = await configService.getAesSecretKey();
 
-  const res = await fetch(`${apiUrl}dc_doctor_getCommonComplaintsGrouped`, {
+  const res = await fetch(`${apiUrl}/dc_doctor_getCommonComplaintsGrouped`, {
     method: "POST",
     headers,
     body: JSON.stringify({}),
