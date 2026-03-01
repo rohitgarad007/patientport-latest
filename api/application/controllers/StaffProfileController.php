@@ -77,7 +77,12 @@ class StaffProfileController extends CI_Controller {
         $role = $tokenData['role'] ?? null;
         $loguid = $tokenData['loguid'] ?? null;
 
-        if ($role !== 'staff') {
+        // Allow all roles except known non-staff roles
+        // This is necessary because staff tokens contain specific job titles (e.g., "Receptionist", "Anesthetist")
+        // instead of the generic "staff" role.
+        $non_staff_roles = ['doctor', 'hospital_admin', 'patient', 'admin', 'super_admin'];
+
+        if (!$role || in_array($role, $non_staff_roles)) {
             throw new Exception("Unauthorized: Not a staff member");
         }
         

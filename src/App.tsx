@@ -399,6 +399,7 @@ const App = () => {
               <Route path="/staff-dashboard" element={<StaffLayout><StaffDashboard /></StaffLayout>} />
               <Route path="/staff-profile" element={<StaffLayout><StaffProfilePage /></StaffLayout>} />
               <Route path="/staff-patients" element={<StaffLayout><StaffPatientList /></StaffLayout>} />
+              <Route path="/sf-patient-list" element={<StaffLayout><StaffPatientList /></StaffLayout>} />
               <Route path="/sf-appointment-list" element={<StaffLayout><StaffaAppointmentList /></StaffLayout>} />
               <Route path="/sf-book-appointment" element={<StaffLayout><StaffaAppointmentScheduler /></StaffLayout>} />
               <Route path="/sf-master-scheduler" element={<StaffLayout><StaffasMasterScheduler /></StaffLayout>} />
