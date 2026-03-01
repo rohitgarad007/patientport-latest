@@ -16,7 +16,6 @@ import { fetchStaffProfile, updateStaffProfile, changeStaffPassword, StaffProfil
 import Swal from "sweetalert2";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SearchableSelect } from "@/components/ui/searchable-select";
-import { fetchSpecializations } from "@/services/HSHospitalService";
 
 const sleepTimeOptions = Array.from({ length: 240 }, (_, i) => {
   const seconds = (i + 1) * 30;
@@ -57,7 +56,7 @@ export default function StaffProfilePage() {
   });
 
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
-  const [specializations, setSpecializations] = useState<{ value: string; label: string }[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -66,27 +65,9 @@ export default function StaffProfilePage() {
 
   useEffect(() => {
     fetchProfile();
-    loadSpecializations();
   }, []);
 
-  const loadSpecializations = async () => {
-    try {
-      const res = await fetchSpecializations();
-      if (res.data) {
-        // Assuming we store specialization name or ID. 
-        // Since the column is varchar(100), we can store the name or ID. 
-        // DoctorProfile stores ID. Let's assume we store the ID or Name. 
-        // If the user selects a specialization, we'll store the value (ID) in the specialization field.
-        const options = res.data.map((s: any) => ({
-          value: s.id, // Storing ID
-          label: s.name,
-        }));
-        setSpecializations(options);
-      }
-    } catch (error) {
-      console.error("Failed to load specializations", error);
-    }
-  };
+
 
   const fetchProfile = async () => {
     setLoading(true);
@@ -268,15 +249,7 @@ export default function StaffProfilePage() {
                   </Select>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Specialization</Label>
-                  <SearchableSelect
-                    value={profileData.specialization}
-                    onChange={(val) => handleProfileChange("specialization", val)}
-                    options={specializations}
-                    placeholder="Select Specialization"
-                  />
-                </div>
+
 
                 <div className="space-y-2">
                   <Label>Experience</Label>
@@ -311,16 +284,7 @@ export default function StaffProfilePage() {
                   </div>
                 </div>
 
-                {/* Read-only Role and Department for context */}
-                <div className="space-y-2">
-                  <Label>Role</Label>
-                  <Input value={profileData.role} disabled className="bg-muted" />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>Department</Label>
-                  <Input value={profileData.department} disabled className="bg-muted" />
-                </div>
+
 
                 <div className="space-y-2">
                   <Label>Screen Lock PIN (4-6 digits)</Label>

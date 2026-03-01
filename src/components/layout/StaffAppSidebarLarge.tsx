@@ -242,15 +242,11 @@ export function StaffAppSidebar() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem asChild>
-              <NavLink to="/hs-profile" className="flex items-center gap-2">
-                <img src={PaIcons.user1} alt="Profile" className="w-4 h-4" /> Profile
-              </NavLink>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <NavLink to="/hs-settings" className="flex items-center gap-2">
-                <img src={PaIcons.setting} alt="Settings" className="w-4 h-4" /> Settings
-              </NavLink>
-            </DropdownMenuItem>
+                <NavLink to="/staff-profile" className="flex items-center gap-2">
+                  <img src={PaIcons.user1} alt="Profile" className="w-4 h-4" />{" "}
+                  Profile
+                </NavLink>
+              </DropdownMenuItem>
             <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 text-red-600">
               <img src={PaIcons.switch} alt="Logout" className="w-4 h-4" /> Logout
             </DropdownMenuItem>

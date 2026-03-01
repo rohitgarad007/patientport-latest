@@ -225,7 +225,7 @@ export function StaffAppSidebar() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem asChild>
-                <NavLink to="/hs-profile" className="flex items-center gap-2">
+                <NavLink to="/staff-profile" className="flex items-center gap-2">
                   <img src={PaIcons.user1} alt="Profile" className="w-4 h-4" /> Profile
                 </NavLink>
               </DropdownMenuItem>
