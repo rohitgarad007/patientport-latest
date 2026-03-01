@@ -12,7 +12,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Eye, EyeOff, Upload } from "lucide-react";
-import { fetchStaffProfile, updateStaffProfile, changeStaffPassword, StaffProfile } from "@/services/HsstaffService";
+import { fetchStaffProfile, updateStaffProfile, StaffProfile } from "@/services/HsstaffService";
+import { staffProfileService } from "@/services/StaffProfileService";
 import Swal from "sweetalert2";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SearchableSelect } from "@/components/ui/searchable-select";
@@ -162,7 +163,10 @@ export default function StaffProfilePage() {
     }
 
     try {
-      const res = await changeStaffPassword(passwordData.currentPassword, passwordData.newPassword);
+      const res = await staffProfileService.changePassword({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      });
       if (res.status) {
         Swal.fire("Success", "Password changed successfully", "success");
         setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });

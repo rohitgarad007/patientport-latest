@@ -14,13 +14,35 @@ interface DoctorLayoutProps {
 
 export function DoctorLayout({ children }: DoctorLayoutProps) {
   // Screen Lock States
-  const [isLocked, setIsLocked] = useState(false);
+  const [isLocked, setIsLocked] = useState(() => {
+    return localStorage.getItem("doctor_screen_locked") === "true";
+  });
   const [pin, setPin] = useState("");
   const [enteredPin, setEnteredPin] = useState("");
   const [showPin, setShowPin] = useState(false);
   const [sleepTime, setSleepTime] = useState<number | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Sync Lock State with LocalStorage & Across Tabs
+  useEffect(() => {
+    if (isLocked) {
+      localStorage.setItem("doctor_screen_locked", "true");
+    } else {
+      localStorage.removeItem("doctor_screen_locked");
+    }
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "doctor_screen_locked") {
+        setIsLocked(e.newValue === "true");
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, [isLocked]);
 
   // Load doctor info from cookie & fetch profile for screen lock settings
   useEffect(() => {
@@ -58,6 +80,31 @@ export function DoctorLayout({ children }: DoctorLayoutProps) {
       unsubscribe();
     };
   }, []);
+
+  // Keyboard Shortcut for Screen Lock (Ctrl + Alt + L)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.altKey && (e.key === 'l' || e.key === 'L')) {
+        e.preventDefault();
+        if (pin && pin.length >= 4) {
+          setIsLocked(true);
+        } else {
+          Swal.fire({
+            icon: "warning",
+            title: "Screen Lock Unavailable",
+            text: "Please set a screen lock PIN in your profile settings first.",
+            timer: 3000,
+            timerProgressBar: true,
+          });
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [pin]);
 
   // Idle Timer Logic
   useEffect(() => {
@@ -124,6 +171,7 @@ export function DoctorLayout({ children }: DoctorLayoutProps) {
   const handleLogout = () => {
     Cookies.remove("token");
     Cookies.remove("userInfo");
+    localStorage.removeItem("doctor_screen_locked");
     window.location.href = "/login";
   };
 
