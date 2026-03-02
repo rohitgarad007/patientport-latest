@@ -135,7 +135,12 @@
       if (!API_URL) return;
 
       if (!otp.trim()) {
-        Swal.fire("Validation Error", "Please enter OTP", "warning");
+        Swal.fire("Validation Error", "Please enter PIN", "warning");
+        return;
+      }
+
+      if (otp.length !== 4) {
+        Swal.fire("Validation Error", "PIN must be exactly 4 digits", "warning");
         return;
       }
 
@@ -164,7 +169,7 @@
           if (newAttempts >= 3) {
             await Swal.fire({
               title: "Maximum Attempts Reached",
-              text: "You have exceeded the maximum number of OTP attempts. Redirecting to login...",
+              text: "You have exceeded the maximum number of attempts. Redirecting to login...",
               icon: "error",
               timer: 2000,
               showConfirmButton: false,
@@ -178,7 +183,7 @@
             return;
           }
 
-          Swal.fire("OTP Verification Failed", data.message || `Invalid OTP. Attempts remaining: ${3 - newAttempts}`, "error");
+          Swal.fire("Verification Failed", data.message || `Invalid PIN. Attempts remaining: ${3 - newAttempts}`, "error");
         }
       } catch (err: any) {
         Swal.fire("Error", err.message, "error");
@@ -220,7 +225,7 @@
           setTempRole(data.role);
           setShowOtpScreen(true);
           setLoading(false);
-          Swal.fire("OTP Required", "Please enter the OTP sent to your registered device.", "info");
+          Swal.fire("Security Verification", "Please enter your Screen Lock PIN to continue.", "info");
           return;
         }
 
@@ -259,30 +264,35 @@
           </CardHeader>
 
           <CardContent className="space-y-4 card-content-body">
-            {/* OTP Screen */}
+            {/* PIN Screen */}
             {showOtpScreen ? (
               <form className="space-y-4" onSubmit={handleVerifyOtp}>
                 <div className="text-center mb-4">
                   <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-2">
                     <Shield className="w-6 h-6 text-primary" />
                   </div>
-                  <h3 className="text-lg font-semibold">Two-Factor Authentication</h3>
+                  <h3 className="text-lg font-semibold">Security Verification</h3>
                   <p className="text-sm text-muted-foreground">
-                    Please enter the OTP to verify your identity.
+                    Please enter your Screen Lock PIN to verify your identity.
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="otp">One-Time Password (OTP)</Label>
+                  <Label htmlFor="otp">Enter Your PIN</Label>
                   <div className="relative">
                     <Input
                       id="otp"
-                      type="text"
-                      placeholder="Enter OTP"
+                      type="password"
+                      placeholder="Enter PIN"
                       value={otp}
-                      onChange={(e) => setOtp(e.target.value)}
-                      maxLength={6}
-                      className="pl-10 tracking-widest font-mono text-lg"
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (/^\d{0,4}$/.test(val)) {
+                          setOtp(val);
+                        }
+                      }}
+                      maxLength={4}
+                      className="pl-10 tracking-widest font-mono text-lg text-center"
                       autoFocus
                     />
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -295,7 +305,7 @@
                   size="lg"
                   disabled={loading}
                 >
-                  {loading ? "Verifying..." : "Verify & Login"}
+                  {loading ? "Verifying..." : "Verify PIN & Login"}
                 </Button>
 
                 <Button

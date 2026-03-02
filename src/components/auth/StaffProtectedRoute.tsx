@@ -36,9 +36,25 @@ const StaffProtectedRoute = ({ permissionId }: StaffProtectedRouteProps) => {
         // Check if user's role exists in DB and is NOT Receptionist
         // The user role must be one of the roles in ms_staff_role, but NOT 'Receptionist'
         const userRole = parsedInfo.role;
-        const matchedRole = allRoles.find((r: any) => r.roleName === userRole);
         
-        if (!matchedRole || matchedRole.roleName === "Receptionist") {
+        // Case-insensitive match
+        const matchedRole = allRoles.find((r: any) => r.roleName.toLowerCase() === userRole.toLowerCase());
+        
+        // Block Receptionist explicitly
+        if (userRole.toLowerCase() === "receptionist") {
+           setHasAccess(false);
+           return;
+        }
+
+        // If role is found in DB and is Receptionist (double check)
+        if (matchedRole && matchedRole.roleName === "Receptionist") {
+            setHasAccess(false);
+            return;
+        }
+        
+        // If role is NOT found in DB, but is generic "staff", allow it. 
+        // Otherwise, if not found and not "staff", block.
+        if (!matchedRole && userRole.toLowerCase() !== "staff") {
            setHasAccess(false);
            return;
         }

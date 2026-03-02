@@ -148,6 +148,13 @@ class StaffProfileController extends CI_Controller {
                 'screen_lock_pin', 'screen_sleep_time'
             ];
             
+            // Validate screen_lock_pin
+            if (isset($data['screen_lock_pin']) && strlen($data['screen_lock_pin']) > 0) {
+                 if (!preg_match('/^\d{4}$/', $data['screen_lock_pin'])) {
+                      throw new Exception("Screen Lock PIN must be exactly 4 digits.");
+                 }
+            }
+            
             foreach ($allowedFields as $field) {
                 if (isset($data[$field])) {
                     $updateData[$field] = $data[$field];

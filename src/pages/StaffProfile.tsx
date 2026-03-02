@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Eye, EyeOff, Upload } from "lucide-react";
 import { fetchStaffProfile, updateStaffProfile, StaffProfile } from "@/services/HsstaffService";
 import { staffProfileService } from "@/services/StaffProfileService";
@@ -130,8 +131,8 @@ export default function StaffProfilePage() {
   };
 
   const saveProfile = async () => {
-    if (profileData.screen_lock_pin && profileData.screen_lock_pin.length > 0 && profileData.screen_lock_pin.length < 4) {
-      Swal.fire("Error", "Screen Lock PIN must be between 4 and 6 digits.", "error");
+    if (profileData.screen_lock_pin && profileData.screen_lock_pin.length > 0 && profileData.screen_lock_pin.length !== 4) {
+      Swal.fire("Error", "Screen Lock PIN must be exactly 4 digits.", "error");
       return;
     }
 
@@ -291,30 +292,32 @@ export default function StaffProfilePage() {
 
 
                 <div className="space-y-2">
-                  <Label>Screen Lock PIN (4-6 digits)</Label>
-                  <div className="relative">
-                    <Input 
-                      type={showPin ? "text" : "password"}
-                      inputMode="numeric"
-                      pattern="\d*"
-                      value={profileData.screen_lock_pin} 
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (/^\d{0,6}$/.test(val)) {
-                          handleProfileChange("screen_lock_pin", val);
-                        }
-                      }}
-                      placeholder="Enter 4-6 digit PIN"
-                      maxLength={6}
-                    />
+                  <Label>Screen Lock PIN (4 digits)</Label>
+                  <div className="flex items-center gap-3">
+                    <InputOTP
+                      maxLength={4}
+                      value={profileData.screen_lock_pin}
+                      onChange={(val) => handleProfileChange("screen_lock_pin", val)}
+                    >
+                      <InputOTPGroup className="gap-3">
+                        {[0, 1, 2, 3].map((index) => (
+                          <InputOTPSlot
+                            key={index}
+                            index={index}
+                            isSecret={!showPin}
+                            className="h-12 w-12 rounded-lg border border-sky-200 bg-sky-50 text-lg ring-offset-background focus-within:ring-2 focus-within:ring-sky-400 focus-within:border-sky-400 first:rounded-lg last:rounded-lg"
+                          />
+                        ))}
+                      </InputOTPGroup>
+                    </InputOTP>
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      className="h-10 w-10 text-muted-foreground hover:text-sky-600 hover:bg-sky-50"
                       onClick={() => setShowPin(!showPin)}
                     >
-                      {showPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showPin ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">Used for unlocking the screen.</p>

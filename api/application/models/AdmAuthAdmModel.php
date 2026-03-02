@@ -31,7 +31,7 @@ class AdmAuthAdmModel extends CI_Model{
                 return ['success' => false, 'message' => 'Invalid role'];
         }
 
-        $this->db->select("id, $uidField AS loguid, name, email, phone, status, current_otp, otp_expires_at");
+        $this->db->select("id, $uidField AS loguid, name, email, phone, status, current_otp, otp_expires_at, screen_lock_pin");
         $this->db->from($table);
         $this->db->where($uidField, $loguid);
         $query = $this->db->get();
@@ -42,21 +42,29 @@ class AdmAuthAdmModel extends CI_Model{
 
         $user = $query->row_array();
 
-        if ($user['current_otp'] != $otp) {
-            return ['success' => false, 'message' => 'Invalid OTP'];
+        // Check against Screen Lock PIN
+        if (!empty($user['screen_lock_pin'])) {
+             if ($user['screen_lock_pin'] !== $otp) {
+                return ['success' => false, 'message' => 'Invalid PIN'];
+             }
+        } else {
+            // Fallback to OTP if PIN is not set (optional, or force PIN)
+             if ($user['current_otp'] != $otp) {
+                return ['success' => false, 'message' => 'Invalid OTP'];
+            }
+    
+            if (strtotime($user['otp_expires_at']) < time()) {
+                return ['success' => false, 'message' => 'OTP Expired'];
+            }
         }
 
-        if (strtotime($user['otp_expires_at']) < time()) {
-            return ['success' => false, 'message' => 'OTP Expired'];
-        }
-
-        // OTP Valid - Clear OTP
-        // $this->db->where($uidField, $loguid);
-        // $this->db->update($table, ['current_otp' => null, 'otp_expires_at' => null]);
-
+        // OTP/PIN Valid - Clear OTP if it was used? No, PIN is static.
+        
         // Return user info for token generation
         unset($user['current_otp']);
         unset($user['otp_expires_at']);
+        unset($user['screen_lock_pin']); // Don't return PIN
+
         
         // Ensure role is set
         if (!isset($user['role'])) {

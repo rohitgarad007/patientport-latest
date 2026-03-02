@@ -4,6 +4,7 @@ import { DcotorAppSidebar } from "./DcotorAppSidebar";
 import Cookies from "js-cookie";
 import { doctorProfileService } from "@/services/DoctorProfileService";
 import { Input } from "@/components/ui/input";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Lock } from "lucide-react";
 import Swal from "sweetalert2";
@@ -206,39 +207,43 @@ export function DoctorLayout({ children }: DoctorLayoutProps) {
                 </p>
               </div>
 
-              <div className="w-full space-y-4">
-                <div className="relative">
-                  <Input
-                    type={showPin ? "text" : "password"}
-                    placeholder="Enter PIN"
-                    className="text-center text-lg tracking-widest pr-10"
+              <div className="w-full space-y-6">
+                <div className="flex items-center justify-center gap-3">
+                  <InputOTP
+                    maxLength={4}
                     value={enteredPin}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (/^\d*$/.test(val) && val.length <= 6) {
-                        setEnteredPin(val);
-                      }
-                    }}
+                    onChange={(val) => setEnteredPin(val)}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter") {
+                      if (e.key === "Enter" && enteredPin.length === 4) {
                         handleUnlock();
                       }
                     }}
                     autoFocus
-                  />
+                  >
+                    <InputOTPGroup className="gap-3">
+                      {[0, 1, 2, 3].map((index) => (
+                        <InputOTPSlot
+                          key={index}
+                          index={index}
+                          isSecret={!showPin}
+                          className="h-14 w-14 rounded-lg border-2 border-sky-200 bg-sky-50 text-2xl font-bold ring-offset-background focus-within:ring-2 focus-within:ring-sky-400 focus-within:border-sky-400 first:rounded-lg last:rounded-lg shadow-sm"
+                        />
+                      ))}
+                    </InputOTPGroup>
+                  </InputOTP>
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    className="h-12 w-12 text-muted-foreground hover:text-sky-600 hover:bg-sky-50 rounded-full"
                     onClick={() => setShowPin(!showPin)}
                   >
-                    {showPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showPin ? <EyeOff className="h-6 w-6" /> : <Eye className="h-6 w-6" />}
                   </Button>
                 </div>
 
                 <Button 
-                  className="w-full h-11 text-lg" 
+                  className="w-full h-12 text-lg font-semibold shadow-md" 
                   onClick={handleUnlock}
                   disabled={enteredPin.length < 4}
                 >

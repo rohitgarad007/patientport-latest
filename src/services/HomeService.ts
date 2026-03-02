@@ -20,7 +20,7 @@ export interface HomeDoctor {
 export const fetchHomeDoctors = async (hospitalId?: number): Promise<HomeDoctor[]> => {
   const apiUrl = await configService.getApiUrl();
   const query = hospitalId ? `?hospital_id=${hospitalId}` : "";
-  const res = await fetch(`${apiUrl}home_doctors_list${query}`, {
+  const res = await fetch(`${apiUrl}/home_doctors_list${query}`, {
     method: "GET",
     headers: { "Accept": "application/json" },
   });
@@ -56,7 +56,7 @@ export interface HomeHospitalInfo {
 export const fetchHomeHospital = async (hospitalId?: number): Promise<HomeHospitalInfo> => {
   const apiUrl = await configService.getApiUrl();
   const query = hospitalId ? `?hospital_id=${hospitalId}` : "";
-  const res = await fetch(`${apiUrl}home_hospital_info${query}`, {
+  const res = await fetch(`${apiUrl}/home_hospital_info${query}`, {
     method: "GET",
     headers: { "Accept": "application/json" },
   });
@@ -83,7 +83,7 @@ export interface SubmitAppointmentPayload {
 
 export const submitHomeAppointment = async (payload: SubmitAppointmentPayload): Promise<{ success: boolean; appointment_id?: number; booking_code?: string; message?: string; }> => {
   const apiUrl = await configService.getApiUrl();
-  const res = await fetch(`${apiUrl}home_submit_appointment`, {
+  const res = await fetch(`${apiUrl}/home_submit_appointment`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "Accept": "application/json" },
     body: JSON.stringify(payload),
@@ -114,7 +114,7 @@ export interface SubmitPatientResponse {
 
 export const submitHomePatient = async (payload: SubmitPatientPayload): Promise<SubmitPatientResponse> => {
   const apiUrl = await configService.getApiUrl();
-  const res = await fetch(`${apiUrl}home_submit_patient`, {
+  const res = await fetch(`${apiUrl}/home_submit_patient`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "Accept": "application/json" },
     body: JSON.stringify(payload),
@@ -152,7 +152,7 @@ export interface ChatAssistantResponse {
 
 export const chatAssistant = async (req: ChatAssistantRequest): Promise<ChatAssistantResponse> => {
   const apiUrl = await configService.getApiUrl();
-  const res = await fetch(`${apiUrl}home_chat`, {
+  const res = await fetch(`${apiUrl}/home_chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "Accept": "application/json" },
     body: JSON.stringify(req),
@@ -173,7 +173,7 @@ export interface CheckUserResponse {
 
 export const checkUser = async (phone: string, hospital_id: number = 2): Promise<CheckUserResponse> => {
   const apiUrl = await configService.getApiUrl();
-  const res = await fetch(`${apiUrl}check_user`, {
+  const res = await fetch(`${apiUrl}/check_user`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "Accept": "application/json" },
     body: JSON.stringify({ phone, hospital_id }),
@@ -197,7 +197,7 @@ export interface RegisterUserResponse {
 
 export const registerUser = async (payload: RegisterUserPayload): Promise<RegisterUserResponse> => {
   const apiUrl = await configService.getApiUrl();
-  const res = await fetch(`${apiUrl}register_user`, {
+  const res = await fetch(`${apiUrl}/register_user`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "Accept": "application/json" },
     body: JSON.stringify(payload),
@@ -215,7 +215,7 @@ export interface GetDoctorsResponse {
 
 export const getDoctors = async (): Promise<GetDoctorsResponse> => {
   const apiUrl = await configService.getApiUrl();
-  const res = await fetch(`${apiUrl}get_doctors`, {
+  const res = await fetch(`${apiUrl}/get_doctors`, {
     method: "GET",
     headers: { "Accept": "application/json" },
   });
@@ -242,7 +242,7 @@ export interface SearchDoctorResponse {
 
 export const searchDoctor = async (query: string): Promise<SearchDoctorResponse> => {
   const apiUrl = await configService.getApiUrl();
-  const res = await fetch(`${apiUrl}search_doctor`, {
+  const res = await fetch(`${apiUrl}/search_doctor`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "Accept": "application/json" },
     body: JSON.stringify({ query }),
@@ -266,7 +266,7 @@ export interface BookAppointmentResponse {
 
 export const bookAppointment = async (payload: BookAppointmentPayload): Promise<BookAppointmentResponse> => {
   const apiUrl = await configService.getApiUrl();
-  const res = await fetch(`${apiUrl}book_appointment`, {
+  const res = await fetch(`${apiUrl}/book_appointment`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "Accept": "application/json" },
     body: JSON.stringify(payload),
@@ -314,7 +314,7 @@ export const getAvailableSlots = async (
   patient_id?: number
 ): Promise<GetAvailableSlotsResponse> => {
   const apiUrl = await configService.getApiUrl();
-  const res = await fetch(`${apiUrl}get_available_slots`, {
+  const res = await fetch(`${apiUrl}/get_available_slots`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
     body: JSON.stringify({ hospital_id, doctor_id, date, phone, patient_id }),
@@ -349,7 +349,7 @@ export const bookPatientAppointment = async (
   payload: BookAppointmentRequest
 ): Promise<BookAppointmentResponse> => {
   const apiUrl = await configService.getApiUrl();
-  const res = await fetch(`${apiUrl}book_patient_appointment`, {
+  const res = await fetch(`${apiUrl}/book_patient_appointment`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "Accept": "application/json" },
     body: JSON.stringify(payload),
@@ -390,7 +390,7 @@ export const getAppointmentDetails = async (
   params: { appointment_uid?: string; appointment_id?: number }
 ): Promise<GetAppointmentDetailsResponse> => {
   const apiUrl = await configService.getApiUrl();
-  const res = await fetch(`${apiUrl}get_appointment_details`, {
+  const res = await fetch(`${apiUrl}/get_appointment_details`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "Accept": "application/json" },
     body: JSON.stringify(params),
@@ -416,7 +416,7 @@ export const cancelAppointment = async (
   params: CancelAppointmentRequest
 ): Promise<CancelAppointmentResponse> => {
   const apiUrl = await configService.getApiUrl();
-  const res = await fetch(`${apiUrl}cancel_appointment`, {
+  const res = await fetch(`${apiUrl}/cancel_appointment`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "Accept": "application/json" },
     body: JSON.stringify(params),
