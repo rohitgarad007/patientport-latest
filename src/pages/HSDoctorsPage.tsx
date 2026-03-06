@@ -209,11 +209,11 @@ export default function HSDoctorsPage() {
       : 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 md:p-6 pb-24">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 md:pb-0">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Manage Doctors ({allowDoctorCount})</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Manage Doctors ({allowDoctorCount})</h1>
           
         </div>
         {/*<Button
@@ -251,7 +251,7 @@ export default function HSDoctorsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Total Doctors"
           value={doctors.length.toString()}
@@ -306,25 +306,144 @@ export default function HSDoctorsPage() {
       {/* Doctor Directory */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <CardTitle>Doctor Directory</CardTitle>
-              
             </div>
-            <div className="flex items-center gap-2">
-              <div className="relative">
+            <div className="flex items-center gap-2 w-full md:w-auto">
+              <div className="relative w-full md:w-auto">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
                   placeholder="Search doctors..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-80"
+                  className="pl-10 w-full md:w-80"
                 />
               </div>
             </div>
           </div>
         </CardHeader>
         <CardContent>
+          {/* Mobile View: Grid of Cards */}
+          <div className="grid grid-cols-1 gap-4 md:hidden">
+            {doctors.map((doctor) => (
+              <div key={doctor.id} className="bg-white p-4 rounded-xl border shadow-sm flex flex-col gap-4 hover:shadow-md transition-shadow">
+                {/* Header: Avatar, Name, Specialization, Actions */}
+                <div className="flex justify-between items-start">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-12 w-12 border-2 border-gray-100">
+                      {doctor.profile_image && apiUrl ? (
+                        <AvatarImage
+                          src={`${apiUrl}/${doctor.profile_image}`}
+                          alt={doctor.doctorName || "Doctor"}
+                        />
+                      ) : null}
+                      <AvatarFallback>
+                        {doctor.doctorName
+                          ? doctor.doctorName
+                              .split(" ")
+                              .map((n: string) => n[0])
+                              .join("")
+                          : "DR"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="font-semibold text-base text-foreground">
+                        {doctor.doctorName}
+                      </div>
+                      <Badge variant="outline" className="text-xs font-normal text-muted-foreground mt-1 border-gray-200 bg-gray-50/50">
+                        {doctor.specialization_name}
+                      </Badge>
+                    </div>
+                  </div>
+                  
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground">
+                        <MoreHorizontal className="w-5 h-5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {doctor.status == "1" ? (
+                          <DropdownMenuItem onClick={() => handleStatusChange(doctor.docuid, "inactive")}>
+                            <img src={PaIcons.red} alt="Inactive" className="w-3 h-3 mr-2" /> Set Inactive
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem onClick={() => handleStatusChange(doctor.docuid, "active")}>
+                            <img src={PaIcons.green} alt="Active" className="w-3 h-3 mr-2" /> Set Active
+                          </DropdownMenuItem>
+                        )}
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setEditingDoctor(doctor);
+                          setIsDialogOpen(true);
+                        }}
+                      >
+                        <img src={PaIcons.edit} alt="Edit" className="w-4 h-4 mr-2" />
+                        Edit Doctor
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-destructive"
+                        onClick={() => handleDeleteDoctor(doctor.docuid)}
+                      >
+                        <img src={PaIcons.delete} alt="Edit" className="w-4 h-4 mr-2" />
+                        Remove Doctor
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
+                {/* Details Grid */}
+                <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm bg-gray-50/50 p-3 rounded-lg border border-gray-100/50">
+                  <div className="flex items-center gap-2 col-span-2">
+                    <div className="p-1.5 bg-white rounded-full shadow-sm">
+                        <img src={PaIcons.email} alt="Email" className="w-3.5 h-3.5 opacity-70" />
+                    </div>
+                    <span className="truncate text-gray-600 font-medium">{doctor.doctorEmail}</span>
+                  </div>
+                  <div className="flex items-center gap-2 col-span-2">
+                    <div className="p-1.5 bg-white rounded-full shadow-sm">
+                        <img src={PaIcons.phone} alt="Phone" className="w-3.5 h-3.5 opacity-70" />
+                    </div>
+                    <span className="text-gray-600 font-medium">{doctor.phone}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-white rounded-full shadow-sm">
+                        <img src={PaIcons.experience} alt="Exp" className="w-3.5 h-3.5 opacity-70" />
+                    </div>
+                    <span className="text-gray-600">{doctor.expYear || '0'}Y {doctor.expMonth || '0'}M</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-white rounded-full shadow-sm">
+                        <img src={PaIcons.inr} alt="Fee" className="w-3.5 h-3.5 opacity-70" />
+                    </div>
+                    <span className="text-gray-600">{doctor.doctorFees}/-</span>
+                  </div>
+                </div>
+
+                {/* Footer: Hospital & Status */}
+                <div className="flex items-center justify-between pt-1 mt-auto">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground truncate max-w-[65%]">
+                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0"></span>
+                    {doctor.hospitalName}
+                  </div>
+                  <Badge
+                    variant="secondary"
+                    className={`${
+                      doctor.status == "1"
+                        ? "bg-green-100 text-green-700 border-green-200"
+                        : "bg-red-100 text-red-700 border-red-200"
+                    } border px-2.5 py-0.5`}
+                  >
+                    {doctor.status == "1" ? "Active" : "Inactive"}
+                  </Badge>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop View: Table */}
+          <div className="hidden md:block">
           <Table>
             <TableHeader>
               <TableRow>
@@ -453,6 +572,7 @@ export default function HSDoctorsPage() {
               ))}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
 

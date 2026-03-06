@@ -2,6 +2,7 @@
 
 import { NavLink, useLocation } from "react-router-dom";
 import Cookies from "js-cookie";
+import { useState } from "react";
 import { PaIcons } from "@/components/icons/PaIcons";
 import {
   DropdownMenu,
@@ -104,6 +105,7 @@ const profileItems = [
 
 export function HospitalAppSidebar() {
   const location = useLocation();
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const userInfo = Cookies.get("userInfo");
   const currentUser = userInfo ? JSON.parse(userInfo) : null;
 
@@ -115,8 +117,21 @@ export function HospitalAppSidebar() {
     window.location.href = "/login";
   };
 
+  const mobileMenuData = [
+    ...menuItems,
+    {
+      title: "Profile",
+      icon: PaIcons.user1,
+      children: [
+        { title: "Profile", url: "/hospital-profile", icon: PaIcons.user1 },
+        { title: "Logout", action: "logout", icon: PaIcons.switch },
+      ],
+    },
+  ];
+
   return (
-    <header className="fixed top-0 left-0 w-full bg-white border-b border-border shadow-sm z-50">
+    <>
+    <header className="hidden md:block fixed top-0 left-0 w-full bg-white border-b border-border shadow-sm z-50">
       <div className="max-w-screen-2xl mx-auto flex items-center justify-between px-6 py-3">
         {/* Logo & Admin Info */}
         <div className="flex items-center gap-3">
@@ -211,5 +226,93 @@ export function HospitalAppSidebar() {
         </DropdownMenu>
       </div>
     </header>
+
+    {/* 📱 Mobile Bottom Nav */}
+    <div className="block md:hidden">
+      <nav className="fixed bottom-0 left-0 w-full bg-white dark:bg-neutral-900 shadow-lg border-t border-gray-200 dark:border-gray-800 z-50">
+        <ul className="flex justify-around items-center h-16 overflow-x-auto no-scrollbar">
+          {mobileMenuData.map((item) => {
+            const hasChildren = !!item.children;
+            const isActive =
+              (item.url && location.pathname === item.url) ||
+              (hasChildren &&
+                item.children?.some((child: any) => child.url && location.pathname === child.url));
+            const isOpen = activeCategory === item.title;
+
+            return (
+              <li key={item.title} className="flex-shrink-0 px-2">
+                <button
+                  onClick={() =>
+                    hasChildren
+                      ? setActiveCategory(isOpen ? null : item.title)
+                      : (window.location.href = item.url)
+                  }
+                  className={`flex flex-col items-center justify-center text-xs w-16 ${
+                    isActive ? "text-violet-600" : "text-gray-400"
+                  }`}
+                >
+                  <img
+                    src={item.icon}
+                    alt={item.title}
+                    className={`w-6 h-6 mb-1 transition-opacity ${
+                      isActive ? "opacity-100" : "opacity-85"
+                    }`}
+                  />
+                  <span className="truncate w-full text-center text-[10px]">{item.title}</span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+
+      {/* Mobile Sub-Menu */}
+      {activeCategory && (
+        <div className="fixed bottom-16 left-0 w-full bg-white dark:bg-neutral-900 border-t border-gray-200 p-4 z-40 max-h-[60vh] overflow-y-auto shadow-2xl rounded-t-xl">
+          <div className="flex justify-between items-center mb-4 sticky top-0 bg-white dark:bg-neutral-900 pb-2 border-b border-gray-100 z-10">
+            <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">{activeCategory}</h3>
+            <button 
+              onClick={() => setActiveCategory(null)} 
+              className="p-1 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <span className="sr-only">Close</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 pb-2">
+            {mobileMenuData
+              .find((m) => m.title === activeCategory)
+              ?.children?.map((item: any) =>
+                item.action === "logout" ? (
+                  <button
+                    key={item.title}
+                    onClick={handleLogout}
+                    className="flex flex-col items-center justify-center p-3 rounded-lg border border-red-200 bg-red-50 text-red-600 active:scale-95 transition-transform"
+                  >
+                    <img src={item.icon} className="w-6 h-6 mb-2" />
+                    <span className="text-xs font-medium">{item.title}</span>
+                  </button>
+                ) : (
+                  <NavLink
+                    key={item.title}
+                    to={item.url}
+                    onClick={() => setActiveCategory(null)}
+                    className={`flex flex-col items-center justify-center p-3 rounded-lg border active:scale-95 transition-all ${
+                      location.pathname === item.url
+                        ? "border-violet-200 bg-violet-50 text-violet-700 shadow-sm"
+                        : "border-gray-100 bg-gray-50 text-gray-600 hover:bg-gray-100"
+                    }`}
+                  >
+                    <img src={item.icon} alt={item.title} className="w-6 h-6 mb-2 opacity-80" />
+                    <span className="text-xs font-medium text-center line-clamp-2">{item.title}</span>
+                  </NavLink>
+                )
+              )}
+          </div>
+        </div>
+      )}
+    </div>
+    </>
   );
 }

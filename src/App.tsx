@@ -168,6 +168,7 @@ import ReceptionScreenDesign from "@/components/reception/ReceptionScreenDesign"
 import ReceptionLiveScreen from "@/components/reception/ReceptionLiveScreen";
 import ReceptionSingleScreen from "@/components/reception/ReceptionSingleScreen";
 import ReceptionSettings from "@/components/reception/ReceptionSettings";
+import ReceptionAppointmentList from "@/components/reception/ReceptionAppointmentList";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const currentUser = getCurrentUser();
@@ -413,6 +414,7 @@ const App = () => {
 
              <Route element={<ReceptionProtectedRoute />}>
                 <Route path="/reception-dashboard" element={<ReceptionLayout><ReceptionDashboard /></ReceptionLayout>} />
+                <Route path="/reception-appointments" element={<ReceptionLayout><ReceptionAppointmentList /></ReceptionLayout>} />
                 <Route path="/reception-screen-design" element={<ReceptionLayout><ReceptionScreenDesign /></ReceptionLayout>} />
                 <Route path="/reception-screen-live" element={<ReceptionLayout><ReceptionLiveScreen /></ReceptionLayout>} />
                 <Route path="/reception-screen-live/:screenId" element={<ReceptionSingleScreen />} />

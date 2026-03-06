@@ -13,7 +13,7 @@ export function HospitalLayout({ children }: HospitalLayoutProps) {
         <HospitalAppSidebar />
         <div className="flex-1 flex flex-col pt-16">
          
-          <main className="flex-1 p-6 bg-gradient-to-br from-background to-muted/20">
+          <main className="flex-1 p-0 bg-gradient-to-br from-background to-muted/20">
             {children}
           </main>
         </div>
