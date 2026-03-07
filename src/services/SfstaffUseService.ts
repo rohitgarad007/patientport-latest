@@ -126,6 +126,41 @@ export const saveDoctorSchedule = async (payload: any) => {
   }
 };
 
+// -------------------------------
+// 📅 Fetch Today's Appointments
+// -------------------------------
+export const getTodayAppointments = async () => {
+  try {
+    const { apiUrl, headers } = await getAuthHeaders();
+    const AES_KEY = await configService.getAesSecretKey();
+
+    const response = await fetch(`${apiUrl}/sf_staff_todayAppointments`, {
+      method: "GET",
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch appointments: ${response.statusText}`);
+    }
+
+    const json = await response.json();
+
+    if (json.success && json.data) {
+      const decrypted = decryptAESFromPHP(json.data, AES_KEY);
+      const parsedData = decrypted ? JSON.parse(decrypted) : [];
+      return { ...json, data: parsedData };
+    }
+    return { ...json, data: [] };
+  } catch (error: any) {
+    console.error("Error fetching today's appointments:", error);
+    return {
+      success: false,
+      message: error.message || "Unexpected error",
+      data: [],
+    };
+  }
+};
+
 
 // -------------------------------
 // 🧑‍⚕️ Fetch Doctor Schedule (encrypted request)

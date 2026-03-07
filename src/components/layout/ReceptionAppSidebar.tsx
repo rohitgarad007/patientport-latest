@@ -34,7 +34,7 @@ export function ReceptionAppSidebar() {
         <div className="max-w-screen-2xl mx-auto flex items-center justify-between px-6 py-3">
           
           {/* Logo & Welcome */}
-          <div className="flex items-center gap-3">
+          <NavLink to="/reception-dashboard" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center">
               <img src={PaIcons.hospital} alt="logo" className="w-5 h-5" />
             </div>
@@ -44,7 +44,7 @@ export function ReceptionAppSidebar() {
                 <p className="text-xs text-muted-foreground">Welcome {currentUser.name}</p>
               </div>
             )}
-          </div>
+          </NavLink>
 
           {/* Navigation */}
           <nav className="flex items-center gap-6">

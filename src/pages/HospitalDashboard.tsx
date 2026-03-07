@@ -401,59 +401,73 @@ export default function HospitalDashboard() {
           </Button>
         </CardHeader>
         <CardContent>
-          {/* Mobile View: Grid of Cards */}
-          <div className="grid grid-cols-2 gap-3 md:hidden">
-            {appointments.map((apt, index) => (
-              <div key={index} className="flex flex-col p-3 bg-gray-50 rounded-lg border border-gray-100 transition-colors hover:bg-white hover:shadow-sm">
-                <div className="flex justify-between items-start mb-2">
-                  <Badge
-                    variant="secondary"
-                    className={`${statusToBadge(apt.status)} border-none font-normal text-[10px] px-1.5`}
-                  >
-                    {apt.status}
-                  </Badge>
-                  <span className="text-[10px] font-medium text-gray-500">{apt.time}</span>
-                </div>
-                <div className="space-y-1">
-                  <p className="font-semibold text-sm text-gray-900 truncate">{apt.patient}</p>
-                  <div className="flex flex-col gap-0.5">
-                    <p className="text-xs text-gray-500 truncate">Dr: {apt.doctor}</p>
-                    <p className="text-xs text-gray-400 truncate">{apt.type}</p>
-                  </div>
-                </div>
+          {appointments.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="bg-emerald-50 p-4 rounded-full mb-3">
+                <Calendar className="h-8 w-8 text-emerald-600" />
               </div>
-            ))}
-          </div>
-
-          {/* Desktop View: Table */}
-          <div className="hidden md:block">
-            <Table>
-              <TableHeader>
-                <TableRow className="hover:bg-transparent border-none">
-                  <TableHead className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Patient</TableHead>
-                  <TableHead className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Doctor</TableHead>
-                  <TableHead className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Time</TableHead>
-                  <TableHead className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Type</TableHead>
-                  <TableHead className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+              <h3 className="text-lg font-semibold text-gray-900">No appointments today</h3>
+              <p className="text-sm text-gray-500 max-w-[250px]">
+                There are no appointments scheduled for today. Enjoy your day!
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Mobile View: Grid of Cards */}
+              <div className="grid grid-cols-2 gap-3 md:hidden">
                 {appointments.map((apt, index) => (
-                  <TableRow key={index} className="border-gray-100 hover:bg-gray-50/50">
-                    <TableCell className="font-medium text-gray-900">{apt.patient}</TableCell>
-                    <TableCell className="text-gray-600">{apt.doctor}</TableCell>
-                    <TableCell className="text-gray-600">{apt.time}</TableCell>
-                    <TableCell className="text-gray-600">{apt.type}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className={`${statusToBadge(apt.status)} border-none font-normal text-xs`}>
+                  <div key={index} className="flex flex-col p-3 bg-gray-50 rounded-lg border border-gray-100 transition-colors hover:bg-white hover:shadow-sm">
+                    <div className="flex justify-between items-start mb-2">
+                      <Badge
+                        variant="secondary"
+                        className={`${statusToBadge(apt.status)} border-none font-normal text-[10px] px-1.5`}
+                      >
                         {apt.status}
                       </Badge>
-                    </TableCell>
-                  </TableRow>
+                      <span className="text-[10px] font-medium text-gray-500">{apt.time}</span>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-semibold text-sm text-gray-900 truncate">{apt.patient}</p>
+                      <div className="flex flex-col gap-0.5">
+                        <p className="text-xs text-gray-500 truncate">Dr: {apt.doctor}</p>
+                        <p className="text-xs text-gray-400 truncate">{apt.type}</p>
+                      </div>
+                    </div>
+                  </div>
                 ))}
-              </TableBody>
-            </Table>
-          </div>
+              </div>
+
+              {/* Desktop View: Table */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="hover:bg-transparent border-none">
+                      <TableHead className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Patient</TableHead>
+                      <TableHead className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Doctor</TableHead>
+                      <TableHead className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Time</TableHead>
+                      <TableHead className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Type</TableHead>
+                      <TableHead className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {appointments.map((apt, index) => (
+                      <TableRow key={index} className="border-gray-100 hover:bg-gray-50/50">
+                        <TableCell className="font-medium text-gray-900">{apt.patient}</TableCell>
+                        <TableCell className="text-gray-600">{apt.doctor}</TableCell>
+                        <TableCell className="text-gray-600">{apt.time}</TableCell>
+                        <TableCell className="text-gray-600">{apt.type}</TableCell>
+                        <TableCell>
+                          <Badge variant="secondary" className={`${statusToBadge(apt.status)} border-none font-normal text-xs`}>
+                            {apt.status}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 

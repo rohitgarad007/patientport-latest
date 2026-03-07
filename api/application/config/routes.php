@@ -564,6 +564,7 @@ $route['sf_staff_saveDoctorSchedule']				= 'SFStaffController/saveDoctorSchedule
 
 $route['sf_staff_getDoctorSchedule']				= 'SFStaffController/getDoctorSchedule';
 $route['sf_staff_getDoctorEventSchedule']			= 'SFStaffController/getDoctorEventSchedule';
+$route['sf_staff_todayAppointments']				= 'SFStaffController/getTodayAppointments';
 
 $route['sf_staff_getShiftList']						= 'SFStaffController/getShiftList';
 $route['sf_staff_getEventTypeList']					= 'SFStaffController/getEventTypeList';

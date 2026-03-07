@@ -191,6 +191,51 @@ class StaffCommonModel extends CI_Model{
 	    return $query->result_array();
 	}
 
+    public function get_today_appointments($hospital_id) {
+        $today = date('Y-m-d');
+        $this->db->select('
+            pa.id,
+            pa.appointment_uid,
+            pa.date,
+            pa.start_time,
+            pa.end_time,
+            pa.status,
+            pa.created_at,
+            d.name as doctor_name,
+            d.profile_image as doctor_image,
+            CONCAT(p.fname, " ", p.lname) as patient_name,
+            p.gender as patient_gender,
+            p.dob as patient_dob
+        ', FALSE);
+        $this->db->from('ms_patient_appointment pa');
+        $this->db->join('ms_doctors d', 'd.id = pa.doctor_id', 'left');
+        $this->db->join('ms_patient p', 'p.id = pa.patient_id', 'left');
+        $this->db->where('pa.hospital_id', $hospital_id);
+        $this->db->where('pa.date', $today);
+        $this->db->order_by('pa.start_time', 'ASC');
+        $query = $this->db->get();
+        return $query->result_array();
+    }
+
+    public function get_dashboard_doctors($hosuid) {
+        $this->db->select('
+            d.id,
+            d.docuid,
+            d.name,
+            d.profile_image,
+            d.status,
+            s.specialization_name as specialty,
+            (SELECT COUNT(*) FROM ms_patient_appointment pa WHERE pa.doctor_id = d.id AND pa.date = CURDATE() AND pa.status != "Cancelled") as patients_today,
+            (SELECT MIN(pa.start_time) FROM ms_patient_appointment pa WHERE pa.doctor_id = d.id AND pa.date = CURDATE() AND pa.start_time > CURTIME() AND pa.status != "Cancelled") as next_appointment
+        ', FALSE);
+        $this->db->from('ms_doctors d');
+        $this->db->join('ms_doctor_specializations s', 's.id = d.specialization_id', 'left');
+        $this->db->where('d.hosuid', $hosuid);
+        $this->db->where('d.isdelete', 0);
+        $query = $this->db->get();
+        return $query->result_array();
+    }
+
 	public function get_StaffsAccessByHospital($loguid = '', $staffUid) {
 	    $this->db->select('
 	        ms.staff_uid,

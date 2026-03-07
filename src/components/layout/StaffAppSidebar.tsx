@@ -175,7 +175,7 @@ export function StaffAppSidebar() {
       {/* 💻 Desktop Navbar */}
       <header className="hidden md:block fixed top-0 left-0 w-full bg-white border-b border-border shadow-sm z-50">
         <div className="max-w-screen-2xl mx-auto flex items-center justify-between px-6 py-3">
-          <div className="flex items-center gap-3">
+          <NavLink to="/staff-dashboard" className="flex items-center gap-3">
             <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center">
               <img src={PaIcons.hospital} alt="logo" className="w-5 h-5" />
             </div>
@@ -184,7 +184,7 @@ export function StaffAppSidebar() {
                 <h2 className="font-bold text-foreground">Welcome {currentUser.name}</h2>
               </div>
             )}
-          </div>
+          </NavLink>
 
           <nav className="flex items-center gap-6">
             {filteredMenu.map((item: any) =>

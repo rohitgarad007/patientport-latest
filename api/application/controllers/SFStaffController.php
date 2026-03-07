@@ -22,7 +22,74 @@ class SFStaffController  extends CI_Controller {
         header('Content-Type: application/json');
     }
 
+    public function getTodayAppointments(){
+        $userToken = $this->input->get_request_header('Authorization');
+        $splitToken = explode(" ", $userToken);
+        $token = isset($splitToken[1]) ? $splitToken[1] : '';
 
+        try {
+            // Validate token
+            $token = verifyAuthToken($token);
+            if (!$token) throw new Exception("Unauthorized");
+
+            $tokenData = is_string($token) ? json_decode($token, true) : $token;
+            $loguid = $tokenData['loguid'] ?? null;
+
+            if (!$loguid) {
+                echo json_encode([
+                    "success" => false,
+                    "message" => "Invalid user token or insufficient privileges"
+                ]);
+                return;
+            }
+
+            // Get hospital info
+            $staffInfo = $this->StaffCommonModel->get_logstaffInfo($loguid);
+            if (!$staffInfo) {
+                echo json_encode([
+                    "success" => false,
+                    "message" => "Staff hospital not found"
+                ]);
+                return;
+            }
+
+            $hosuid = $staffInfo['hospital_id']; 
+
+            // Fallback: If hospital_id is not set in staffInfo, try to get it from ms_hospitals using hosuid
+            if (empty($hosuid) && !empty($staffInfo['hosuid'])) {
+                 $hospital = $this->db->get_where('ms_hospitals', ['hosuid' => $staffInfo['hosuid']])->row_array();
+                 if ($hospital) {
+                     $hosuid = $hospital['id'];
+                 }
+            }
+            
+            // If still empty, return error
+            if (empty($hosuid)) {
+                 echo json_encode([
+                    "success" => false,
+                    "message" => "Hospital ID not found for this staff"
+                ]);
+                return;
+            }
+
+            $appointments = $this->StaffCommonModel->get_today_appointments($hosuid);
+
+            // Encrypt response
+            $AES_KEY = "RohitGaradHos@173414";
+            $encryptedData = $this->encrypt_aes_for_js(json_encode($appointments), $AES_KEY);
+
+            echo json_encode([
+                "success" => true,
+                "data" => $encryptedData
+            ]);
+
+        } catch (Exception $e) {
+            echo json_encode([
+                "success" => false,
+                "message" => "Error: " . $e->getMessage()
+            ]);
+        }
+    }
 
     // AES Encryption function compatible with JS decryption
     public function encrypt_aes_for_js($plainText, $passphrase) {
@@ -224,7 +291,7 @@ class SFStaffController  extends CI_Controller {
             $staffInfo = $this->StaffCommonModel->get_logstaffInfo($loguid);
             if($staffInfo){
 
-                $doctorList = $this->DoctorCommonModel->get_DoctorListByHospitalUid($staffInfo['hosuid']);
+                $doctorList = $this->StaffCommonModel->get_dashboard_doctors($staffInfo['hosuid']);
                 $AES_KEY = "RohitGaradHos@173414";
                 $encryptedData = $this->encrypt_aes_for_js(json_encode($doctorList), $AES_KEY);
 

@@ -182,7 +182,7 @@ export function StaffLayout({ children }: StaffLayoutProps) {
         <StaffAppSidebar />
         <div className="w-full sm:max-w-full max-w-[100%] mx-auto flex-1 flex flex-col pt-16 sx-pagebody">
          
-          <main className="w-full sm:max-w-full max-w-[100%] mx-auto flex-1 p-6 bg-gradient-to-br from-background to-muted/20 sx-col">
+          <main className="w-full sm:max-w-full max-w-[100%] mx-auto flex-1 p-0 bg-gradient-to-br from-background to-muted/20 sx-col">
             {children}
           </main>
         </div>
