@@ -1,6 +1,8 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+use OpenApi\Annotations as OA;
+
 class HSHospitalsInventoryController  extends CI_Controller {
 
     public function __construct(){
@@ -93,6 +95,35 @@ class HSHospitalsInventoryController  extends CI_Controller {
     // ================================
     // Medical Inventory Requests: List
     // ================================
+    /**
+     * @OA\Post(
+     *     path="/HSHospitalsInventoryController/GetMedicalRequestsList",
+     *     tags={"Hospital Inventory"},
+     *     summary="Get medical requests list",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="page", type="integer"),
+     *             @OA\Property(property="limit", type="integer"),
+     *             @OA\Property(property="search", type="string"),
+     *             @OA\Property(property="status", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted list"),
+     *             @OA\Property(property="total", type="integer"),
+     *             @OA\Property(property="page", type="integer"),
+     *             @OA\Property(property="limit", type="integer")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function GetMedicalRequestsList(){
         try {
             $hosInfo = $this->requireHospitalAuth();
@@ -179,6 +210,38 @@ class HSHospitalsInventoryController  extends CI_Controller {
     // ================================
     // Medical Inventory Requests: Create
     // ================================
+    /**
+     * @OA\Post(
+     *     path="/HSHospitalsInventoryController/CreateMedicalRequest",
+     *     tags={"Hospital Inventory"},
+     *     summary="Create medical request",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="store_id", type="integer"),
+     *             @OA\Property(property="requested_by", type="string"),
+     *             @OA\Property(property="priority", type="string"),
+     *             @OA\Property(property="remarks", type="string"),
+     *             @OA\Property(property="items", type="array", @OA\Items(
+     *                 @OA\Property(property="product_id", type="integer"),
+     *                 @OA\Property(property="requested_qty", type="integer"),
+     *                 @OA\Property(property="unit", type="string")
+     *             ))
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="request_id", type="integer"),
+     *             @OA\Property(property="code", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function CreateMedicalRequest(){
         try {
             $hosInfo = $this->requireHospitalAuth();
@@ -262,6 +325,29 @@ class HSHospitalsInventoryController  extends CI_Controller {
     // ================================
     // Medical Inventory Requests: Details
     // ================================
+    /**
+     * @OA\Post(
+     *     path="/HSHospitalsInventoryController/GetMedicalRequestDetails",
+     *     tags={"Hospital Inventory"},
+     *     summary="Get medical request details",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="request_id", type="integer")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted details")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function GetMedicalRequestDetails(){
         try {
             $hosInfo = $this->requireHospitalAuth();
@@ -329,6 +415,29 @@ class HSHospitalsInventoryController  extends CI_Controller {
     // ==========================================
     // Approvals: Items with FEFO batch options
     // ==========================================
+    /**
+     * @OA\Post(
+     *     path="/HSHospitalsInventoryController/GetMedicalRequestItemsWithBatches",
+     *     tags={"Hospital Inventory"},
+     *     summary="Get medical request items with batches",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="request_id", type="integer")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted items with batches")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function GetMedicalRequestItemsWithBatches(){
         try {
             $hosInfo = $this->requireHospitalAuth();
@@ -399,6 +508,39 @@ class HSHospitalsInventoryController  extends CI_Controller {
     // ==========================================
     // Approvals: Allocate selected batches & dispatch
     // ==========================================
+    /**
+     * @OA\Post(
+     *     path="/HSHospitalsInventoryController/AllocateMedicalRequestItems",
+     *     tags={"Hospital Inventory"},
+     *     summary="Allocate medical request items",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="request_id", type="integer"),
+     *             @OA\Property(property="courier", type="string"),
+     *             @OA\Property(property="trackingNumber", type="string"),
+     *             @OA\Property(property="items", type="array", @OA\Items(
+     *                 @OA\Property(property="item_id", type="integer"),
+     *                 @OA\Property(property="approved", type="integer"),
+     *                 @OA\Property(property="selectedBatches", type="array", @OA\Items(
+     *                     @OA\Property(property="batchNo", type="string"),
+     *                     @OA\Property(property="qty", type="integer")
+     *                 ))
+     *             ))
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="dispatch_id", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function AllocateMedicalRequestItems(){
         try {
             $hosInfo = $this->requireHospitalAuth();
@@ -461,6 +603,28 @@ class HSHospitalsInventoryController  extends CI_Controller {
     // ==========================================
     // Approvals: Mark request approved (status only)
     // ==========================================
+    /**
+     * @OA\Post(
+     *     path="/HSHospitalsInventoryController/ApproveMedicalRequest",
+     *     tags={"Hospital Inventory"},
+     *     summary="Approve medical request",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="request_id", type="integer")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function ApproveMedicalRequest(){
         try {
             $hosInfo = $this->requireHospitalAuth();
@@ -478,6 +642,29 @@ class HSHospitalsInventoryController  extends CI_Controller {
     // ==========================================
     // Approvals: Mark request declined (status only)
     // ==========================================
+    /**
+     * @OA\Post(
+     *     path="/HSHospitalsInventoryController/DeclineMedicalRequest",
+     *     tags={"Hospital Inventory"},
+     *     summary="Decline medical request",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="request_id", type="integer"),
+     *             @OA\Property(property="reason", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function DeclineMedicalRequest(){
         try {
             $hosInfo = $this->requireHospitalAuth();
@@ -501,6 +688,33 @@ class HSHospitalsInventoryController  extends CI_Controller {
     // ==========================================
     // Receipts: Pending list (In Transit / Delivered)
     // ==========================================
+    /**
+     * @OA\Post(
+     *     path="/HSHospitalsInventoryController/GetPendingReceiptsList",
+     *     tags={"Hospital Inventory"},
+     *     summary="Get pending receipts list",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="page", type="integer"),
+     *             @OA\Property(property="limit", type="integer")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted receipts list"),
+     *             @OA\Property(property="total", type="integer"),
+     *             @OA\Property(property="page", type="integer"),
+     *             @OA\Property(property="limit", type="integer")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function GetPendingReceiptsList(){
         try {
             $hosInfo = $this->requireHospitalAuth();
@@ -586,6 +800,36 @@ class HSHospitalsInventoryController  extends CI_Controller {
     // ==========================================
     // Receipts: Confirm verification
     // ==========================================
+    /**
+     * @OA\Post(
+     *     path="/HSHospitalsInventoryController/ConfirmMedicalReceiptVerification",
+     *     tags={"Hospital Inventory"},
+     *     summary="Confirm medical receipt verification",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="dispatch_id", type="string"),
+     *             @OA\Property(property="received_by", type="string"),
+     *             @OA\Property(property="remarks", type="string"),
+     *             @OA\Property(property="items", type="array", @OA\Items(
+     *                 @OA\Property(property="allocation_id", type="integer"),
+     *                 @OA\Property(property="received_qty", type="integer"),
+     *                 @OA\Property(property="has_issue", type="integer"),
+     *                 @OA\Property(property="issue_description", type="string")
+     *             ))
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function ConfirmMedicalReceiptVerification(){
         try {
             $hosInfo = $this->requireHospitalAuth();
@@ -627,6 +871,23 @@ class HSHospitalsInventoryController  extends CI_Controller {
 
 
     // ===== Inventory Category Code Start here ===== //
+        /**
+         * @OA\Get(
+         *     path="/HSHospitalsInventoryController/getInventoryCategoryList",
+         *     tags={"Hospital Inventory"},
+         *     summary="Get inventory category list",
+         *     security={{"bearerAuth":{}}},
+         *     @OA\Response(
+         *         response=200,
+         *         description="Successful operation",
+         *         @OA\JsonContent(
+         *             @OA\Property(property="success", type="boolean"),
+         *             @OA\Property(property="data", type="string", description="Encrypted category list")
+         *         )
+         *     ),
+         *     @OA\Response(response=401, description="Unauthorized")
+         * )
+         */
         public function getInventoryCategoryList(){
             $userToken = $this->input->get_request_header('Authorization');
             $splitToken = explode(" ", $userToken);
@@ -683,6 +944,32 @@ class HSHospitalsInventoryController  extends CI_Controller {
             }
         }
 
+        /**
+         * @OA\Post(
+         *     path="/HSHospitalsInventoryController/AddInventoryCategoryInfo",
+         *     tags={"Hospital Inventory"},
+         *     summary="Add inventory category information",
+         *     security={{"bearerAuth":{}}},
+         *     @OA\RequestBody(
+         *         required=true,
+         *         @OA\JsonContent(
+         *             @OA\Property(property="name", type="string", description="Encrypted category name"),
+         *             @OA\Property(property="description", type="string", description="Encrypted description"),
+         *             @OA\Property(property="status", type="string", description="Encrypted status")
+         *         )
+         *     ),
+         *     @OA\Response(
+         *         response=200,
+         *         description="Successful operation",
+         *         @OA\JsonContent(
+         *             @OA\Property(property="success", type="boolean"),
+         *             @OA\Property(property="message", type="string"),
+         *             @OA\Property(property="id", type="string")
+         *         )
+         *     ),
+         *     @OA\Response(response=401, description="Unauthorized")
+         * )
+         */
         public function AddInventoryCategoryInfo(){
             $userToken = $this->input->get_request_header('Authorization');
             $splitToken = explode(" ", $userToken);
@@ -785,6 +1072,33 @@ class HSHospitalsInventoryController  extends CI_Controller {
             }
         }
 
+        /**
+         * @OA\Post(
+         *     path="/HSHospitalsInventoryController/UpdateInventoryCategoryInfo",
+         *     tags={"Hospital Inventory"},
+         *     summary="Update inventory category information",
+         *     security={{"bearerAuth":{}}},
+         *     @OA\RequestBody(
+         *         required=true,
+         *         @OA\JsonContent(
+         *             @OA\Property(property="id", type="string", description="Encrypted category ID"),
+         *             @OA\Property(property="name", type="string", description="Encrypted category name"),
+         *             @OA\Property(property="description", type="string", description="Encrypted description"),
+         *             @OA\Property(property="status", type="string", description="Encrypted status")
+         *         )
+         *     ),
+         *     @OA\Response(
+         *         response=200,
+         *         description="Successful operation",
+         *         @OA\JsonContent(
+         *             @OA\Property(property="success", type="boolean"),
+         *             @OA\Property(property="message", type="string"),
+         *             @OA\Property(property="id", type="string")
+         *         )
+         *     ),
+         *     @OA\Response(response=401, description="Unauthorized")
+         * )
+         */
         public function UpdateInventoryCategoryInfo(){
             $userToken = $this->input->get_request_header('Authorization');
             $splitToken = explode(" ", $userToken);
@@ -888,6 +1202,24 @@ class HSHospitalsInventoryController  extends CI_Controller {
     // ===== Inventory Category Code End here ===== //
 
     // ===== Inventory Category -> Sub Category Code Start here ===== //
+        /**
+         * @OA\Get(
+         *     path="/HSHospitalsInventoryController/getIvSubCategoryList",
+         *     tags={"Hospital Inventory"},
+         *     summary="Get inventory sub-category list",
+         *     security={{"bearerAuth":{}}},
+         *     @OA\Response(
+         *         response=200,
+         *         description="Successful operation",
+         *         @OA\JsonContent(
+         *             @OA\Property(property="success", type="boolean"),
+         *             @OA\Property(property="data", type="string", description="Encrypted sub-category list"),
+         *             @OA\Property(property="rowData", type="array", @OA\Items(type="object"))
+         *         )
+         *     ),
+         *     @OA\Response(response=401, description="Unauthorized")
+         * )
+         */
         public function getIvSubCategoryList(){
             $userToken = $this->input->get_request_header('Authorization');
             $splitToken = explode(" ", $userToken);
@@ -944,6 +1276,33 @@ class HSHospitalsInventoryController  extends CI_Controller {
             }
         }
 
+        /**
+         * @OA\Post(
+         *     path="/HSHospitalsInventoryController/AddIvSubCategoryInfo",
+         *     tags={"Hospital Inventory"},
+         *     summary="Add inventory sub-category information",
+         *     security={{"bearerAuth":{}}},
+         *     @OA\RequestBody(
+         *         required=true,
+         *         @OA\JsonContent(
+         *             @OA\Property(property="category_id", type="string", description="Encrypted category ID"),
+         *             @OA\Property(property="name", type="string", description="Encrypted name"),
+         *             @OA\Property(property="description", type="string", description="Encrypted description"),
+         *             @OA\Property(property="status", type="string", description="Encrypted status")
+         *         )
+         *     ),
+         *     @OA\Response(
+         *         response=200,
+         *         description="Successful operation",
+         *         @OA\JsonContent(
+         *             @OA\Property(property="success", type="boolean"),
+         *             @OA\Property(property="message", type="string"),
+         *             @OA\Property(property="id", type="string")
+         *         )
+         *     ),
+         *     @OA\Response(response=401, description="Unauthorized")
+         * )
+         */
         public function AddIvSubCategoryInfo(){
             $userToken = $this->input->get_request_header('Authorization');
             $splitToken = explode(" ", $userToken);
@@ -1048,6 +1407,34 @@ class HSHospitalsInventoryController  extends CI_Controller {
             }
         }
 
+        /**
+         * @OA\Post(
+         *     path="/HSHospitalsInventoryController/UpdateIvSubCategoryInfo",
+         *     tags={"Hospital Inventory"},
+         *     summary="Update sub-category information",
+         *     security={{"bearerAuth":{}}},
+         *     @OA\RequestBody(
+         *         required=true,
+         *         @OA\JsonContent(
+         *             @OA\Property(property="id", type="string", description="Encrypted sub-category ID"),
+         *             @OA\Property(property="category_id", type="string", description="Encrypted category ID"),
+         *             @OA\Property(property="name", type="string", description="Encrypted name"),
+         *             @OA\Property(property="description", type="string", description="Encrypted description"),
+         *             @OA\Property(property="status", type="string", description="Encrypted status")
+         *         )
+         *     ),
+         *     @OA\Response(
+         *         response=200,
+         *         description="Successful operation",
+         *         @OA\JsonContent(
+         *             @OA\Property(property="success", type="boolean"),
+         *             @OA\Property(property="message", type="string"),
+         *             @OA\Property(property="id", type="string")
+         *         )
+         *     ),
+         *     @OA\Response(response=401, description="Unauthorized")
+         * )
+         */
         public function UpdateIvSubCategoryInfo(){
             $userToken = $this->input->get_request_header('Authorization');
             $splitToken = explode(" ", $userToken);
@@ -1153,7 +1540,23 @@ class HSHospitalsInventoryController  extends CI_Controller {
     // ===== Inventory Category -> Sub Category Code End here ===== //
 
     // ===== Inventory Manufacturer Code Start here ===== //
-
+        /**
+         * @OA\Get(
+         *     path="/HSHospitalsInventoryController/GetIvManufacturerList",
+         *     tags={"Hospital Inventory"},
+         *     summary="Get inventory manufacturer list",
+         *     security={{"bearerAuth":{}}},
+         *     @OA\Response(
+         *         response=200,
+         *         description="Successful operation",
+         *         @OA\JsonContent(
+         *             @OA\Property(property="success", type="boolean"),
+         *             @OA\Property(property="data", type="string", description="Encrypted list of manufacturers")
+         *         )
+         *     ),
+         *     @OA\Response(response=401, description="Unauthorized")
+         * )
+         */
         public function GetIvManufacturerList(){
             $userToken = $this->input->get_request_header('Authorization');
             $splitToken = explode(" ", $userToken);
@@ -1210,6 +1613,36 @@ class HSHospitalsInventoryController  extends CI_Controller {
             }
         }
 
+        /**
+         * @OA\Post(
+         *     path="/HSHospitalsInventoryController/AddIvManufacturerInfo",
+         *     tags={"Hospital Inventory"},
+         *     summary="Add manufacturer information",
+         *     security={{"bearerAuth":{}}},
+         *     @OA\RequestBody(
+         *         required=true,
+         *         @OA\JsonContent(
+         *             @OA\Property(property="name", type="string", description="Encrypted name"),
+         *             @OA\Property(property="contact_person", type="string", description="Encrypted contact person"),
+         *             @OA\Property(property="address", type="string", description="Encrypted address"),
+         *             @OA\Property(property="phone", type="string", description="Encrypted phone"),
+         *             @OA\Property(property="email", type="string", description="Encrypted email"),
+         *             @OA\Property(property="license_no", type="string", description="Encrypted license number"),
+         *             @OA\Property(property="status", type="string", description="Encrypted status")
+         *         )
+         *     ),
+         *     @OA\Response(
+         *         response=200,
+         *         description="Successful operation",
+         *         @OA\JsonContent(
+         *             @OA\Property(property="success", type="boolean"),
+         *             @OA\Property(property="message", type="string"),
+         *             @OA\Property(property="id", type="string")
+         *         )
+         *     ),
+         *     @OA\Response(response=401, description="Unauthorized")
+         * )
+         */
         public function AddIvManufacturerInfo(){
             $userToken = $this->input->get_request_header('Authorization');
             $splitToken = explode(" ", $userToken);
@@ -1320,6 +1753,37 @@ class HSHospitalsInventoryController  extends CI_Controller {
             }
         }
 
+        /**
+         * @OA\Post(
+         *     path="/HSHospitalsInventoryController/UpdateIvManufacturerInfo",
+         *     tags={"Hospital Inventory"},
+         *     summary="Update manufacturer information",
+         *     security={{"bearerAuth":{}}},
+         *     @OA\RequestBody(
+         *         required=true,
+         *         @OA\JsonContent(
+         *             @OA\Property(property="id", type="string", description="Encrypted manufacturer ID"),
+         *             @OA\Property(property="name", type="string", description="Encrypted name"),
+         *             @OA\Property(property="contact_person", type="string", description="Encrypted contact person"),
+         *             @OA\Property(property="address", type="string", description="Encrypted address"),
+         *             @OA\Property(property="phone", type="string", description="Encrypted phone"),
+         *             @OA\Property(property="email", type="string", description="Encrypted email"),
+         *             @OA\Property(property="license_no", type="string", description="Encrypted license number"),
+         *             @OA\Property(property="status", type="string", description="Encrypted status")
+         *         )
+         *     ),
+         *     @OA\Response(
+         *         response=200,
+         *         description="Successful operation",
+         *         @OA\JsonContent(
+         *             @OA\Property(property="success", type="boolean"),
+         *             @OA\Property(property="message", type="string"),
+         *             @OA\Property(property="id", type="string")
+         *         )
+         *     ),
+         *     @OA\Response(response=401, description="Unauthorized")
+         * )
+         */
         public function UpdateIvManufacturerInfo(){
             $userToken = $this->input->get_request_header('Authorization');
             $splitToken = explode(" ", $userToken);
@@ -1432,6 +1896,24 @@ class HSHospitalsInventoryController  extends CI_Controller {
 
     // ===== Inventory Brand Code Start here ===== //
         
+        /**
+         * @OA\Get(
+         *     path="/HSHospitalsInventoryController/GetIvBrandList",
+         *     tags={"Hospital Inventory"},
+         *     summary="Get inventory brand list",
+         *     security={{"bearerAuth":{}}},
+         *     @OA\Response(
+         *         response=200,
+         *         description="Successful operation",
+         *         @OA\JsonContent(
+         *             @OA\Property(property="success", type="boolean"),
+         *             @OA\Property(property="data", type="string", description="Encrypted brand list"),
+         *             @OA\Property(property="rowData", type="array", @OA\Items(type="object"))
+         *         )
+         *     ),
+         *     @OA\Response(response=401, description="Unauthorized")
+         * )
+         */
         public function GetIvBrandList(){
             $userToken = $this->input->get_request_header('Authorization');
             $splitToken = explode(" ", $userToken);
@@ -1488,6 +1970,33 @@ class HSHospitalsInventoryController  extends CI_Controller {
             }
         }
 
+        /**
+         * @OA\Post(
+         *     path="/HSHospitalsInventoryController/AddIvBrandInformation",
+         *     tags={"Hospital Inventory"},
+         *     summary="Add brand information",
+         *     security={{"bearerAuth":{}}},
+         *     @OA\RequestBody(
+         *         required=true,
+         *         @OA\JsonContent(
+         *             @OA\Property(property="name", type="string", description="Encrypted name"),
+         *             @OA\Property(property="manufacturer_id", type="string", description="Encrypted manufacturer ID"),
+         *             @OA\Property(property="description", type="string", description="Encrypted description"),
+         *             @OA\Property(property="status", type="string", description="Encrypted status")
+         *         )
+         *     ),
+         *     @OA\Response(
+         *         response=200,
+         *         description="Successful operation",
+         *         @OA\JsonContent(
+         *             @OA\Property(property="success", type="boolean"),
+         *             @OA\Property(property="message", type="string"),
+         *             @OA\Property(property="id", type="string")
+         *         )
+         *     ),
+         *     @OA\Response(response=401, description="Unauthorized")
+         * )
+         */
         public function AddIvBrandInformation(){
             $userToken = $this->input->get_request_header('Authorization');
             $splitToken = explode(" ", $userToken);
@@ -1592,6 +2101,34 @@ class HSHospitalsInventoryController  extends CI_Controller {
             }
         }
 
+        /**
+         * @OA\Post(
+         *     path="/HSHospitalsInventoryController/UpdateIvBrandInformation",
+         *     tags={"Hospital Inventory"},
+         *     summary="Update brand information",
+         *     security={{"bearerAuth":{}}},
+         *     @OA\RequestBody(
+         *         required=true,
+         *         @OA\JsonContent(
+         *             @OA\Property(property="id", type="string", description="Encrypted brand ID"),
+         *             @OA\Property(property="name", type="string", description="Encrypted name"),
+         *             @OA\Property(property="manufacturer_id", type="string", description="Encrypted manufacturer ID"),
+         *             @OA\Property(property="description", type="string", description="Encrypted description"),
+         *             @OA\Property(property="status", type="string", description="Encrypted status")
+         *         )
+         *     ),
+         *     @OA\Response(
+         *         response=200,
+         *         description="Successful operation",
+         *         @OA\JsonContent(
+         *             @OA\Property(property="success", type="boolean"),
+         *             @OA\Property(property="message", type="string"),
+         *             @OA\Property(property="id", type="string")
+         *         )
+         *     ),
+         *     @OA\Response(response=401, description="Unauthorized")
+         * )
+         */
         public function UpdateIvBrandInformation(){
             $userToken = $this->input->get_request_header('Authorization');
             $splitToken = explode(" ", $userToken);
@@ -1699,6 +2236,23 @@ class HSHospitalsInventoryController  extends CI_Controller {
 
     // ===== Inventory Unit of Measure Code Start here ===== //
 
+        /**
+         * @OA\Get(
+         *     path="/HSHospitalsInventoryController/GetIvUnitOfMeasureList",
+         *     tags={"Hospital Inventory"},
+         *     summary="Get inventory unit of measure list",
+         *     security={{"bearerAuth":{}}},
+         *     @OA\Response(
+         *         response=200,
+         *         description="Successful operation",
+         *         @OA\JsonContent(
+         *             @OA\Property(property="success", type="boolean"),
+         *             @OA\Property(property="data", type="string", description="Encrypted unit of measure list")
+         *         )
+         *     ),
+         *     @OA\Response(response=401, description="Unauthorized")
+         * )
+         */
         public function GetIvUnitOfMeasureList(){
             $userToken = $this->input->get_request_header('Authorization');
             $splitToken = explode(" ", $userToken);
@@ -1755,6 +2309,33 @@ class HSHospitalsInventoryController  extends CI_Controller {
             }
         }
 
+        /**
+         * @OA\Post(
+         *     path="/HSHospitalsInventoryController/AddIvUnitOfMeasureList",
+         *     tags={"Hospital Inventory"},
+         *     summary="Add unit of measure information",
+         *     security={{"bearerAuth":{}}},
+         *     @OA\RequestBody(
+         *         required=true,
+         *         @OA\JsonContent(
+         *             @OA\Property(property="name", type="string", description="Encrypted name"),
+         *             @OA\Property(property="symbol", type="string", description="Encrypted symbol"),
+         *             @OA\Property(property="conversion_rate", type="string", description="Encrypted conversion rate"),
+         *             @OA\Property(property="status", type="string", description="Encrypted status")
+         *         )
+         *     ),
+         *     @OA\Response(
+         *         response=200,
+         *         description="Successful operation",
+         *         @OA\JsonContent(
+         *             @OA\Property(property="success", type="boolean"),
+         *             @OA\Property(property="message", type="string"),
+         *             @OA\Property(property="id", type="string")
+         *         )
+         *     ),
+         *     @OA\Response(response=401, description="Unauthorized")
+         * )
+         */
         public function AddIvUnitOfMeasureList(){
             $userToken = $this->input->get_request_header('Authorization');
             $splitToken = explode(" ", $userToken);
@@ -1859,6 +2440,34 @@ class HSHospitalsInventoryController  extends CI_Controller {
             }
         }
 
+        /**
+         * @OA\Post(
+         *     path="/HSHospitalsInventoryController/UpdateIvUnitOfMeasureList",
+         *     tags={"Hospital Inventory"},
+         *     summary="Update unit of measure information",
+         *     security={{"bearerAuth":{}}},
+         *     @OA\RequestBody(
+         *         required=true,
+         *         @OA\JsonContent(
+         *             @OA\Property(property="id", type="string", description="Encrypted UOM ID"),
+         *             @OA\Property(property="name", type="string", description="Encrypted name"),
+         *             @OA\Property(property="symbol", type="string", description="Encrypted symbol"),
+         *             @OA\Property(property="conversion_rate", type="string", description="Encrypted conversion rate"),
+         *             @OA\Property(property="status", type="string", description="Encrypted status")
+         *         )
+         *     ),
+         *     @OA\Response(
+         *         response=200,
+         *         description="Successful operation",
+         *         @OA\JsonContent(
+         *             @OA\Property(property="success", type="boolean"),
+         *             @OA\Property(property="message", type="string"),
+         *             @OA\Property(property="id", type="string")
+         *         )
+         *     ),
+         *     @OA\Response(response=401, description="Unauthorized")
+         * )
+         */
         public function UpdateIvUnitOfMeasureList(){
             $userToken = $this->input->get_request_header('Authorization');
             $splitToken = explode(" ", $userToken);
@@ -1967,6 +2576,23 @@ class HSHospitalsInventoryController  extends CI_Controller {
 
     // ===== Inventory Tax (GST / VAT) Code Start here ===== //
 
+        /**
+         * @OA\Get(
+         *     path="/HSHospitalsInventoryController/GetIvTaxList",
+         *     tags={"Hospital Inventory"},
+         *     summary="Get inventory tax list",
+         *     security={{"bearerAuth":{}}},
+         *     @OA\Response(
+         *         response=200,
+         *         description="Successful operation",
+         *         @OA\JsonContent(
+         *             @OA\Property(property="success", type="boolean"),
+         *             @OA\Property(property="data", type="string", description="Encrypted list of taxes")
+         *         )
+         *     ),
+         *     @OA\Response(response=401, description="Unauthorized")
+         * )
+         */
         public function GetIvTaxList(){
             $userToken = $this->input->get_request_header('Authorization');
             $splitToken = explode(" ", $userToken);
@@ -2023,6 +2649,34 @@ class HSHospitalsInventoryController  extends CI_Controller {
             }
         }
 
+        /**
+         * @OA\Post(
+         *     path="/HSHospitalsInventoryController/AddIvTaxInfo",
+         *     tags={"Hospital Inventory"},
+         *     summary="Add tax information",
+         *     security={{"bearerAuth":{}}},
+         *     @OA\RequestBody(
+         *         required=true,
+         *         @OA\JsonContent(
+         *             @OA\Property(property="name", type="string", description="Encrypted name"),
+         *             @OA\Property(property="percentage", type="string", description="Encrypted percentage"),
+         *             @OA\Property(property="type", type="string", description="Encrypted type"),
+         *             @OA\Property(property="region", type="string", description="Encrypted region"),
+         *             @OA\Property(property="status", type="string", description="Encrypted status")
+         *         )
+         *     ),
+         *     @OA\Response(
+         *         response=200,
+         *         description="Successful operation",
+         *         @OA\JsonContent(
+         *             @OA\Property(property="success", type="boolean"),
+         *             @OA\Property(property="message", type="string"),
+         *             @OA\Property(property="id", type="string")
+         *         )
+         *     ),
+         *     @OA\Response(response=401, description="Unauthorized")
+         * )
+         */
         public function AddIvTaxInfo(){
             $userToken = $this->input->get_request_header('Authorization');
             $splitToken = explode(" ", $userToken);
@@ -2129,6 +2783,35 @@ class HSHospitalsInventoryController  extends CI_Controller {
             }
         }
 
+        /**
+         * @OA\Post(
+         *     path="/HSHospitalsInventoryController/UpdateIvTaxInfo",
+         *     tags={"Hospital Inventory"},
+         *     summary="Update tax information",
+         *     security={{"bearerAuth":{}}},
+         *     @OA\RequestBody(
+         *         required=true,
+         *         @OA\JsonContent(
+         *             @OA\Property(property="id", type="string", description="Encrypted tax ID"),
+         *             @OA\Property(property="name", type="string", description="Encrypted name"),
+         *             @OA\Property(property="percentage", type="string", description="Encrypted percentage"),
+         *             @OA\Property(property="type", type="string", description="Encrypted type"),
+         *             @OA\Property(property="region", type="string", description="Encrypted region"),
+         *             @OA\Property(property="status", type="string", description="Encrypted status")
+         *         )
+         *     ),
+         *     @OA\Response(
+         *         response=200,
+         *         description="Successful operation",
+         *         @OA\JsonContent(
+         *             @OA\Property(property="success", type="boolean"),
+         *             @OA\Property(property="message", type="string"),
+         *             @OA\Property(property="id", type="string")
+         *         )
+         *     ),
+         *     @OA\Response(response=401, description="Unauthorized")
+         * )
+         */
         public function UpdateIvTaxInfo(){
             $userToken = $this->input->get_request_header('Authorization');
             $splitToken = explode(" ", $userToken);
@@ -2238,6 +2921,23 @@ class HSHospitalsInventoryController  extends CI_Controller {
     // ===== Inventory Tax (GST / VAT) Code End here ===== //
 
     // ===== Inventory Product Code Start here ===== //
+        /**
+         * @OA\Get(
+         *     path="/HSHospitalsInventoryController/GetIvProductList",
+         *     tags={"Hospital Inventory"},
+         *     summary="Get inventory product list",
+         *     security={{"bearerAuth":{}}},
+         *     @OA\Response(
+         *         response=200,
+         *         description="Successful operation",
+         *         @OA\JsonContent(
+         *             @OA\Property(property="success", type="boolean"),
+         *             @OA\Property(property="data", type="string", description="Encrypted list of products")
+         *         )
+         *     ),
+         *     @OA\Response(response=401, description="Unauthorized")
+         * )
+         */
         public function GetIvProductList(){
             $userToken = $this->input->get_request_header('Authorization');
             $splitToken = explode(" ", $userToken);
@@ -2290,6 +2990,34 @@ class HSHospitalsInventoryController  extends CI_Controller {
         }
 
         // ===== Inventory Overview (Products + Stock + Batches) ===== //
+        /**
+         * @OA\Post(
+         *     path="/HSHospitalsInventoryController/GetIvInventoryOverview",
+         *     tags={"Hospital Inventory"},
+         *     summary="Get inventory overview",
+         *     security={{"bearerAuth":{}}},
+         *     @OA\RequestBody(
+         *         required=true,
+         *         @OA\JsonContent(
+         *             @OA\Property(property="search", type="string"),
+         *             @OA\Property(property="page", type="integer"),
+         *             @OA\Property(property="limit", type="integer")
+         *         )
+         *     ),
+         *     @OA\Response(
+         *         response=200,
+         *         description="Successful operation",
+         *         @OA\JsonContent(
+         *             @OA\Property(property="success", type="boolean"),
+         *             @OA\Property(property="data", type="string", description="Encrypted overview data"),
+         *             @OA\Property(property="total", type="integer"),
+         *             @OA\Property(property="page", type="integer"),
+         *             @OA\Property(property="limit", type="integer")
+         *         )
+         *     ),
+         *     @OA\Response(response=401, description="Unauthorized")
+         * )
+         */
         public function GetIvInventoryOverview(){
             $userToken = $this->input->get_request_header('Authorization');
             $splitToken = explode(" ", $userToken);
@@ -2529,6 +3257,50 @@ class HSHospitalsInventoryController  extends CI_Controller {
         }
         // ===== Inventory Overview Code End ===== //
 
+        /**
+         * @OA\Post(
+         *     path="/HSHospitalsInventoryController/AddIvProductInformation",
+         *     tags={"Hospital Inventory"},
+         *     summary="Add product information",
+         *     security={{"bearerAuth":{}}},
+         *     @OA\RequestBody(
+         *         required=true,
+         *         @OA\MediaType(
+         *             mediaType="multipart/form-data",
+         *             @OA\Schema(
+         *                 @OA\Property(property="name", type="string", description="Encrypted name"),
+         *                 @OA\Property(property="sku", type="string", description="Encrypted SKU"),
+         *                 @OA\Property(property="category_id", type="string", description="Encrypted category ID"),
+         *                 @OA\Property(property="subcategory_id", type="string", description="Encrypted subcategory ID"),
+         *                 @OA\Property(property="model_number", type="string", description="Encrypted model number"),
+         *                 @OA\Property(property="uom_id", type="string", description="Encrypted UOM ID"),
+         *                 @OA\Property(property="license_no", type="string", description="Encrypted license number"),
+         *                 @OA\Property(property="barcode", type="string", description="Encrypted barcode"),
+         *                 @OA\Property(property="purchase_price", type="string", description="Encrypted purchase price"),
+         *                 @OA\Property(property="selling_price", type="string", description="Encrypted selling price"),
+         *                 @OA\Property(property="mrp_price", type="string", description="Encrypted MRP price"),
+         *                 @OA\Property(property="tax_id", type="string", description="Encrypted tax ID"),
+         *                 @OA\Property(property="min_stock", type="string", description="Encrypted min stock"),
+         *                 @OA\Property(property="max_stock", type="string", description="Encrypted max stock"),
+         *                 @OA\Property(property="description", type="string", description="Encrypted description"),
+         *                 @OA\Property(property="status", type="string", description="Encrypted status"),
+         *                 @OA\Property(property="product_image", type="string", format="binary", description="Product image file")
+         *             )
+         *         )
+         *     ),
+         *     @OA\Response(
+         *         response=200,
+         *         description="Successful operation",
+         *         @OA\JsonContent(
+         *             @OA\Property(property="success", type="boolean"),
+         *             @OA\Property(property="message", type="string"),
+         *             @OA\Property(property="id", type="string"),
+         *             @OA\Property(property="image_path", type="string")
+         *         )
+         *     ),
+         *     @OA\Response(response=401, description="Unauthorized")
+         * )
+         */
         public function AddIvProductInformation(){
             $userToken = $this->input->get_request_header('Authorization');
             $splitToken = explode(" ", $userToken);
@@ -2700,6 +3472,35 @@ class HSHospitalsInventoryController  extends CI_Controller {
     // ===== Inventory Product Code End here ===== //
 
     // ===== Inventory Batch Code Start here ===== //
+    // ================================
+    // Inventory Batches: Add
+    // ================================
+    /**
+     * @OA\Post(
+     *     path="/HSHospitalsInventoryController/AddIvBatchInformation",
+     *     tags={"Hospital Inventory"},
+     *     summary="Add batch information",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="product_id", type="string", description="Encrypted product ID"),
+     *             @OA\Property(property="batches", type="string", description="Encrypted batches JSON array")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="added_count", type="integer"),
+     *             @OA\Property(property="errors", type="array", @OA\Items(type="string"))
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function AddIvBatchInformation(){
         $userToken = $this->input->get_request_header('Authorization');
         $splitToken = explode(" ", $userToken);

@@ -36,6 +36,35 @@ class AdmAdminAuthCtr extends CI_Controller {
     
     
     
+    /**
+     * @OA\Post(
+     *     path="/AdmAdminAuthCtr/userLogin",
+     *     tags={"Auth"},
+     *     summary="User Login (Doctor, Staff, Hospital Admin)",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="username", type="string", description="Encrypted username"),
+     *             @OA\Property(property="password", type="string", description="Encrypted password"),
+     *             @OA\Property(property="role", type="string", description="Role (doctor, staff, hospital_admin)")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Login Successful",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="integer"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="token", type="string"),
+     *             @OA\Property(property="userInfo", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Invalid credentials"
+     *     )
+     * )
+     */
     public function userLogin() {
         $jwt = new JWT();
         $JwtSecretKey = "myloginSecret";
@@ -159,6 +188,34 @@ class AdmAdminAuthCtr extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/AdmAdminAuthCtr/adminLogin",
+     *     tags={"Auth"},
+     *     summary="Super Admin Login",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="username", type="string", description="Encrypted username"),
+     *             @OA\Property(property="password", type="string", description="Encrypted password")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Login Successful",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="integer"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="token", type="string"),
+     *             @OA\Property(property="adminInfo", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Invalid credentials"
+     *     )
+     * )
+     */
     public function adminLogin() {
         $jwt = new JWT();
         $JwtSecretKey = "myloginSecret";

@@ -1,6 +1,8 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+use OpenApi\Annotations as OA;
+
 class HSHospitalsController  extends CI_Controller {
 
     public function __construct(){
@@ -21,6 +23,24 @@ class HSHospitalsController  extends CI_Controller {
     }
 
     /* ===== Doctors List Code Start Here ===== */
+    /**
+     * @OA\Get(
+     *     path="/HSHospitalsController/getDoctorsList",
+     *     tags={"Hospital Admin"},
+     *     summary="Get list of doctors",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted doctor list"),
+     *             @OA\Property(property="RowData", type="array", @OA\Items(type="object"))
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function getDoctorsList(){
         if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
             exit;
@@ -66,6 +86,23 @@ class HSHospitalsController  extends CI_Controller {
     }
     /* ===== Doctors List Code End Here ===== */
 
+    /**
+     * @OA\Get(
+     *     path="/HSHospitalsController/getSpecializationList",
+     *     tags={"Hospital Admin"},
+     *     summary="Get list of specializations",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted specialization list")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function getSpecializationList() {
         if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
             exit;
@@ -124,6 +161,24 @@ class HSHospitalsController  extends CI_Controller {
     }
 
     /* ===== Shift List Code Start Here ===== */
+    /**
+     * @OA\Get(
+     *     path="/HSHospitalsController/getShiftList",
+     *     tags={"Hospital Admin"},
+     *     summary="Get list of shifts",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted shift list"),
+     *             @OA\Property(property="rowData", type="array", @OA\Items(type="object"))
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function getShiftList(){
         if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
             exit;
@@ -166,6 +221,24 @@ class HSHospitalsController  extends CI_Controller {
     }
     /* ===== Shift List Code End Here ===== */
 
+    /**
+     * @OA\Get(
+     *     path="/HSHospitalsController/getEventTypeList",
+     *     tags={"Hospital Admin"},
+     *     summary="Get list of event types",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted event types"),
+     *             @OA\Property(property="rowData", type="array", @OA\Items(type="object"))
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function getEventTypeList(){
         if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
             exit;
@@ -207,6 +280,24 @@ class HSHospitalsController  extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Get(
+     *     path="/HSHospitalsController/getDepartmentList",
+     *     tags={"Hospital Admin"},
+     *     summary="Get list of departments",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted departments"),
+     *             @OA\Property(property="rowData", type="array", @OA\Items(type="object"))
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function getDepartmentList(){
         if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
             exit;
@@ -248,6 +339,24 @@ class HSHospitalsController  extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Get(
+     *     path="/HSHospitalsController/getRoleList",
+     *     tags={"Hospital Admin"},
+     *     summary="Get list of roles",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted roles"),
+     *             @OA\Property(property="rowData", type="array", @OA\Items(type="object"))
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function getRoleList(){
         if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
             exit;
@@ -289,6 +398,24 @@ class HSHospitalsController  extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Get(
+     *     path="/HSHospitalsController/getAmenityList",
+     *     tags={"Hospital Admin"},
+     *     summary="Get list of amenities",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted amenities"),
+     *             @OA\Property(property="rowData", type="array", @OA\Items(type="object"))
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function getAmenityList(){
         if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
             exit;
@@ -330,6 +457,24 @@ class HSHospitalsController  extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Get(
+     *     path="/HSHospitalsController/getWardTypeList",
+     *     tags={"Hospital Admin"},
+     *     summary="Get list of ward types",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted ward types"),
+     *             @OA\Property(property="rowData", type="array", @OA\Items(type="object"))
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function getWardTypeList(){
         if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
             exit;
@@ -371,6 +516,24 @@ class HSHospitalsController  extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Get(
+     *     path="/HSHospitalsController/getWardList",
+     *     tags={"Hospital Admin"},
+     *     summary="Get list of wards",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted wards"),
+     *             @OA\Property(property="rowData", type="array", @OA\Items(type="object"))
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function getWardList(){
         if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
             exit;
@@ -416,6 +579,42 @@ class HSHospitalsController  extends CI_Controller {
     }
 
     /* ===== Screen Management Code Start Here ===== */
+    /**
+     * @OA\Post(
+     *     path="/HSHospitalsController/saveScreen",
+     *     tags={"Hospital Admin"},
+     *     summary="Save screen information",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         description="Screen data (encrypted fields)",
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="name", type="string", description="Encrypted name"),
+     *             @OA\Property(property="location", type="string", description="Encrypted location"),
+     *             @OA\Property(property="description", type="string", description="Encrypted description"),
+     *             @OA\Property(property="doctorIds", type="string", description="Encrypted doctor IDs JSON array"),
+     *             @OA\Property(property="resolution", type="string"),
+     *             @OA\Property(property="layout", type="string"),
+     *             @OA\Property(property="theme", type="string"),
+     *             @OA\Property(property="showLogo", type="string"),
+     *             @OA\Property(property="showDateTime", type="string"),
+     *             @OA\Property(property="showQueue", type="string"),
+     *             @OA\Property(property="enableAudio", type="string"),
+     *             @OA\Property(property="autoRefresh", type="string"),
+     *             @OA\Property(property="refreshInterval", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Screen created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function saveScreen(){
         $userToken = $this->input->get_request_header('Authorization');
         $splitToken = explode(" ", $userToken);
@@ -527,6 +726,24 @@ class HSHospitalsController  extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Get(
+     *     path="/HSHospitalsController/getScreensList",
+     *     tags={"Hospital Admin"},
+     *     summary="Get list of screens",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted screens list"),
+     *             @OA\Property(property="rowData", type="array", @OA\Items(type="object"))
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function getScreensList() {
         if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
             exit;
@@ -573,6 +790,29 @@ class HSHospitalsController  extends CI_Controller {
             ]);
         }
     }
+    /**
+     * @OA\Post(
+     *     path="/HSHospitalsController/getScreenPreviewAppointments",
+     *     tags={"Hospital Admin"},
+     *     summary="Get screen preview appointments",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="doctorIds", type="string", description="Encrypted doctor IDs JSON array")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted appointments data")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function getScreenPreviewAppointments() {
         if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
             exit;
@@ -649,6 +889,23 @@ class HSHospitalsController  extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Get(
+     *     path="/HSHospitalsController/getTokenDashboardStats",
+     *     tags={"Hospital Admin"},
+     *     summary="Get token dashboard stats",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted stats data")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function getTokenDashboardStats() {
         if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
             exit;
@@ -701,6 +958,29 @@ class HSHospitalsController  extends CI_Controller {
 
     /* ===== Employee OTP Management Code Start Here ===== */
     
+    /**
+     * @OA\Get(
+     *     path="/HSHospitalsController/getEmployeeOTPList",
+     *     tags={"Hospital Admin"},
+     *     summary="Get employee OTP list",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="role",
+     *         in="query",
+     *         required=true,
+     *         @OA\Schema(type="string", enum={"Doctor", "Staff"})
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted OTP list")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function getEmployeeOTPList() {
         if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
             exit;
@@ -747,6 +1027,33 @@ class HSHospitalsController  extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/HSHospitalsController/resetEmployeeOTP",
+     *     tags={"Hospital Admin"},
+     *     summary="Reset employee OTP",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="employeeId", type="string"),
+     *             @OA\Property(property="role", type="string", enum={"Doctor", "Staff"})
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="otp", type="integer"),
+     *             @OA\Property(property="generatedAt", type="string"),
+     *             @OA\Property(property="expiresAt", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function resetEmployeeOTP() {
         if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
             exit;
@@ -806,6 +1113,31 @@ class HSHospitalsController  extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/HSHospitalsController/toggleEmployee2FA",
+     *     tags={"Hospital Admin"},
+     *     summary="Toggle employee 2FA",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="employeeId", type="string"),
+     *             @OA\Property(property="role", type="string", enum={"Doctor", "Staff"}),
+     *             @OA\Property(property="status", type="integer", description="0 or 1")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function toggleEmployee2FA() {
         if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
             exit;
@@ -861,6 +1193,23 @@ class HSHospitalsController  extends CI_Controller {
 
     /* ===== Laboratory Management Code Start Here ===== */
 
+    /**
+     * @OA\Get(
+     *     path="/HSHospitalsController/getPreferredLaboratories",
+     *     tags={"Hospital Admin"},
+     *     summary="Get preferred laboratories",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted laboratories list")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function getPreferredLaboratories() {
         if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
             exit;
@@ -898,6 +1247,23 @@ class HSHospitalsController  extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Get(
+     *     path="/HSHospitalsController/getAvailableLaboratories",
+     *     tags={"Hospital Admin"},
+     *     summary="Get available laboratories",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted laboratories list")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function getAvailableLaboratories() {
         if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
             exit;
@@ -935,6 +1301,29 @@ class HSHospitalsController  extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/HSHospitalsController/addPreferredLaboratory",
+     *     tags={"Hospital Admin"},
+     *     summary="Add preferred laboratory",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="laboratory_id", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function addPreferredLaboratory() {
         if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
             exit;
@@ -986,6 +1375,29 @@ class HSHospitalsController  extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/HSHospitalsController/removePreferredLaboratory",
+     *     tags={"Hospital Admin"},
+     *     summary="Remove preferred laboratory",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="laboratory_id", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function removePreferredLaboratory() {
         if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
             exit;

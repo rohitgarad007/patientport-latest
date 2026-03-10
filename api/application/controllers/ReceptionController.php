@@ -1,6 +1,8 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+use OpenApi\Annotations as OA;
+
 class ReceptionController extends CI_Controller {
 
     public function __construct(){

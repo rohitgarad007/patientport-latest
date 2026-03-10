@@ -1,6 +1,8 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+use OpenApi\Annotations as OA;
+
 class HSStaffController  extends CI_Controller {
 
     public function __construct(){
@@ -74,6 +76,38 @@ class HSStaffController  extends CI_Controller {
     }
 
 
+    /**
+     * @OA\Post(
+     *     path="/HSStaffController/AddStaffInformation",
+     *     tags={"Hospital Staff"},
+     *     summary="Add new staff member",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="name", type="string", description="Encrypted name"),
+     *             @OA\Property(property="email", type="string", description="Encrypted email"),
+     *             @OA\Property(property="password", type="string", description="Encrypted password"),
+     *             @OA\Property(property="phone", type="string", description="Encrypted phone"),
+     *             @OA\Property(property="role", type="string", description="Encrypted role"),
+     *             @OA\Property(property="department", type="string", description="Encrypted department"),
+     *             @OA\Property(property="shift", type="string", description="Encrypted shift"),
+     *             @OA\Property(property="experienceYears", type="string", description="Encrypted years"),
+     *             @OA\Property(property="experienceMonths", type="string", description="Encrypted months")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="staff_id", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function AddStaffInformation() {
         $userToken = $this->input->get_request_header('Authorization');
         $splitToken = explode(" ", $userToken);
@@ -252,6 +286,37 @@ class HSStaffController  extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/HSStaffController/UpdateStaffInformation",
+     *     tags={"Hospital Staff"},
+     *     summary="Update staff information",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="id", type="string", description="Encrypted staff UID"),
+     *             @OA\Property(property="name", type="string", description="Encrypted name"),
+     *             @OA\Property(property="phone", type="string", description="Encrypted phone"),
+     *             @OA\Property(property="role", type="string", description="Encrypted role"),
+     *             @OA\Property(property="department", type="string", description="Encrypted department"),
+     *             @OA\Property(property="shift", type="string", description="Encrypted shift"),
+     *             @OA\Property(property="experienceYears", type="string", description="Encrypted years"),
+     *             @OA\Property(property="experienceMonths", type="string", description="Encrypted months")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="staff_id", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function UpdateStaffInformation() {
         $userToken = $this->input->get_request_header('Authorization');
         $splitToken = explode(" ", $userToken);
@@ -385,6 +450,35 @@ class HSStaffController  extends CI_Controller {
     }
 
 
+    /**
+     * @OA\Post(
+     *     path="/HSStaffController/ManageStaffList",
+     *     tags={"Hospital Staff"},
+     *     summary="Get staff list",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="limit", type="integer"),
+     *             @OA\Property(property="page", type="integer"),
+     *             @OA\Property(property="search", type="string"),
+     *             @OA\Property(property="role", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted staff list"),
+     *             @OA\Property(property="total", type="integer"),
+     *             @OA\Property(property="page", type="integer"),
+     *             @OA\Property(property="limit", type="integer")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function ManageStaffList() {
 
 
@@ -456,6 +550,23 @@ class HSStaffController  extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Get(
+     *     path="/HSStaffController/GetStaffOptionList",
+     *     tags={"Hospital Staff"},
+     *     summary="Get staff option list",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted option list")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function GetStaffOptionList() {
 
 
@@ -507,6 +618,29 @@ class HSStaffController  extends CI_Controller {
     }
 
 
+    /**
+     * @OA\Post(
+     *     path="/HSStaffController/GetStaffAccess",
+     *     tags={"Hospital Staff"},
+     *     summary="Get staff access permissions",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="staff_uid", type="string", description="Encrypted staff UID")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted access data")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function GetStaffAccess() {
 
 
@@ -573,6 +707,67 @@ class HSStaffController  extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/HSStaffController/UpdateStaffAccess",
+     *     tags={"Hospital Staff"},
+     *     summary="Update staff access permissions",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="staff_uid", type="string", description="Encrypted staff UID"),
+     *             @OA\Property(property="patient_list", type="string", description="Encrypted 0/1"),
+     *             @OA\Property(property="view_patients", type="string", description="Encrypted 0/1"),
+     *             @OA\Property(property="add_patients", type="string", description="Encrypted 0/1"),
+     *             @OA\Property(property="edit_patients", type="string", description="Encrypted 0/1"),
+     *             @OA\Property(property="view_medical_history", type="string", description="Encrypted 0/1"),
+     *             @OA\Property(property="write_prescriptions", type="string", description="Encrypted 0/1"),
+     *             @OA\Property(property="view_lab_results", type="string", description="Encrypted 0/1"),
+     *             @OA\Property(property="request_lab_tests", type="string", description="Encrypted 0/1"),
+     *             @OA\Property(property="manage_vitals", type="string", description="Encrypted 0/1"),
+     *             @OA\Property(property="appointment_list", type="string", description="Encrypted 0/1"),
+     *             @OA\Property(property="book_appointment", type="string", description="Encrypted 0/1"),
+     *             @OA\Property(property="reschedule_appointment", type="string", description="Encrypted 0/1"),
+     *             @OA\Property(property="cancel_appointment", type="string", description="Encrypted 0/1"),
+     *             @OA\Property(property="icu_access", type="string", description="Encrypted 0/1"),
+     *             @OA\Property(property="assign_rooms", type="string", description="Encrypted 0/1"),
+     *             @OA\Property(property="bad_request_approved", type="string", description="Encrypted 0/1"),
+     *             @OA\Property(property="monitor_beds", type="string", description="Encrypted 0/1"),
+     *             @OA\Property(property="emergency_access", type="string", description="Encrypted 0/1"),
+     *             @OA\Property(property="view_inventory", type="string", description="Encrypted 0/1"),
+     *             @OA\Property(property="dispense_medication", type="string", description="Encrypted 0/1"),
+     *             @OA\Property(property="manage_controlled", type="string", description="Encrypted 0/1"),
+     *             @OA\Property(property="reorder_stock", type="string", description="Encrypted 0/1"),
+     *             @OA\Property(property="perform_lab_tests", type="string", description="Encrypted 0/1"),
+     *             @OA\Property(property="manage_lab_equipment", type="string", description="Encrypted 0/1"),
+     *             @OA\Property(property="lab_safety", type="string", description="Encrypted 0/1"),
+     *             @OA\Property(property="view_billing", type="string", description="Encrypted 0/1"),
+     *             @OA\Property(property="process_payments", type="string", description="Encrypted 0/1"),
+     *             @OA\Property(property="apply_discounts", type="string", description="Encrypted 0/1"),
+     *             @OA\Property(property="insurance_claims", type="string", description="Encrypted 0/1"),
+     *             @OA\Property(property="financial_reports", type="string", description="Encrypted 0/1"),
+     *             @OA\Property(property="manage_users", type="string", description="Encrypted 0/1"),
+     *             @OA\Property(property="assign_roles", type="string", description="Encrypted 0/1"),
+     *             @OA\Property(property="system_monitoring", type="string", description="Encrypted 0/1"),
+     *             @OA\Property(property="emergency_override", type="string", description="Encrypted 0/1"),
+     *             @OA\Property(property="view_staff_profiles", type="string", description="Encrypted 0/1"),
+     *             @OA\Property(property="manage_shifts", type="string", description="Encrypted 0/1"),
+     *             @OA\Property(property="performance_reviews", type="string", description="Encrypted 0/1")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="staff_uid", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function UpdateStaffAccess() {
         $userToken = $this->input->get_request_header('Authorization');
         $splitToken = explode(" ", $userToken);
@@ -678,6 +873,30 @@ class HSStaffController  extends CI_Controller {
 
 
 
+    /**
+     * @OA\Post(
+     *     path="/HSStaffController/changeStaffStatus",
+     *     tags={"Hospital Staff"},
+     *     summary="Change staff status",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="id", type="string", description="Staff UID"),
+     *             @OA\Property(property="status", type="integer")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function changeStaffStatus() {
         $userToken = $this->input->get_request_header('Authorization');
         $splitToken = explode(" ", $userToken);
@@ -749,6 +968,30 @@ class HSStaffController  extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/HSStaffController/DeleteStaffInformation",
+     *     tags={"Hospital Staff"},
+     *     summary="Delete staff information",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="id", type="string", description="Staff UID")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="staff_id", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function DeleteStaffInformation() {
         $userToken = $this->input->get_request_header('Authorization');
         $splitToken = explode(" ", $userToken);

@@ -2,6 +2,8 @@
 
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+use OpenApi\Annotations as OA;
+
 class SFDoctorController extends CI_Controller {
 
     public function __construct(){
@@ -19,6 +21,23 @@ class SFDoctorController extends CI_Controller {
         $this->load->model('HospitalCommonModel');
     }
 
+    /**
+     * @OA\Get(
+     *     path="/SFDoctorController/getLoggedInDoctorProfile",
+     *     tags={"Doctor"},
+     *     summary="Get logged in doctor profile",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted doctor profile")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function getLoggedInDoctorProfile() {
         $userToken = $this->input->get_request_header('Authorization');
         $splitToken = explode(" ", $userToken);
@@ -62,6 +81,24 @@ class SFDoctorController extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Get(
+     *     path="/SFDoctorController/get_receipt_content",
+     *     tags={"Doctor"},
+     *     summary="Get receipt content",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted receipt content"),
+     *             @OA\Property(property="rowData", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function get_receipt_content() {
         $userToken = $this->input->get_request_header('Authorization');
         $splitToken = explode(" ", $userToken);
@@ -105,6 +142,27 @@ class SFDoctorController extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/SFDoctorController/update_receipt_content",
+     *     tags={"Doctor"},
+     *     summary="Update receipt content",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(type="object", description="Receipt content data")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function update_receipt_content() {
         $userToken = $this->input->get_request_header('Authorization');
         $splitToken = explode(" ", $userToken);
@@ -194,6 +252,31 @@ class SFDoctorController extends CI_Controller {
      * Input (JSON): { search: string, page?: number, limit?: number }
      * Output: { success: boolean, data: <AES encrypted JSON array> }
      */
+    /**
+     * @OA\Post(
+     *     path="/SFDoctorController/getDiagnosisSuggestions",
+     *     tags={"Doctor"},
+     *     summary="Get diagnosis suggestions",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="search", type="string"),
+     *             @OA\Property(property="page", type="integer"),
+     *             @OA\Property(property="limit", type="integer")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted suggestions")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function getDiagnosisSuggestions() {
         $userToken = $this->input->get_request_header('Authorization');
         $splitToken = explode(" ", $userToken);
@@ -281,6 +364,29 @@ class SFDoctorController extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/SFDoctorController/getPatientDetails",
+     *     tags={"Doctor"},
+     *     summary="Get patient details",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="id", type="string", description="Encrypted patient ID")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted patient details")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function getPatientDetails() {
         $userToken = $this->input->get_request_header('Authorization');
         $splitToken = explode(" ", $userToken);
@@ -372,6 +478,29 @@ class SFDoctorController extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/SFDoctorController/getPatientVisitHistory",
+     *     tags={"Doctor"},
+     *     summary="Get patient visit history",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="id", type="string", description="Encrypted patient ID")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted visit history")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function getPatientVisitHistory() {
         $userToken = $this->input->get_request_header('Authorization');
         $splitToken = explode(" ", $userToken);
@@ -2268,6 +2397,24 @@ class SFDoctorController extends CI_Controller {
         } catch (Exception $e) { echo json_encode(["success" => false, "message" => $e->getMessage()]); }
     }
 
+    /**
+     * @OA\Get(
+     *     path="/SFDoctorController/getMyEventSchedule",
+     *     tags={"Doctor"},
+     *     summary="Get doctor's event schedule and master schedule",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted schedule data"),
+     *             @OA\Property(property="rowData", type="array", @OA\Items(type="object"))
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function getMyEventSchedule() {
         $userToken = $this->input->get_request_header('Authorization');
         $splitToken = explode(" ", $userToken);
@@ -2427,6 +2574,29 @@ class SFDoctorController extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/SFDoctorController/getMyAppointmentsByDate",
+     *     tags={"Doctor"},
+     *     summary="Get appointments for a specific date",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="date", type="string", description="Encrypted date string (YYYY-MM-DD)")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted appointments list")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function getMyAppointmentsByDate(){
         $userToken = $this->input->get_request_header('Authorization');
         $splitToken = explode(" ", $userToken);
@@ -2703,6 +2873,29 @@ class SFDoctorController extends CI_Controller {
         }
     }*/
 
+    /**
+     * @OA\Post(
+     *     path="/SFDoctorController/getMyTodaysAppointmentsGrouped",
+     *     tags={"Doctor"},
+     *     summary="Get today's appointments grouped by status",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             @OA\Property(property="date", type="string", description="Optional encrypted date (YYYY-MM-DD), defaults to today")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted grouped appointments"),
+     *             @OA\Property(property="rowData", type="object", description="Raw grouped appointments")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function getMyTodaysAppointmentsGrouped() {
         $userToken = $this->input->get_request_header('Authorization');
         $splitToken = explode(" ", $userToken);
@@ -2896,6 +3089,28 @@ class SFDoctorController extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/SFDoctorController/getMyUpcomingAppointments",
+     *     tags={"Doctor"},
+     *     summary="Get upcoming appointments",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             @OA\Property(property="limitDays", type="string", description="Optional encrypted limit days (int), default 30")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted upcoming appointments list")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function getMyUpcomingAppointments() {
         $userToken = $this->input->get_request_header('Authorization');
         $splitToken = explode(" ", $userToken);
@@ -3043,8 +3258,22 @@ class SFDoctorController extends CI_Controller {
     }
 
     /**
-     * Get receipt templates from ms_hospitals_receipts
-     * Output: { success: boolean, data: <AES encrypted JSON array> }
+     * @OA\Get(
+     *     path="/SFDoctorController/getReceiptTemplates",
+     *     tags={"Doctor"},
+     *     summary="Get receipt templates",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted receipt templates"),
+     *             @OA\Property(property="default_receipt_id", type="string", nullable=true)
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
      */
     public function getReceiptTemplates() {
         $userToken = $this->input->get_request_header('Authorization');
@@ -3097,6 +3326,29 @@ class SFDoctorController extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/SFDoctorController/setDefaultReceipt",
+     *     tags={"Doctor"},
+     *     summary="Set default receipt template",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="receipt_id", type="string", description="Receipt ID")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function setDefaultReceipt() {
         $userToken = $this->input->get_request_header('Authorization');
         $splitToken = explode(" ", $userToken);
@@ -3141,6 +3393,39 @@ class SFDoctorController extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/SFDoctorController/upload_shared_receipt",
+     *     tags={"Doctor"},
+     *     summary="Upload and share a receipt",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 @OA\Property(property="patient_id", type="string"),
+     *                 @OA\Property(property="appointment_id", type="string"),
+     *                 @OA\Property(property="file", type="string", format="binary")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="link", type="string"),
+     *                 @OA\Property(property="token", type="string"),
+     *                 @OA\Property(property="password", type="string"),
+     *                 @OA\Property(property="patient_phone", type="string")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function upload_shared_receipt() {
         // Load URL helper
         $this->load->helper('url');

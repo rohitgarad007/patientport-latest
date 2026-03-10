@@ -1,6 +1,8 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+use OpenApi\Annotations as OA;
+
 class HSHospitalLaboratoryController extends CI_Controller {
 
     public function __construct(){
@@ -36,6 +38,24 @@ class HSHospitalLaboratoryController extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Get(
+     *     path="/HSHospitalLaboratoryController/GetPreferredLaboratories",
+     *     tags={"Hospital Laboratory"},
+     *     summary="Get preferred laboratories",
+     *     description="Accessible by hospital_admin and doctor",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted laboratories list")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function GetPreferredLaboratories() {
         $tokenData = $this->getAuthData();
         if (!$tokenData) {
@@ -80,6 +100,23 @@ class HSHospitalLaboratoryController extends CI_Controller {
         echo json_encode(["success" => true, "data" => $encryptedData]);
     }
     
+    /**
+     * @OA\Get(
+     *     path="/HSHospitalLaboratoryController/GetAvailableLaboratories",
+     *     tags={"Hospital Laboratory"},
+     *     summary="Get available laboratories",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted laboratories list")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function GetAvailableLaboratories() {
         $tokenData = $this->getAuthData();
         if (!$tokenData || ($tokenData['role'] ?? '') !== "hospital_admin") {
@@ -126,6 +163,29 @@ class HSHospitalLaboratoryController extends CI_Controller {
         ];
     }
 
+    /**
+     * @OA\Post(
+     *     path="/HSHospitalLaboratoryController/AddPreferredLaboratory",
+     *     tags={"Hospital Laboratory"},
+     *     summary="Add preferred laboratory",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="laboratory_id", type="string", example="LAB_123")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function AddPreferredLaboratory() {
         $tokenData = $this->getAuthData();
         if (!$tokenData || ($tokenData['role'] ?? '') !== "hospital_admin") {
@@ -163,6 +223,29 @@ class HSHospitalLaboratoryController extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/HSHospitalLaboratoryController/RemovePreferredLaboratory",
+     *     tags={"Hospital Laboratory"},
+     *     summary="Remove preferred laboratory",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="laboratory_id", type="string", example="LAB_123")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function RemovePreferredLaboratory() {
         $tokenData = $this->getAuthData();
         if (!$tokenData || ($tokenData['role'] ?? '') !== "hospital_admin") {

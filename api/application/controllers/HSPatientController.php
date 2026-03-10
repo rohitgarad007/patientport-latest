@@ -1,6 +1,8 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+use OpenApi\Annotations as OA;
+
 class HSPatientController  extends CI_Controller {
 
     public function __construct(){
@@ -74,6 +76,34 @@ class HSPatientController  extends CI_Controller {
     }
 
 
+    /**
+     * @OA\Post(
+     *     path="/HSPatientController/ManagePatientList",
+     *     tags={"Hospital Patient"},
+     *     summary="Get patient list",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="page", type="integer", example=1),
+     *             @OA\Property(property="limit", type="integer", example=10),
+     *             @OA\Property(property="search", type="string", example="")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted patient list"),
+     *             @OA\Property(property="total", type="integer"),
+     *             @OA\Property(property="page", type="integer"),
+     *             @OA\Property(property="limit", type="integer")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function ManagePatientList() {
 
 
@@ -145,6 +175,38 @@ class HSPatientController  extends CI_Controller {
     }
 
 
+    /**
+     * @OA\Post(
+     *     path="/HSPatientController/AddPatientInformation",
+     *     tags={"Hospital Patient"},
+     *     summary="Add patient information",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="firstName", type="string", description="Encrypted first name"),
+     *             @OA\Property(property="lastName", type="string", description="Encrypted last name"),
+     *             @OA\Property(property="email", type="string", description="Encrypted email"),
+     *             @OA\Property(property="phone", type="string", description="Encrypted phone"),
+     *             @OA\Property(property="dob", type="string", description="Encrypted dob"),
+     *             @OA\Property(property="gender", type="string", description="Encrypted gender"),
+     *             @OA\Property(property="bloodGroup", type="string", description="Encrypted blood group"),
+     *             @OA\Property(property="emergencyContact", type="string", description="Encrypted emergency contact"),
+     *             @OA\Property(property="address", type="string", description="Encrypted address")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="staff_id", type="integer")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function AddPatientInformation() {
         $userToken = $this->input->get_request_header('Authorization');
         $splitToken = explode(" ", $userToken);
@@ -352,6 +414,31 @@ class HSPatientController  extends CI_Controller {
         $this->db->query($sql);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/HSPatientController/hs_patient_info_share_create",
+     *     tags={"Hospital Patient"},
+     *     summary="Share patient information",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="patient_id", type="string", description="Encrypted patient ID"),
+     *             @OA\Property(property="share_to", type="string", description="Encrypted share recipient"),
+     *             @OA\Property(property="fields", type="array", @OA\Items(type="string"))
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function hs_patient_info_share_create() {
         $userToken = $this->input->get_request_header('Authorization');
         $splitToken = explode(" ", $userToken);
@@ -427,6 +514,30 @@ class HSPatientController  extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/HSPatientController/hs_patient_info_share_list",
+     *     tags={"Hospital Patient"},
+     *     summary="List shared patient information",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="page", type="integer", example=1),
+     *             @OA\Property(property="limit", type="integer", example=10)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted shared info list")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function hs_patient_info_share_list() {
         $userToken = $this->input->get_request_header('Authorization');
         $splitToken = explode(" ", $userToken);
@@ -482,6 +593,29 @@ class HSPatientController  extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/HSPatientController/hs_patient_info_share_revoke",
+     *     tags={"Hospital Patient"},
+     *     summary="Revoke shared patient information",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="id", type="string", description="Encrypted share ID")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function hs_patient_info_share_revoke() {
         $userToken = $this->input->get_request_header('Authorization');
         $splitToken = explode(" ", $userToken);
@@ -522,6 +656,23 @@ class HSPatientController  extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/HSPatientController/hs_patient_info_content_get",
+     *     tags={"Hospital Patient"},
+     *     summary="Get patient info sharing content settings",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted settings row")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function hs_patient_info_content_get() {
         $userToken = $this->input->get_request_header('Authorization');
         $splitToken = explode(" ", $userToken);
@@ -607,6 +758,35 @@ class HSPatientController  extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/HSPatientController/hs_patient_info_content_update",
+     *     tags={"Hospital Patient"},
+     *     summary="Update patient info sharing content settings",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="name_status", type="integer", example=1),
+     *             @OA\Property(property="email_status", type="integer", example=1),
+     *             @OA\Property(property="phone_status", type="integer", example=1),
+     *             @OA\Property(property="dob_status", type="integer", example=1),
+     *             @OA\Property(property="gender_status", type="integer", example=1),
+     *             @OA\Property(property="blood_group_status", type="integer", example=1),
+     *             @OA\Property(property="address_status", type="integer", example=1)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function hs_patient_info_content_update() {
         $userToken = $this->input->get_request_header('Authorization');
         $splitToken = explode(" ", $userToken);
@@ -684,6 +864,38 @@ class HSPatientController  extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/HSPatientController/UpdatePatientInformation",
+     *     tags={"Hospital Patient"},
+     *     summary="Update patient information",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="id", type="string", description="Encrypted patient ID"),
+     *             @OA\Property(property="firstName", type="string", description="Encrypted first name"),
+     *             @OA\Property(property="lastName", type="string", description="Encrypted last name"),
+     *             @OA\Property(property="phone", type="string", description="Encrypted phone"),
+     *             @OA\Property(property="dob", type="string", description="Encrypted dob"),
+     *             @OA\Property(property="gender", type="string", description="Encrypted gender"),
+     *             @OA\Property(property="bloodGroup", type="string", description="Encrypted blood group"),
+     *             @OA\Property(property="emergencyContact", type="string", description="Encrypted emergency contact"),
+     *             @OA\Property(property="address", type="string", description="Encrypted address")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="staff_id", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function UpdatePatientInformation() {
         $userToken = $this->input->get_request_header('Authorization');
         $splitToken = explode(" ", $userToken);
@@ -817,6 +1029,30 @@ class HSPatientController  extends CI_Controller {
     }
 
 
+    /**
+     * @OA\Post(
+     *     path="/HSPatientController/changePatientStatus",
+     *     tags={"Hospital Patient"},
+     *     summary="Change patient status",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="id", type="string", description="Encrypted patient ID"),
+     *             @OA\Property(property="status", type="string", description="Encrypted status")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function changePatientStatus() {
         $userToken = $this->input->get_request_header('Authorization');
         $splitToken = explode(" ", $userToken);
@@ -881,6 +1117,30 @@ class HSPatientController  extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/HSPatientController/DeletePatientInformation",
+     *     tags={"Hospital Patient"},
+     *     summary="Delete patient information",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="id", type="string", description="Encrypted patient ID")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="patient_uid", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function DeletePatientInformation() {
         $userToken = $this->input->get_request_header('Authorization');
         $splitToken = explode(" ", $userToken);
@@ -948,6 +1208,29 @@ class HSPatientController  extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/HSPatientController/getPatientVisitHistory",
+     *     tags={"Hospital Patient"},
+     *     summary="Get patient visit history",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="id", type="string", description="Encrypted patient ID")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted visit history")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function getPatientVisitHistory() {
         $userToken = $this->input->get_request_header('Authorization');
         $splitToken = explode(" ", $userToken);
@@ -1022,6 +1305,29 @@ class HSPatientController  extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/HSPatientController/getTreatment",
+     *     tags={"Hospital Patient"},
+     *     summary="Get treatment for visit",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="id", type="string", description="Encrypted visit (appointment) ID")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted treatment data")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function getTreatment() {
         $userToken = $this->input->get_request_header('Authorization');
         $splitToken = explode(" ", $userToken);
@@ -1083,6 +1389,30 @@ class HSPatientController  extends CI_Controller {
             ]);
         }
     }
+
+    /**
+     * @OA\Post(
+     *     path="/HSPatientController/getPatientDetails",
+     *     tags={"Hospital Patient"},
+     *     summary="Get patient details",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="id", type="string", description="Encrypted patient ID")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted patient details")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function getPatientDetails() {
         $userToken = $this->input->get_request_header('Authorization');
         $splitToken = explode(" ", $userToken);

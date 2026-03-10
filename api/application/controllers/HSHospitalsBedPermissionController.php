@@ -1,6 +1,8 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+use OpenApi\Annotations as OA;
+
 class HSHospitalsBedPermissionController extends CI_Controller {
 
     public function __construct(){
@@ -95,6 +97,34 @@ class HSHospitalsBedPermissionController extends CI_Controller {
     }
 
     // hs_bed_permission_requests_list
+    /**
+     * @OA\Post(
+     *     path="/HSHospitalsBedPermissionController/BedPermissionRequestsList",
+     *     tags={"Hospital Bed Permission"},
+     *     summary="Get bed permission requests list",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="page", type="string", description="Encrypted page number"),
+     *             @OA\Property(property="limit", type="string", description="Encrypted limit"),
+     *             @OA\Property(property="search", type="string", description="Encrypted search term")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted list"),
+     *             @OA\Property(property="total", type="integer"),
+     *             @OA\Property(property="page", type="integer"),
+     *             @OA\Property(property="limit", type="integer")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function BedPermissionRequestsList() {
 
         $userToken = $this->input->get_request_header('Authorization');
@@ -443,6 +473,29 @@ class HSHospitalsBedPermissionController extends CI_Controller {
         }
     }*/
 
+    /**
+     * @OA\Post(
+     *     path="/HSHospitalsBedPermissionController/BedPermissionApprovalStepsList",
+     *     tags={"Hospital Bed Permission"},
+     *     summary="Get bed permission approval steps",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="request_id", type="string", description="Encrypted request ID")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted steps list")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function BedPermissionApprovalStepsList(){
         $userToken = $this->input->get_request_header('Authorization');
         $splitToken = explode(" ", $userToken);
@@ -589,6 +642,34 @@ class HSHospitalsBedPermissionController extends CI_Controller {
 
 
     // hs_bed_permission_audit_logs_list
+    /**
+     * @OA\Post(
+     *     path="/HSHospitalsBedPermissionController/BedPermissionAuditLogsList",
+     *     tags={"Hospital Bed Permission"},
+     *     summary="Get bed permission audit logs",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="page", type="integer", example=1),
+     *             @OA\Property(property="limit", type="integer", example=50),
+     *             @OA\Property(property="search", type="string", example="")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted logs list"),
+     *             @OA\Property(property="total", type="integer"),
+     *             @OA\Property(property="page", type="integer"),
+     *             @OA\Property(property="limit", type="integer")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function BedPermissionAuditLogsList() {
 
 
@@ -720,6 +801,23 @@ class HSHospitalsBedPermissionController extends CI_Controller {
     }
 
     // hs_patient_stays_overview
+    /**
+     * @OA\Get(
+     *     path="/HSHospitalsBedPermissionController/PatientStaysOverview",
+     *     tags={"Hospital Bed Permission"},
+     *     summary="Get patient stays overview",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted stays list")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function PatientStaysOverview() {
 
         $userToken = $this->input->get_request_header('Authorization');
@@ -839,6 +937,31 @@ class HSHospitalsBedPermissionController extends CI_Controller {
     }
 
     // hs_bed_permission_request_approve
+    /**
+     * @OA\Post(
+     *     path="/HSHospitalsBedPermissionController/BedPermissionRequestApprove",
+     *     tags={"Hospital Bed Permission"},
+     *     summary="Approve bed permission request",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="request_id", type="string", description="Encrypted request ID"),
+     *             @OA\Property(property="notes", type="string", description="Encrypted notes")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", type="string", description="Encrypted response data")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function BedPermissionRequestApprove() {
         $userToken = $this->input->get_request_header('Authorization');
         $splitToken = explode(" ", $userToken);
@@ -965,6 +1088,30 @@ class HSHospitalsBedPermissionController extends CI_Controller {
     }
 
     // hs_bed_permission_request_decline
+    /**
+     * @OA\Post(
+     *     path="/HSHospitalsBedPermissionController/BedPermissionRequestDecline",
+     *     tags={"Hospital Bed Permission"},
+     *     summary="Decline bed permission request",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="request_id", type="string", description="Encrypted request ID"),
+     *             @OA\Property(property="reason", type="string", description="Encrypted reason")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function BedPermissionRequestDecline() {
         $userToken = $this->input->get_request_header('Authorization');
         $splitToken = explode(" ", $userToken);

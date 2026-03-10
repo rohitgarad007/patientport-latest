@@ -1,6 +1,8 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+use OpenApi\Annotations as OA;
+
 class HospitalProfileController extends CI_Controller {
 
     private $AES_KEY = "RohitGaradHos@173414";
@@ -57,6 +59,28 @@ class HospitalProfileController extends CI_Controller {
         return $decrypted;
     }
 
+    /**
+     * @OA\Get(
+     *     path="/HospitalProfileController/get_profile/{hosuid}",
+     *     tags={"Hospital Profile"},
+     *     summary="Get hospital profile",
+     *     @OA\Parameter(
+     *         name="hosuid",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted profile data"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     )
+     * )
+     */
     public function get_profile($hosuid) {
         if (!$hosuid) {
             echo json_encode(['status' => false, 'message' => 'Hospital UID is required']);
@@ -71,6 +95,27 @@ class HospitalProfileController extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/HospitalProfileController/update_profile",
+     *     tags={"Hospital Profile"},
+     *     summary="Update hospital profile",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="string", description="Encrypted update data")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     )
+     * )
+     */
     public function update_profile() {
         $raw = file_get_contents("php://input");
         $requestData = json_decode($raw, true);
@@ -139,6 +184,29 @@ class HospitalProfileController extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/HospitalProfileController/change_password",
+     *     tags={"Hospital Profile"},
+     *     summary="Change hospital password",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="hosuid", type="string"),
+     *             @OA\Property(property="currentPassword", type="string"),
+     *             @OA\Property(property="newPassword", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     )
+     * )
+     */
     public function change_password() {
         $hosuid = $this->input->post('hosuid');
         $currentPassword = $this->input->post('currentPassword');

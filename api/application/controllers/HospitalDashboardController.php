@@ -1,6 +1,8 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+use OpenApi\Annotations as OA;
+
 class HospitalDashboardController extends CI_Controller {
     private $AES_KEY = "RohitGaradHos@173414";
 
@@ -86,6 +88,24 @@ class HospitalDashboardController extends CI_Controller {
         }
     }
 
+    /**
+     * @OA\Get(
+     *     path="/HospitalDashboardController/getStats",
+     *     tags={"Hospital Dashboard"},
+     *     summary="Get dashboard statistics",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", type="string", description="Encrypted stats data")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function getStats() {
         $hosuid = $this->authHosuid();
         $payload = $this->HospitalDashboardModel->getStats($hosuid);
@@ -98,6 +118,24 @@ class HospitalDashboardController extends CI_Controller {
         ]);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/HospitalDashboardController/getLists",
+     *     tags={"Hospital Dashboard"},
+     *     summary="Get dashboard lists",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", type="string", description="Encrypted lists data")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function getLists() {
         $hosuid = $this->authHosuid();
         $payload = $this->HospitalDashboardModel->getLists($hosuid);
@@ -110,6 +148,24 @@ class HospitalDashboardController extends CI_Controller {
         ]);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/HospitalDashboardController/getAppointments",
+     *     tags={"Hospital Dashboard"},
+     *     summary="Get dashboard appointments",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", type="string", description="Encrypted appointments data")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function getAppointments() {
         $hosuid = $this->authHosuid();
         $payload = $this->HospitalDashboardModel->getAppointments($hosuid);
@@ -122,6 +178,24 @@ class HospitalDashboardController extends CI_Controller {
         ]);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/HospitalDashboardController/getBottom",
+     *     tags={"Hospital Dashboard"},
+     *     summary="Get dashboard bottom data",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", type="string", description="Encrypted bottom data")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function getBottom() {
         $hosuid = $this->authHosuid();
         $payload = $this->HospitalDashboardModel->getBottom($hosuid);

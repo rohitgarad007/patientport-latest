@@ -1,6 +1,8 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+use OpenApi\Annotations as OA;
+
 class HSHospitalMedicalSController extends CI_Controller {
 
     public function __construct(){
@@ -86,6 +88,31 @@ class HSHospitalMedicalSController extends CI_Controller {
     // ================================
     // Medical Store: List
     // ================================
+    /**
+     * @OA\Post(
+     *     path="/HSHospitalMedicalSController/GetMedicalStoreList",
+     *     tags={"Hospital Medical Store"},
+     *     summary="Get medical store list",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="page", type="integer", example=1),
+     *             @OA\Property(property="limit", type="integer", example=10),
+     *             @OA\Property(property="search", type="string", example="")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted medical store list")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function GetMedicalStoreList(){
         try {
             $hosInfo = $this->requireHospitalAuth();
@@ -127,6 +154,35 @@ class HSHospitalMedicalSController extends CI_Controller {
     // ================================
     // Medical Store: Add
     // ================================
+    /**
+     * @OA\Post(
+     *     path="/HSHospitalMedicalSController/AddMedicalStoreInfo",
+     *     tags={"Hospital Medical Store"},
+     *     summary="Add medical store info",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="name", type="string", description="Encrypted name"),
+     *             @OA\Property(property="email", type="string", description="Encrypted email"),
+     *             @OA\Property(property="phone", type="string", description="Encrypted phone"),
+     *             @OA\Property(property="license_no", type="string", description="Encrypted license_no"),
+     *             @OA\Property(property="address", type="string", description="Encrypted address"),
+     *             @OA\Property(property="status", type="string", description="Encrypted status (active/1 or other)")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="id", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function AddMedicalStoreInfo(){
         try {
             $hosInfo = $this->requireHospitalAuth();
@@ -181,6 +237,36 @@ class HSHospitalMedicalSController extends CI_Controller {
     // ================================
     // Medical Store: Update
     // ================================
+    /**
+     * @OA\Post(
+     *     path="/HSHospitalMedicalSController/UpdateMedicalStoreInfo",
+     *     tags={"Hospital Medical Store"},
+     *     summary="Update medical store info",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="id", type="string", description="Encrypted store id"),
+     *             @OA\Property(property="name", type="string", description="Encrypted name"),
+     *             @OA\Property(property="email", type="string", description="Encrypted email"),
+     *             @OA\Property(property="phone", type="string", description="Encrypted phone"),
+     *             @OA\Property(property="license_no", type="string", description="Encrypted license_no"),
+     *             @OA\Property(property="address", type="string", description="Encrypted address"),
+     *             @OA\Property(property="status", type="string", description="Encrypted status")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="id", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function UpdateMedicalStoreInfo(){
         try {
             $hosInfo = $this->requireHospitalAuth();
@@ -236,6 +322,31 @@ class HSHospitalMedicalSController extends CI_Controller {
     // ================================
     // Medical Store: Change Status
     // ================================
+    /**
+     * @OA\Post(
+     *     path="/HSHospitalMedicalSController/ChangeMedicalStoreStatus",
+     *     tags={"Hospital Medical Store"},
+     *     summary="Change medical store status",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="id", type="string", description="Encrypted store id"),
+     *             @OA\Property(property="status", type="string", description="Encrypted status")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="id", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function ChangeMedicalStoreStatus(){
         try {
             $hosInfo = $this->requireHospitalAuth();
@@ -283,6 +394,30 @@ class HSHospitalMedicalSController extends CI_Controller {
     // ================================
     // Medical Store: Delete (soft)
     // ================================
+    /**
+     * @OA\Post(
+     *     path="/HSHospitalMedicalSController/DeleteMedicalStoreInfo",
+     *     tags={"Hospital Medical Store"},
+     *     summary="Delete medical store",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="id", type="string", description="Encrypted store id")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="id", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function DeleteMedicalStoreInfo(){
         try {
             $hosInfo = $this->requireHospitalAuth();
@@ -326,6 +461,32 @@ class HSHospitalMedicalSController extends CI_Controller {
     // ================================
     // Medical Inventory: Simple List with Available Count
     // ================================
+    /**
+     * @OA\Post(
+     *     path="/HSHospitalMedicalSController/GetMedicalInventoryList",
+     *     tags={"Hospital Medical Store"},
+     *     summary="Get medical inventory list",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="search", type="string"),
+     *             @OA\Property(property="only_available", type="integer", example=1),
+     *             @OA\Property(property="page", type="integer", example=1),
+     *             @OA\Property(property="limit", type="integer", example=50)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="string", description="Encrypted inventory list")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
     public function GetMedicalInventoryList(){
         try {
             $hosInfo = $this->requireHospitalAuth();
