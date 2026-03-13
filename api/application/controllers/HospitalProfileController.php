@@ -10,6 +10,7 @@ class HospitalProfileController extends CI_Controller {
     public function __construct() {
         parent::__construct();
         $this->load->model('HospitalProfileModel');
+        $this->load->helper('url');
         // Enable CORS
         header('Access-Control-Allow-Origin: *');
         header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
@@ -93,6 +94,42 @@ class HospitalProfileController extends CI_Controller {
         } else {
             echo json_encode(['status' => false, 'message' => 'Hospital not found']);
         }
+    }
+
+    public function get_website_settings($hosuid) {
+        if (!$hosuid) {
+            echo json_encode(['status' => false, 'message' => 'Hospital UID is required']);
+            return;
+        }
+
+        $hospitalId = $this->HospitalProfileModel->get_hospital_id_by_hosuid($hosuid);
+        if (!$hospitalId) {
+            echo json_encode(['status' => false, 'message' => 'Hospital not found']);
+            return;
+        }
+
+        $about = $this->HospitalProfileModel->get_website_about_by_hospital_id($hospitalId);
+        $bannersRows = $this->HospitalProfileModel->get_website_banners_by_hospital_id($hospitalId);
+
+        $banners = [];
+        foreach ($bannersRows as $row) {
+            $banners[] = [
+                'id' => isset($row['id']) ? (int)$row['id'] : null,
+                'title' => $row['title'] ?? '',
+                'sub_title' => $row['sub_title'] ?? '',
+                'image' => $row['banner_image'] ?? '',
+            ];
+        }
+
+        $settings = [
+            'about_title' => $about['about_title'] ?? '',
+            'about_description' => $about['about_description'] ?? '',
+            'website_template' => $about['website_template'] ?? '',
+            'banners' => $banners,
+        ];
+
+        $encryptedData = $this->encrypt_aes_for_js(json_encode($settings), $this->AES_KEY);
+        echo json_encode(['status' => true, 'data' => $encryptedData]);
     }
 
     /**
@@ -182,6 +219,209 @@ class HospitalProfileController extends CI_Controller {
         } else {
             echo json_encode(['status' => false, 'message' => 'Failed to update profile']);
         }
+    }
+
+    public function update_website_settings() {
+        $raw = file_get_contents("php://input");
+        $requestData = json_decode($raw, true);
+
+        $data = [];
+        if (isset($requestData['data'])) {
+            try {
+                $decryptedJson = $this->decrypt_aes_from_js($requestData['data'], $this->AES_KEY);
+                $data = json_decode($decryptedJson, true);
+            } catch (Exception $e) {
+                echo json_encode(['status' => false, 'message' => 'Decryption failed: ' . $e->getMessage()]);
+                return;
+            }
+        } else {
+            $data = !empty($requestData) ? $requestData : $_POST;
+        }
+
+        $hosuid = $data['hosuid'] ?? null;
+        if (!$hosuid) {
+            echo json_encode(['status' => false, 'message' => 'Hospital UID is required']);
+            return;
+        }
+
+        $hospitalId = $this->HospitalProfileModel->get_hospital_id_by_hosuid($hosuid);
+        if (!$hospitalId) {
+            echo json_encode(['status' => false, 'message' => 'Hospital not found']);
+            return;
+        }
+
+        $about_title = isset($data['about_title']) ? (string)$data['about_title'] : '';
+        $about_description = isset($data['about_description']) ? (string)$data['about_description'] : '';
+        $website_template = isset($data['website_template']) ? (string)$data['website_template'] : '';
+
+        $aboutData = [
+            'about_title' => $about_title,
+            'about_description' => $about_description,
+            'website_template' => $website_template,
+            'status' => 1,
+            'isdelete' => 0,
+        ];
+
+        if (array_key_exists('banners', $data)) {
+            $bannersIn = $data['banners'] ?? [];
+            if (is_string($bannersIn)) {
+                $decoded = json_decode($bannersIn, true);
+                $bannersIn = is_array($decoded) ? $decoded : [];
+            }
+            if (!is_array($bannersIn)) {
+                $bannersIn = [];
+            }
+
+            $sanitizedBanners = [];
+            $maxBanners = 20;
+            foreach ($bannersIn as $banner) {
+                if (!is_array($banner)) continue;
+                $title = isset($banner['title']) ? trim((string)$banner['title']) : '';
+                $subTitle = isset($banner['sub_title']) ? trim((string)$banner['sub_title']) : '';
+                $image = isset($banner['image']) ? trim((string)$banner['image']) : '';
+
+                $sanitizedBanners[] = [
+                    'title' => $title,
+                    'sub_title' => $subTitle,
+                    'banner_image' => $image,
+                ];
+
+                if (count($sanitizedBanners) >= $maxBanners) break;
+            }
+
+            $updated = $this->HospitalProfileModel->save_website_settings($hospitalId, $aboutData, $sanitizedBanners);
+        } else {
+            $updated = $this->HospitalProfileModel->upsert_website_about($hospitalId, $aboutData);
+        }
+
+        if ($updated) {
+            echo json_encode(['status' => true, 'message' => 'Website settings updated successfully']);
+        } else {
+            echo json_encode(['status' => false, 'message' => 'Failed to update website settings']);
+        }
+    }
+
+    public function upload_website_banner() {
+        $hosuid = $this->input->post('hosuid');
+        if (!$hosuid) {
+            echo json_encode(['status' => false, 'message' => 'Hospital UID is required']);
+            return;
+        }
+
+        $hospitalId = $this->HospitalProfileModel->get_hospital_id_by_hosuid($hosuid);
+        if (!$hospitalId) {
+            echo json_encode(['status' => false, 'message' => 'Hospital not found']);
+            return;
+        }
+
+        if (empty($_FILES['banner_image']) || empty($_FILES['banner_image']['name'])) {
+            echo json_encode(['status' => false, 'message' => 'No banner image provided']);
+            return;
+        }
+
+        $uploadDir = FCPATH . 'assets/images/hospitals/' . $hospitalId . '/';
+        if (!is_dir($uploadDir)) {
+            @mkdir($uploadDir, 0755, true);
+        }
+
+        $config = [
+            'upload_path'   => $uploadDir,
+            'allowed_types' => 'jpg|jpeg|png|gif|webp',
+            'max_size'      => 5120,
+            'encrypt_name'  => TRUE,
+        ];
+        $this->load->library('upload', $config);
+
+        if (!$this->upload->do_upload('banner_image')) {
+            echo json_encode([
+                'status' => false,
+                'message' => $this->upload->display_errors('', ''),
+            ]);
+            return;
+        }
+
+        $ud = $this->upload->data();
+        $imageRelPath = 'assets/images/hospitals/' . $hospitalId . '/' . $ud['file_name'];
+
+        $fullUrl = rtrim(base_url(), '/') . '/' . $imageRelPath;
+        echo json_encode([
+            'status' => true,
+            'message' => 'Banner image uploaded successfully',
+            'path' => $imageRelPath,
+            'full_url' => $fullUrl,
+        ]);
+    }
+
+    public function add_website_banner() {
+        $hosuid = $this->input->post('hosuid');
+        if (!$hosuid) {
+            echo json_encode(['status' => false, 'message' => 'Hospital UID is required']);
+            return;
+        }
+
+        $hospitalId = $this->HospitalProfileModel->get_hospital_id_by_hosuid($hosuid);
+        if (!$hospitalId) {
+            echo json_encode(['status' => false, 'message' => 'Hospital not found']);
+            return;
+        }
+
+        $title = trim((string)$this->input->post('title'));
+        $subTitle = trim((string)$this->input->post('sub_title'));
+
+        if (empty($_FILES['banner_image']) || empty($_FILES['banner_image']['name'])) {
+            echo json_encode(['status' => false, 'message' => 'Banner image is required']);
+            return;
+        }
+
+        $uploadDir = FCPATH . 'assets/images/hospitals/' . $hospitalId . '/';
+        if (!is_dir($uploadDir)) {
+            if (!@mkdir($uploadDir, 0755, true)) {
+                echo json_encode(['status' => false, 'message' => 'Failed to create upload directory']);
+                return;
+            }
+        }
+
+        $config = [
+            'upload_path'   => $uploadDir,
+            'allowed_types' => 'jpg|jpeg|png|gif|webp',
+            'max_size'      => 5120,
+            'encrypt_name'  => TRUE,
+        ];
+        $this->load->library('upload', $config);
+
+        if (!$this->upload->do_upload('banner_image')) {
+            echo json_encode([
+                'status' => false,
+                'message' => $this->upload->display_errors('', ''),
+            ]);
+            return;
+        }
+
+        $ud = $this->upload->data();
+        $imageRelPath = 'assets/images/hospitals/' . $hospitalId . '/' . $ud['file_name'];
+
+        $bannerId = $this->HospitalProfileModel->add_website_banner($hospitalId, [
+            'title' => $title,
+            'sub_title' => $subTitle,
+            'banner_image' => $imageRelPath,
+        ]);
+
+        if (!$bannerId) {
+            echo json_encode(['status' => false, 'message' => 'Failed to save banner']);
+            return;
+        }
+
+        echo json_encode([
+            'status' => true,
+            'message' => 'Banner added successfully',
+            'banner' => [
+                'id' => $bannerId,
+                'title' => $title,
+                'sub_title' => $subTitle,
+                'image' => $imageRelPath,
+                'full_url' => rtrim(base_url(), '/') . '/' . $imageRelPath,
+            ],
+        ]);
     }
 
     /**

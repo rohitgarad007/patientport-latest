@@ -16,6 +16,20 @@ export interface HospitalProfile {
   hospital_qr_code?: string;
 }
 
+export interface HospitalWebsiteBanner {
+  id?: number | null;
+  title: string;
+  sub_title: string;
+  image: string;
+}
+
+export interface HospitalWebsiteSettings {
+  about_title: string;
+  about_description: string;
+  website_template: string;
+  banners: HospitalWebsiteBanner[];
+}
+
 class HospitalService {
   // Hardcoded key to match backend (should be in secure config ideally)
   private AES_KEY = "RohitGaradHos@173414";
@@ -68,7 +82,7 @@ class HospitalService {
       // but to be safe and consistent, we could encrypt it too. 
       // However, the controller for changePassword wasn't modified to accept encrypted JSON.
       // So I leave it as is.
-      const response = await fetch(`${API_URL}hospital/profile/change_password`, {
+      const response = await fetch(`${API_URL}/hospital/profile/change_password`, {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
@@ -80,6 +94,109 @@ class HospitalService {
     } catch (error) {
       console.error("Error changing password:", error);
       return { status: false, message: "Failed to change password" };
+    }
+  }
+
+  async getWebsiteSettings(hosuid: string): Promise<HospitalWebsiteSettings | null> {
+    const API_URL = await configService.getApiUrl();
+    try {
+      const response = await fetch(`${API_URL}/hospital/website_settings/${hosuid}`);
+      if (!response.ok) throw new Error("Failed to fetch hospital website settings");
+      const result = await response.json();
+
+      if (result.status && result.data) {
+        const decryptedJson = decryptAESFromPHP(result.data, this.AES_KEY);
+        if (decryptedJson) {
+          return JSON.parse(decryptedJson);
+        }
+      }
+      return null;
+    } catch (error) {
+      console.error("Error fetching hospital website settings:", error);
+      return null;
+    }
+  }
+
+  async updateWebsiteSettings(
+    data: { hosuid: string } & Partial<HospitalWebsiteSettings>
+  ): Promise<{ status: boolean; message: string }> {
+    const API_URL = await configService.getApiUrl();
+    try {
+      const encryptedData = encryptAESForPHP(JSON.stringify(data), this.AES_KEY);
+      const response = await fetch(`${API_URL}/hospital/website_settings/update`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ data: encryptedData }),
+      });
+      if (!response.ok) throw new Error("Failed to update hospital website settings");
+      return await response.json();
+    } catch (error) {
+      console.error("Error updating hospital website settings:", error);
+      return { status: false, message: "Failed to update hospital website settings" };
+    }
+  }
+
+  async uploadWebsiteBannerImage(
+    hosuid: string,
+    file: File
+  ): Promise<{ status: boolean; message?: string; path?: string; full_url?: string }> {
+    const API_URL = await configService.getApiUrl();
+    const formData = new FormData();
+    formData.append("hosuid", hosuid);
+    formData.append("banner_image", file);
+
+    try {
+      const response = await fetch(`${API_URL}/hospital/website_settings/upload_banner`, {
+        method: "POST",
+        body: formData,
+      });
+      if (!response.ok) throw new Error("Failed to upload banner image");
+      return await response.json();
+    } catch (error) {
+      console.error("Error uploading banner image:", error);
+      return { status: false, message: "Failed to upload banner image" };
+    }
+  }
+
+  async addWebsiteBanner(params: {
+    hosuid: string;
+    title: string;
+    sub_title: string;
+    banner_image: File;
+  }): Promise<{ status: boolean; message?: string; banner?: HospitalWebsiteBanner; full_url?: string }> {
+    const API_URL = await configService.getApiUrl();
+    const formData = new FormData();
+    formData.append("hosuid", params.hosuid);
+    formData.append("title", params.title);
+    formData.append("sub_title", params.sub_title);
+    formData.append("banner_image", params.banner_image);
+
+    try {
+      const response = await fetch(`${API_URL}/hospital/website_settings/banner/add`, {
+        method: "POST",
+        body: formData,
+      });
+      if (!response.ok) throw new Error("Failed to add banner");
+      const json = await response.json();
+      if (json?.banner) {
+        return {
+          status: Boolean(json.status),
+          message: json.message,
+          banner: {
+            id: json.banner.id ?? null,
+            title: String(json.banner.title ?? ""),
+            sub_title: String(json.banner.sub_title ?? ""),
+            image: String(json.banner.image ?? ""),
+          },
+          full_url: json.banner.full_url ?? json.full_url,
+        };
+      }
+      return json;
+    } catch (error) {
+      console.error("Error adding website banner:", error);
+      return { status: false, message: "Failed to add banner" };
     }
   }
 }

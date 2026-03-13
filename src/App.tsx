@@ -175,6 +175,25 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return currentUser ? <>{children}</> : <Navigate to="/login" replace />;
 }
 
+function ApiDocsRedirect() {
+  useEffect(() => {
+    const apiUrl = String(Config.get("API_URL") || "").replace(/\/$/, "");
+    const targetUrl = apiUrl
+      ? `${apiUrl}/project-api-documentation`
+      : "/project-api-documentation";
+    window.location.replace(targetUrl);
+  }, []);
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="text-center">
+        <h1 className="mb-2 text-2xl font-semibold">Redirecting…</h1>
+        <p className="text-gray-600">Opening API Documentation</p>
+      </div>
+    </div>
+  );
+}
+
 const queryClient = new QueryClient();
 
 const App = () => {
@@ -275,6 +294,7 @@ const App = () => {
             <Route path="/appointment_cancelled" element={<AppointmentCancelled />} />
             <Route path="/appointment_expired" element={<AppointmentExpired />} />
             <Route path="/track-appointment/:appointmentId" element={<TrackAppintment />} />
+            <Route path="/hospital/:hosuid" element={<HospitalChat />} />
             <Route path="/hospital-chat/:hospitalId/:hospitalName" element={<HospitalChat />} />
 
             <Route path="/login" element={<LoginForm />} />
@@ -535,6 +555,10 @@ const App = () => {
                   )}
                 </ProtectedRoute>
               }
+            />
+            <Route
+              path="/project-api-documentation"
+              element={<ApiDocsRedirect />}
             />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

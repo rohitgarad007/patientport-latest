@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { SearchableSelect } from "@/components/ui/searchable-select";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -20,13 +21,22 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Eye, EyeOff, Info } from "lucide-react";
+import { Eye, EyeOff, Grid3x3, Info, List } from "lucide-react";
 import Cookies from "js-cookie";
 import { locationService, State, City } from "@/services/LocationService";
 import { hospitalService } from "@/services/HospitalService";
 import { configService } from "@/services/configService";
 import Swal from "sweetalert2";
 import QRCode from "qrcode";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
+type WebsiteBannerForm = {
+  id: number;
+  title: string;
+  subTitle: string;
+  image: string;
+  isUploading?: boolean;
+};
 
 export default function HospitalProfile() {
   const userInfo = Cookies.get("userInfo");
@@ -58,6 +68,28 @@ export default function HospitalProfile() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [apiUrl, setApiUrl] = useState("");
+
+  const [websiteSettings, setWebsiteSettings] = useState<{
+    aboutTitle: string;
+    aboutDescription: string;
+    template: string;
+    banners: WebsiteBannerForm[];
+  }>({
+    aboutTitle: "",
+    aboutDescription: "",
+    template: "template_1",
+    banners: [],
+  });
+
+  const [addBannerOpen, setAddBannerOpen] = useState(false);
+  const [newBannerTitle, setNewBannerTitle] = useState("");
+  const [newBannerSubTitle, setNewBannerSubTitle] = useState("");
+  const [newBannerFile, setNewBannerFile] = useState<File | null>(null);
+  const [newBannerPreviewUrl, setNewBannerPreviewUrl] = useState("");
+  const [isAddingBanner, setIsAddingBanner] = useState(false);
+  const [bannerView, setBannerView] = useState<"grid" | "table">("grid");
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewBanner, setPreviewBanner] = useState<WebsiteBannerForm | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -95,6 +127,21 @@ export default function HospitalProfile() {
               setCities(citiesData);
             }
           }
+
+          const web = await hospitalService.getWebsiteSettings(hospitalId);
+          if (web) {
+            setWebsiteSettings({
+              aboutTitle: web.about_title || "",
+              aboutDescription: web.about_description || "",
+              template: web.website_template || "template_1",
+              banners: (web.banners || []).map((b, idx) => ({
+                id: Number((b as any).id ?? Date.now() + idx),
+                title: b.title || "",
+                subTitle: b.sub_title || "",
+                image: b.image || "",
+              })),
+            });
+          }
         } else {
             console.error("Hospital ID (hosuid/loguid) not found in current user data.");
             Swal.fire("Error", "Could not identify hospital account. Please login again.", "error");
@@ -109,6 +156,28 @@ export default function HospitalProfile() {
 
     fetchData();
   }, [currentUser?.hosuid, currentUser?.loguid]);
+
+  const getImageUrl = (path: string) => {
+    if (!path) return "";
+    if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("data:")) return path;
+    return `${apiUrl}/${path}`;
+  };
+
+  useEffect(() => {
+    if (!newBannerFile) {
+      setNewBannerPreviewUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return "";
+      });
+      return;
+    }
+    const objectUrl = URL.createObjectURL(newBannerFile);
+    setNewBannerPreviewUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return objectUrl;
+    });
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [newBannerFile]);
 
   const handleGenerateQR = async () => {
     const hospitalId = currentUser?.hosuid || currentUser?.loguid;
@@ -218,6 +287,106 @@ export default function HospitalProfile() {
     }
   };
 
+  const resetNewBannerForm = () => {
+    setNewBannerTitle("");
+    setNewBannerSubTitle("");
+    setNewBannerFile(null);
+    if (newBannerPreviewUrl) {
+      URL.revokeObjectURL(newBannerPreviewUrl);
+      setNewBannerPreviewUrl("");
+    }
+  };
+
+  const handleAddBanner = () => {
+    resetNewBannerForm();
+    setAddBannerOpen(true);
+  };
+
+  const handleSubmitNewBanner = async () => {
+    const hospitalId = currentUser?.hosuid || currentUser?.loguid;
+    if (!hospitalId) {
+      Swal.fire("Error", "Hospital ID not found. Please login again.", "error");
+      return;
+    }
+    if (!newBannerTitle.trim()) {
+      Swal.fire("Error", "Please enter banner title.", "error");
+      return;
+    }
+    if (!newBannerFile) {
+      Swal.fire("Error", "Please select banner image.", "error");
+      return;
+    }
+
+    setIsAddingBanner(true);
+    try {
+      const res = await hospitalService.addWebsiteBanner({
+        hosuid: hospitalId,
+        title: newBannerTitle,
+        sub_title: newBannerSubTitle,
+        banner_image: newBannerFile,
+      });
+
+      if (res.status && res.banner) {
+        setWebsiteSettings((prev) => ({
+          ...prev,
+          banners: [
+            ...prev.banners,
+            {
+              id: Number(res.banner?.id ?? Date.now()),
+              title: res.banner.title || "",
+              subTitle: res.banner.sub_title || "",
+              image: res.banner.image || "",
+            },
+          ],
+        }));
+        setAddBannerOpen(false);
+        resetNewBannerForm();
+        Swal.fire("Success", "Banner added successfully!", "success");
+      } else {
+        Swal.fire("Error", res.message || "Failed to add banner.", "error");
+      }
+    } catch {
+      Swal.fire("Error", "Failed to add banner.", "error");
+    } finally {
+      setIsAddingBanner(false);
+    }
+  };
+
+  const openBannerPreview = (banner: WebsiteBannerForm) => {
+    setPreviewBanner(banner);
+    setPreviewOpen(true);
+  };
+
+  const handleWebsiteSettingsSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const hospitalId = currentUser?.hosuid || currentUser?.loguid;
+    if (!hospitalId) {
+      Swal.fire("Error", "Hospital ID not found. Please login again.", "error");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await hospitalService.updateWebsiteSettings({
+        hosuid: hospitalId,
+        about_title: websiteSettings.aboutTitle,
+        about_description: websiteSettings.aboutDescription,
+        website_template: websiteSettings.template,
+      });
+
+      if (result.status) {
+        Swal.fire("Success", "Website settings updated successfully!", "success");
+      } else {
+        Swal.fire("Error", result.message || "Failed to update website settings.", "error");
+      }
+    } catch {
+      Swal.fire("Error", "An error occurred while updating website settings.", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const isPasswordFormValid = 
       passwordData.currentPassword.trim() !== "" && 
       passwordData.newPassword.trim() !== "" && 
@@ -229,6 +398,92 @@ export default function HospitalProfile() {
 
   return (
     <div className="container mx-auto py-8 max-w-5xl">
+      <Dialog
+        open={addBannerOpen}
+        onOpenChange={(open) => {
+          setAddBannerOpen(open);
+          if (!open) resetNewBannerForm();
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Banner</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Banner Title</Label>
+              <Input value={newBannerTitle} onChange={(e) => setNewBannerTitle(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Sub Title</Label>
+              <Input value={newBannerSubTitle} onChange={(e) => setNewBannerSubTitle(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Banner Image</Label>
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] ?? null;
+                  setNewBannerFile(file);
+                  e.currentTarget.value = "";
+                }}
+                disabled={isAddingBanner}
+              />
+              {newBannerPreviewUrl ? (
+                <img
+                  src={newBannerPreviewUrl}
+                  alt="Banner preview"
+                  className="w-full max-h-56 object-contain rounded border bg-white"
+                />
+              ) : (
+                <div className="text-sm text-muted-foreground border rounded p-4 bg-muted/20">
+                  No image selected
+                </div>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setAddBannerOpen(false)} disabled={isAddingBanner}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={handleSubmitNewBanner} disabled={isAddingBanner}>
+              Submit
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={previewOpen}
+        onOpenChange={(open) => {
+          setPreviewOpen(open);
+          if (!open) setPreviewBanner(null);
+        }}
+      >
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>{previewBanner?.title || "Banner Preview"}</DialogTitle>
+          </DialogHeader>
+          {previewBanner?.subTitle ? (
+            <div className="text-sm text-muted-foreground">{previewBanner.subTitle}</div>
+          ) : null}
+          {previewBanner?.image ? (
+            <img
+              src={getImageUrl(previewBanner.image)}
+              alt={previewBanner.title || "Banner"}
+              className="w-full max-h-[70vh] object-contain rounded border bg-white"
+            />
+          ) : (
+            <div className="text-sm text-muted-foreground border rounded p-6 bg-muted/20">
+              No image
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <div className="flex items-center gap-4 mb-8">
         <div className="bg-primary/10 p-4 rounded-full">
           {/* <img src={PaIcons.user1} alt="Profile" className="w-12 h-12 text-primary" /> */}
@@ -241,9 +496,10 @@ export default function HospitalProfile() {
       </div>
 
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 lg:w-[400px] mb-8">
+        <TabsList className="grid w-full grid-cols-3 lg:w-[650px] mb-8">
           <TabsTrigger value="profile">Profile Information</TabsTrigger>
           <TabsTrigger value="security">Privacy & Security</TabsTrigger>
+          <TabsTrigger value="website">Website Settings</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
@@ -529,6 +785,186 @@ export default function HospitalProfile() {
                 </div>
                 <div className="flex justify-end">
                   <Button type="submit" disabled={!isPasswordFormValid}>Update Password</Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="website">
+          <Card>
+            <CardHeader>
+              <CardTitle>Website Settings</CardTitle>
+              <CardDescription>
+                Manage banners, About Us content, and website template selection.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleWebsiteSettingsSave} className="space-y-6">
+                <div className="space-y-2">
+                  <Label>Website Template</Label>
+                  <Select
+                    value={websiteSettings.template}
+                    onValueChange={(value) => setWebsiteSettings((prev) => ({ ...prev, template: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select template" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="template_1">Template 1</SelectItem>
+                      <SelectItem value="template_2">Template 2</SelectItem>
+                      <SelectItem value="template_3">Template 3</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <Separator />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="aboutTitle">About Title</Label>
+                    <Input
+                      id="aboutTitle"
+                      value={websiteSettings.aboutTitle}
+                      onChange={(e) => setWebsiteSettings((prev) => ({ ...prev, aboutTitle: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="aboutDescription">About Description</Label>
+                    <Textarea
+                      id="aboutDescription"
+                      value={websiteSettings.aboutDescription}
+                      onChange={(e) => setWebsiteSettings((prev) => ({ ...prev, aboutDescription: e.target.value }))}
+                      className="min-h-[120px]"
+                    />
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm font-medium">Banner Setting</div>
+                      <div className="text-xs text-muted-foreground">Add and manage homepage banners.</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 rounded-md border bg-background p-1">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={bannerView === "grid" ? "default" : "ghost"}
+                          onClick={() => setBannerView("grid")}
+                          className="h-8 px-2"
+                        >
+                          <Grid3x3 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={bannerView === "table" ? "default" : "ghost"}
+                          onClick={() => setBannerView("table")}
+                          className="h-8 px-2"
+                        >
+                          <List className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <Button type="button" variant="outline" onClick={handleAddBanner}>
+                        Add Banner
+                      </Button>
+                    </div>
+                  </div>
+
+                  {websiteSettings.banners.length === 0 ? (
+                    <div className="text-sm text-muted-foreground">No banners added.</div>
+                  ) : (
+                    bannerView === "grid" ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {websiteSettings.banners.map((banner, idx) => (
+                          <div key={banner.id} className="border rounded-md overflow-hidden bg-background">
+                            <div className="flex items-start justify-between gap-3 p-4">
+                              <div className="min-w-0">
+                                <div className="text-sm font-medium">Banner {idx + 1}</div>
+                                <div className="text-xs text-muted-foreground truncate">
+                                  {banner.title || "Untitled"} {banner.subTitle ? `• ${banner.subTitle}` : ""}
+                                </div>
+                              </div>
+                              <Button type="button" size="sm" variant="outline" onClick={() => openBannerPreview(banner)}>
+                                Preview
+                              </Button>
+                            </div>
+                            <div className="border-t bg-muted/10">
+                              {banner.image ? (
+                                <button
+                                  type="button"
+                                  onClick={() => openBannerPreview(banner)}
+                                  className="w-full text-left"
+                                >
+                                  <img
+                                    src={getImageUrl(banner.image)}
+                                    alt={`Banner ${idx + 1}`}
+                                    className="w-full h-40 object-cover"
+                                  />
+                                </button>
+                              ) : (
+                                <div className="text-sm text-muted-foreground p-6">No image</div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="rounded-md border overflow-hidden">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="w-[70px]">#</TableHead>
+                              <TableHead className="w-[96px]">Image</TableHead>
+                              <TableHead>Title</TableHead>
+                              <TableHead>Sub Title</TableHead>
+                              <TableHead className="text-right w-[130px]">Action</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {websiteSettings.banners.map((banner, idx) => (
+                              <TableRow key={banner.id}>
+                                <TableCell className="font-medium">{idx + 1}</TableCell>
+                                <TableCell>
+                                  {banner.image ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => openBannerPreview(banner)}
+                                      className="h-10 w-16 overflow-hidden rounded border bg-white"
+                                    >
+                                      <img
+                                        src={getImageUrl(banner.image)}
+                                        alt={`Banner ${idx + 1}`}
+                                        className="h-10 w-16 object-cover"
+                                      />
+                                    </button>
+                                  ) : (
+                                    <div className="h-10 w-16 rounded border bg-muted/20" />
+                                  )}
+                                </TableCell>
+                                <TableCell className="max-w-[260px] truncate">{banner.title || "Untitled"}</TableCell>
+                                <TableCell className="max-w-[260px] truncate">{banner.subTitle || "-"}</TableCell>
+                                <TableCell className="text-right">
+                                  <Button type="button" size="sm" variant="outline" onClick={() => openBannerPreview(banner)}>
+                                    <Eye className="h-4 w-4 mr-2" />
+                                    Preview
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )
+                  )}
+                </div>
+
+                <div className="flex justify-end">
+                  <Button type="submit">Save Website Settings</Button>
                 </div>
               </form>
             </CardContent>

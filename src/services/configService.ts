@@ -31,17 +31,20 @@ class ConfigService {
   }
 
   private async fetchConfig(): Promise<AppConfig> {
+    const normalizeBaseUrl = (url: string) => {
+      return String(url || "").replace(/\/+$/, "");
+    };
+
     // Force local config if running on localhost
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      const env: any = (import.meta as any).env || {};
       return {
         API_KEY: import.meta.env.VITE_API_KEY || '',
         API_KEY_DeepSeek: import.meta.env.VITE_API_KEY_DEEPSEEK || '',
         API_KEY_GEMINI: import.meta.env.VITE_API_KEY_GEMINI || '',
         AES_SECRET_KEY: import.meta.env.VITE_AES_SECRET_KEY || '',
-        API_URL: 'http://localhost/patientport-latest/api',
-        Live_URL: 'http://localhost/patientport-latest',
-        //API_URL: 'https://umahospital.obwebsite.in/api',
-        //Live_URL: 'https://umahospital.obwebsite.in',
+        API_URL: normalizeBaseUrl(env.VITE_API_URL || 'http://localhost/patientport-latest/api'),
+        Live_URL: normalizeBaseUrl(env.VITE_LIVE_URL || 'http://localhost/patientport-latest'),
       };
     }
 
@@ -58,10 +61,8 @@ class ConfigService {
           API_KEY_DeepSeek: serverConfig.VITE_API_KEY_DEEPSEEK || '',
           API_KEY_GEMINI: serverConfig.VITE_API_KEY_GEMINI || '',
           AES_SECRET_KEY: serverConfig.VITE_AES_SECRET_KEY || '',
-          API_URL: 'http://localhost/patientport-latest/api',
-          Live_URL: 'http://localhost/patientport-latest',
-          //API_URL: 'https://umahospital.obwebsite.in/api/',
-          //Live_URL: 'https://umahospital.obwebsite.in',
+          API_URL: normalizeBaseUrl(serverConfig.API_URL || serverConfig.VITE_API_URL || 'https://umahospital.obwebsite.in/api'),
+          Live_URL: normalizeBaseUrl(serverConfig.LIVE_URL || serverConfig.VITE_LIVE_URL || 'https://umahospital.obwebsite.in'),
         };
       }
     } catch (error) {
@@ -75,10 +76,8 @@ class ConfigService {
         API_KEY_DeepSeek: '', // Secure: Moved to backend
         API_KEY_GEMINI: '', // Secure: Moved to backend
         AES_SECRET_KEY: import.meta.env.VITE_AES_SECRET_KEY || '',
-        API_URL: 'http://localhost/patientport-latest/api',
-        Live_URL: 'http://localhost/patientport-latest',
-        //API_URL: 'https://umahospital.obwebsite.in/api',
-        //Live_URL: 'https://umahospital.obwebsite.in',
+        API_URL: normalizeBaseUrl(import.meta.env.VITE_API_URL || 'https://umahospital.obwebsite.in/api'),
+        Live_URL: normalizeBaseUrl(import.meta.env.VITE_LIVE_URL || 'https://umahospital.obwebsite.in'),
       };
     }
 

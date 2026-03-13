@@ -16,9 +16,17 @@ import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { parse, format } from "date-fns";
 
+type HospitalChatParams = {
+  hosuid?: string;
+  hospitalId?: string;
+  hospitalName?: string;
+};
+
 const HospitalChat = () => {
   const navigate = useNavigate();
-  const { hospitalId: hosuidParam, hospitalName: hospitalNameParam } = useParams();
+  const params = useParams<HospitalChatParams>();
+  const hosuidParam = String(params.hosuid ?? params.hospitalId ?? "");
+  const hospitalNameParam = String(params.hospitalName ?? "");
 
   // Resolved hospital details (from public hosuid -> backend lookup or storage)
   const [resolvedHospitalId, setResolvedHospitalId] = useState<number>(() => getCurrentHospitalId() ?? 0);
@@ -147,11 +155,11 @@ const HospitalChat = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-muted/30 to-muted/60">
-      <div className="container max-w-3xl mx-auto p-0 flex-1 flex flex-col animate-fade-in pb-24">
+    <div className="h-screen flex flex-col bg-gradient-to-br from-background via-muted/30 to-muted/60">
+      <div className="w-full p-0 flex-1 flex flex-col animate-fade-in">
         
         {/* Chat Window Card */}
-        <Card className="mb-6 border-primary/20 shadow-lg flex-1 flex flex-col">
+        <Card className="w-full border-primary/20 shadow-lg flex-1 flex flex-col">
           <CardHeader className="bg-primary/5 p-0">
             <CardTitle className="flex items-center justify-between py-2 pl-2 pr-2">
               <div className="flex items-center gap-3">
@@ -173,10 +181,10 @@ const HospitalChat = () => {
               </div>
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-0 flex-1">
+          <CardContent className="pt-0 flex flex-col flex-1">
             {/* Messages */}
-            <ScrollArea className="h-[calc(100vh-220px)] p-0 bg-gradient-to-b from-background to-muted/20 rounded-lg" ref={scrollRef}>
-              <div className="space-y-2">
+            <ScrollArea className="flex-1 p-0 bg-gradient-to-b from-background to-muted/20 rounded-lg" ref={scrollRef}>
+              <div className="space-y-2 pb-24">
                 {messages.map((message, index) => (
                   <div
                     key={message.id}
@@ -219,7 +227,7 @@ const HospitalChat = () => {
 
         {/* Fixed footer input */}
         <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t">
-          <div className="container max-w-3xl mx-auto p-3">
+          <div className="w-full p-3">
             <form onSubmit={handleSubmit} className="flex flex-col gap-2">
               {!invalidLink && conversationState === "book_phone" && (
                 <div className="flex gap-2">
