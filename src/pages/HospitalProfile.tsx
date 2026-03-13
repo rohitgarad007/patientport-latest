@@ -8,6 +8,8 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -21,7 +23,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Eye, EyeOff, Grid3x3, Info, List } from "lucide-react";
+import { Eye, EyeOff, Grid3x3, Info, List, Pencil } from "lucide-react";
 import Cookies from "js-cookie";
 import { locationService, State, City } from "@/services/LocationService";
 import { hospitalService } from "@/services/HospitalService";
@@ -29,12 +31,21 @@ import { configService } from "@/services/configService";
 import Swal from "sweetalert2";
 import QRCode from "qrcode";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import Sampletemplates1 from "@/components/websiteSample/Sampletemplates1";
+import Sampletemplates2 from "@/components/websiteSample/Sampletemplates2";
+import Sampletemplates3 from "@/components/websiteSample/Sampletemplates3";
+import Sampletemplates4 from "@/components/websiteSample/Sampletemplates4";
+import template01Img from "@/assets/template01.png";
+import template02Img from "@/assets/template02.png";
+import template03Img from "@/assets/template03.png";
+import template04Img from "@/assets/template04.png";
 
 type WebsiteBannerForm = {
   id: number;
   title: string;
   subTitle: string;
   image: string;
+  status: number;
   isUploading?: boolean;
 };
 
@@ -72,24 +83,40 @@ export default function HospitalProfile() {
   const [websiteSettings, setWebsiteSettings] = useState<{
     aboutTitle: string;
     aboutDescription: string;
+    aboutImage: string;
     template: string;
     banners: WebsiteBannerForm[];
   }>({
     aboutTitle: "",
     aboutDescription: "",
+    aboutImage: "",
     template: "template_1",
     banners: [],
   });
+  const [aboutImageFile, setAboutImageFile] = useState<File | null>(null);
+  const [aboutImagePreviewUrl, setAboutImagePreviewUrl] = useState("");
 
   const [addBannerOpen, setAddBannerOpen] = useState(false);
   const [newBannerTitle, setNewBannerTitle] = useState("");
   const [newBannerSubTitle, setNewBannerSubTitle] = useState("");
   const [newBannerFile, setNewBannerFile] = useState<File | null>(null);
   const [newBannerPreviewUrl, setNewBannerPreviewUrl] = useState("");
+  const [newBannerStatus, setNewBannerStatus] = useState<0 | 1>(1);
   const [isAddingBanner, setIsAddingBanner] = useState(false);
+  const [editBannerOpen, setEditBannerOpen] = useState(false);
+  const [editBannerId, setEditBannerId] = useState<number | null>(null);
+  const [editBannerTitle, setEditBannerTitle] = useState("");
+  const [editBannerSubTitle, setEditBannerSubTitle] = useState("");
+  const [editBannerFile, setEditBannerFile] = useState<File | null>(null);
+  const [editBannerPreviewUrl, setEditBannerPreviewUrl] = useState("");
+  const [editBannerExistingImage, setEditBannerExistingImage] = useState("");
+  const [editBannerStatus, setEditBannerStatus] = useState<0 | 1>(1);
+  const [isUpdatingBanner, setIsUpdatingBanner] = useState(false);
   const [bannerView, setBannerView] = useState<"grid" | "table">("grid");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewBanner, setPreviewBanner] = useState<WebsiteBannerForm | null>(null);
+  const [templatePreviewOpen, setTemplatePreviewOpen] = useState(false);
+  const [templatePreviewId, setTemplatePreviewId] = useState<1 | 2 | 3 | 4>(1);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -130,15 +157,22 @@ export default function HospitalProfile() {
 
           const web = await hospitalService.getWebsiteSettings(hospitalId);
           if (web) {
+            if (aboutImagePreviewUrl) {
+              URL.revokeObjectURL(aboutImagePreviewUrl);
+              setAboutImagePreviewUrl("");
+            }
+            setAboutImageFile(null);
             setWebsiteSettings({
               aboutTitle: web.about_title || "",
               aboutDescription: web.about_description || "",
+              aboutImage: web.about_image || "",
               template: web.website_template || "template_1",
               banners: (web.banners || []).map((b, idx) => ({
                 id: Number((b as any).id ?? Date.now() + idx),
                 title: b.title || "",
                 subTitle: b.sub_title || "",
                 image: b.image || "",
+                status: Number((b as any).status ?? 1),
               })),
             });
           }
@@ -178,6 +212,22 @@ export default function HospitalProfile() {
     });
     return () => URL.revokeObjectURL(objectUrl);
   }, [newBannerFile]);
+
+  useEffect(() => {
+    if (!editBannerFile) {
+      setEditBannerPreviewUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return "";
+      });
+      return;
+    }
+    const objectUrl = URL.createObjectURL(editBannerFile);
+    setEditBannerPreviewUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return objectUrl;
+    });
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [editBannerFile]);
 
   const handleGenerateQR = async () => {
     const hospitalId = currentUser?.hosuid || currentUser?.loguid;
@@ -291,6 +341,7 @@ export default function HospitalProfile() {
     setNewBannerTitle("");
     setNewBannerSubTitle("");
     setNewBannerFile(null);
+    setNewBannerStatus(1);
     if (newBannerPreviewUrl) {
       URL.revokeObjectURL(newBannerPreviewUrl);
       setNewBannerPreviewUrl("");
@@ -324,6 +375,7 @@ export default function HospitalProfile() {
         title: newBannerTitle,
         sub_title: newBannerSubTitle,
         banner_image: newBannerFile,
+        status: newBannerStatus,
       });
 
       if (res.status && res.banner) {
@@ -336,6 +388,7 @@ export default function HospitalProfile() {
               title: res.banner.title || "",
               subTitle: res.banner.sub_title || "",
               image: res.banner.image || "",
+              status: Number(res.banner.status ?? newBannerStatus ?? 1),
             },
           ],
         }));
@@ -349,6 +402,83 @@ export default function HospitalProfile() {
       Swal.fire("Error", "Failed to add banner.", "error");
     } finally {
       setIsAddingBanner(false);
+    }
+  };
+
+  const resetEditBannerForm = () => {
+    setEditBannerId(null);
+    setEditBannerTitle("");
+    setEditBannerSubTitle("");
+    setEditBannerFile(null);
+    setEditBannerExistingImage("");
+    setEditBannerStatus(1);
+    if (editBannerPreviewUrl) {
+      URL.revokeObjectURL(editBannerPreviewUrl);
+      setEditBannerPreviewUrl("");
+    }
+  };
+
+  const openEditBanner = (banner: WebsiteBannerForm) => {
+    resetEditBannerForm();
+    setEditBannerId(banner.id);
+    setEditBannerTitle(banner.title || "");
+    setEditBannerSubTitle(banner.subTitle || "");
+    setEditBannerExistingImage(banner.image || "");
+    setEditBannerStatus((banner.status ?? 1) === 1 ? 1 : 0);
+    setEditBannerOpen(true);
+  };
+
+  const handleSubmitEditBanner = async () => {
+    const hospitalId = currentUser?.hosuid || currentUser?.loguid;
+    if (!hospitalId) {
+      Swal.fire("Error", "Hospital ID not found. Please login again.", "error");
+      return;
+    }
+    if (editBannerId === null) {
+      Swal.fire("Error", "Banner not found.", "error");
+      return;
+    }
+    if (!editBannerTitle.trim()) {
+      Swal.fire("Error", "Please enter banner title.", "error");
+      return;
+    }
+
+    setIsUpdatingBanner(true);
+    try {
+      const res = await hospitalService.updateWebsiteBanner({
+        hosuid: hospitalId,
+        banner_id: editBannerId,
+        title: editBannerTitle,
+        sub_title: editBannerSubTitle,
+        status: editBannerStatus,
+        banner_image: editBannerFile,
+      });
+
+      if (res.status && res.banner) {
+        setWebsiteSettings((prev) => ({
+          ...prev,
+          banners: prev.banners.map((b) =>
+            b.id === editBannerId
+              ? {
+                  ...b,
+                  title: res.banner?.title || editBannerTitle,
+                  subTitle: res.banner?.sub_title || editBannerSubTitle,
+                  image: res.banner?.image || b.image,
+                  status: Number(res.banner?.status ?? editBannerStatus ?? 1),
+                }
+              : b
+          ),
+        }));
+        setEditBannerOpen(false);
+        resetEditBannerForm();
+        Swal.fire("Success", "Banner updated successfully!", "success");
+      } else {
+        Swal.fire("Error", res.message || "Failed to update banner.", "error");
+      }
+    } catch {
+      Swal.fire("Error", "Failed to update banner.", "error");
+    } finally {
+      setIsUpdatingBanner(false);
     }
   };
 
@@ -373,6 +503,13 @@ export default function HospitalProfile() {
         about_title: websiteSettings.aboutTitle,
         about_description: websiteSettings.aboutDescription,
         website_template: websiteSettings.template,
+        banners: websiteSettings.banners.map((b) => ({
+          id: b.id,
+          title: b.title,
+          sub_title: b.subTitle,
+          image: b.image,
+          status: b.status,
+        })),
       });
 
       if (result.status) {
@@ -384,6 +521,31 @@ export default function HospitalProfile() {
       Swal.fire("Error", "An error occurred while updating website settings.", "error");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleBannerStatusToggle = async (bannerId: number, nextStatus: 0 | 1) => {
+    const hospitalId = currentUser?.hosuid || currentUser?.loguid;
+    if (!hospitalId) {
+      Swal.fire("Error", "Hospital ID not found. Please login again.", "error");
+      return;
+    }
+
+    const previousBanners = websiteSettings.banners;
+    setWebsiteSettings((prev) => ({
+      ...prev,
+      banners: prev.banners.map((b) => (b.id === bannerId ? { ...b, status: nextStatus } : b)),
+    }));
+
+    const res = await hospitalService.changeWebsiteBannerStatus({
+      hosuid: hospitalId,
+      banner_id: bannerId,
+      status: nextStatus,
+    });
+
+    if (!res.status) {
+      setWebsiteSettings((prev) => ({ ...prev, banners: previousBanners }));
+      Swal.fire("Error", res.message || "Failed to update banner status.", "error");
     }
   };
 
@@ -418,6 +580,25 @@ export default function HospitalProfile() {
             <div className="space-y-2">
               <Label>Sub Title</Label>
               <Input value={newBannerSubTitle} onChange={(e) => setNewBannerSubTitle(e.target.value)} />
+            </div>
+            <div className="flex items-center justify-between rounded-md border bg-muted/10 px-3 py-2">
+              <div className="space-y-0.5">
+                <div className="text-sm font-medium">Banner Status</div>
+                <div className="text-xs text-muted-foreground">{newBannerStatus === 1 ? "Active" : "Inactive"}</div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge
+                  variant="secondary"
+                  className={
+                    newBannerStatus === 1
+                      ? "bg-emerald-100 text-emerald-800"
+                      : "bg-gray-100 text-gray-700"
+                  }
+                >
+                  {newBannerStatus === 1 ? "Active" : "Inactive"}
+                </Badge>
+                <Switch checked={newBannerStatus === 1} onCheckedChange={(v) => setNewBannerStatus(v ? 1 : 0)} />
+              </div>
             </div>
             <div className="space-y-2">
               <Label>Banner Image</Label>
@@ -457,6 +638,89 @@ export default function HospitalProfile() {
       </Dialog>
 
       <Dialog
+        open={editBannerOpen}
+        onOpenChange={(open) => {
+          setEditBannerOpen(open);
+          if (!open) resetEditBannerForm();
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Banner</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Banner Title</Label>
+              <Input value={editBannerTitle} onChange={(e) => setEditBannerTitle(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Sub Title</Label>
+              <Input value={editBannerSubTitle} onChange={(e) => setEditBannerSubTitle(e.target.value)} />
+            </div>
+            <div className="flex items-center justify-between rounded-md border bg-muted/10 px-3 py-2">
+              <div className="space-y-0.5">
+                <div className="text-sm font-medium">Banner Status</div>
+                <div className="text-xs text-muted-foreground">{editBannerStatus === 1 ? "Active" : "Inactive"}</div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge
+                  variant="secondary"
+                  className={
+                    editBannerStatus === 1
+                      ? "bg-emerald-100 text-emerald-800"
+                      : "bg-gray-100 text-gray-700"
+                  }
+                >
+                  {editBannerStatus === 1 ? "Active" : "Inactive"}
+                </Badge>
+                <Switch checked={editBannerStatus === 1} onCheckedChange={(v) => setEditBannerStatus(v ? 1 : 0)} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Banner Image</Label>
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] ?? null;
+                  setEditBannerFile(file);
+                  e.currentTarget.value = "";
+                }}
+                disabled={isUpdatingBanner}
+              />
+              {editBannerPreviewUrl ? (
+                <img
+                  src={editBannerPreviewUrl}
+                  alt="Banner preview"
+                  className="h-[60px] w-auto max-w-full object-contain rounded border bg-white mx-auto"
+                />
+              ) : editBannerExistingImage ? (
+                <img
+                  src={getImageUrl(editBannerExistingImage)}
+                  alt="Banner"
+                  className="h-[60px] w-auto max-w-full object-contain rounded border bg-white mx-auto"
+                />
+              ) : (
+                <div className="text-sm text-muted-foreground border rounded p-4 bg-muted/20">
+                  No image selected
+                </div>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setEditBannerOpen(false)} disabled={isUpdatingBanner}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={handleSubmitEditBanner} disabled={isUpdatingBanner}>
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
         open={previewOpen}
         onOpenChange={(open) => {
           setPreviewOpen(open);
@@ -484,6 +748,32 @@ export default function HospitalProfile() {
         </DialogContent>
       </Dialog>
 
+      <Dialog
+        open={templatePreviewOpen}
+        onOpenChange={(open) => {
+          setTemplatePreviewOpen(open);
+        }}
+      >
+        <DialogContent className="max-w-7xl">
+          <DialogHeader>
+            <DialogTitle>Template {templatePreviewId} Preview</DialogTitle>
+          </DialogHeader>
+          <div className="h-[75vh] overflow-auto rounded-md border bg-muted/10 p-6">
+            <div className="mx-auto w-[1280px] overflow-hidden rounded-md border bg-white shadow-sm" style={{ zoom: 0.6 } as any}>
+              {templatePreviewId === 1 ? (
+                <Sampletemplates1 />
+              ) : templatePreviewId === 2 ? (
+                <Sampletemplates2 />
+              ) : templatePreviewId === 3 ? (
+                <Sampletemplates3 />
+              ) : (
+                <Sampletemplates4 />
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <div className="flex items-center gap-4 mb-8">
         <div className="bg-primary/10 p-4 rounded-full">
           {/* <img src={PaIcons.user1} alt="Profile" className="w-12 h-12 text-primary" /> */}
@@ -505,7 +795,25 @@ export default function HospitalProfile() {
         <TabsContent value="profile">
           <Card>
             <CardHeader>
-              <CardTitle>Profile Information</CardTitle>
+              <div className="flex items-center justify-between gap-3">
+                <CardTitle>Profile Information</CardTitle>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const hosuid = currentUser?.hosuid || currentUser?.loguid;
+                    const rawName = String(profileData.name || currentUser?.name || "hospital").trim();
+                    const slug = encodeURIComponent(rawName.replace(/\s+/g, "-"));
+                    if (!hosuid) return;
+                    window.open(`/live-hospital/${slug}/${encodeURIComponent(String(hosuid))}`, "_blank", "noopener,noreferrer");
+                  }}
+                  className="gap-2"
+                >
+                  <Eye className="h-4 w-4" />
+                  Show Website
+                </Button>
+              </div>
               <CardDescription>
                 Update your personal information and contact details.
               </CardDescription>
@@ -794,13 +1102,31 @@ export default function HospitalProfile() {
         <TabsContent value="website">
           <Card>
             <CardHeader>
-              <CardTitle>Website Settings</CardTitle>
+              <div className="flex items-center justify-between gap-3">
+                <CardTitle>Website Settings</CardTitle>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const hosuid = currentUser?.hosuid || currentUser?.loguid;
+                    const rawName = String(profileData.name || currentUser?.name || "hospital").trim();
+                    const slug = encodeURIComponent(rawName.replace(/\s+/g, "-"));
+                    if (!hosuid) return;
+                    window.open(`/live-hospital/${slug}/${encodeURIComponent(String(hosuid))}`, "_blank", "noopener,noreferrer");
+                  }}
+                  className="gap-2"
+                >
+                  <Eye className="h-4 w-4" />
+                  Live Show Website
+                </Button>
+              </div>
               <CardDescription>
                 Manage banners, About Us content, and website template selection.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleWebsiteSettingsSave} className="space-y-6">
+              <div className="space-y-6">
                 <div className="space-y-2">
                   <Label>Website Template</Label>
                   <Select
@@ -814,8 +1140,83 @@ export default function HospitalProfile() {
                       <SelectItem value="template_1">Template 1</SelectItem>
                       <SelectItem value="template_2">Template 2</SelectItem>
                       <SelectItem value="template_3">Template 3</SelectItem>
+                      <SelectItem value="template_4">Template 4</SelectItem>
                     </SelectContent>
                   </Select>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {([1, 2, 3, 4] as const).map((id) => {
+                      const templateKey = `template_${id}`;
+                      const isSelected = websiteSettings.template === templateKey;
+                      const templateImg =
+                        id === 1 ? template01Img : id === 2 ? template02Img : id === 3 ? template03Img : template04Img;
+                      return (
+                        <div
+                          key={id}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => {
+                            setWebsiteSettings((prev) => ({ ...prev, template: templateKey }));
+                            setTemplatePreviewId(id);
+                            setTemplatePreviewOpen(true);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              setWebsiteSettings((prev) => ({ ...prev, template: templateKey }));
+                              setTemplatePreviewId(id);
+                              setTemplatePreviewOpen(true);
+                            }
+                          }}
+                          className={`cursor-pointer rounded-md border p-3 transition-colors ${
+                            isSelected
+                              ? "border-slate-900 bg-slate-50"
+                              : "border-input bg-background hover:bg-muted/10"
+                          }`}
+                        >
+                          <div className="h-14 overflow-hidden rounded border bg-white">
+                            <img
+                              src={templateImg}
+                              alt={`Template ${id}`}
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                          <div className="mt-2 flex items-center justify-between gap-2">
+                            <div className="min-w-0">
+                              <div className="text-sm font-medium truncate">Template {id}</div>
+                              <div className="text-xs text-muted-foreground truncate">
+                                {isSelected ? "Selected" : " "}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex justify-end">
+                    <Button
+                      type="button"
+                      onClick={async () => {
+                        const hospitalId = currentUser?.hosuid || currentUser?.loguid;
+                        if (!hospitalId) {
+                          Swal.fire("Error", "Hospital ID not found. Please login again.", "error");
+                          return;
+                        }
+                        const map: Record<string, 1 | 2 | 3 | 4> = {
+                          template_1: 1, template_2: 2, template_3: 3, template_4: 4,
+                        };
+                        const selected = websiteSettings.template || "template_1";
+                        const template_id = map[selected] ?? 1;
+                        const res = await hospitalService.updateWebsiteTemplate({ hosuid: hospitalId, template_id });
+                        if (res.status) {
+                          Swal.fire("Success", "Website template saved", "success");
+                        } else {
+                          Swal.fire("Error", res.message || "Failed to save website template", "error");
+                        }
+                      }}
+                    >
+                      Save Template
+                    </Button>
+                  </div>
                 </div>
 
                 <Separator />
@@ -837,6 +1238,75 @@ export default function HospitalProfile() {
                       onChange={(e) => setWebsiteSettings((prev) => ({ ...prev, aboutDescription: e.target.value }))}
                       className="min-h-[120px]"
                     />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>About Image</Label>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] ?? null;
+                        setAboutImageFile(file);
+                        if (aboutImagePreviewUrl) {
+                          URL.revokeObjectURL(aboutImagePreviewUrl);
+                          setAboutImagePreviewUrl("");
+                        }
+                        if (file) {
+                          setAboutImagePreviewUrl(URL.createObjectURL(file));
+                        }
+                        e.currentTarget.value = "";
+                      }}
+                    />
+                    {aboutImagePreviewUrl ? (
+                      <img
+                        src={aboutImagePreviewUrl}
+                        alt="About preview"
+                        className="h-[80px] w-auto max-w-full object-contain rounded border bg-white"
+                      />
+                    ) : websiteSettings.aboutImage ? (
+                      <img
+                        src={getImageUrl(websiteSettings.aboutImage)}
+                        alt="About"
+                        className="h-[80px] w-auto max-w-full object-contain rounded border bg-white"
+                      />
+                    ) : (
+                      <div className="text-sm text-muted-foreground border rounded p-4 bg-muted/20">
+                        No image selected
+                      </div>
+                    )}
+                  </div>
+                  <div className="md:col-span-2 flex justify-end">
+                    <Button
+                      type="button"
+                      onClick={async () => {
+                        const hospitalId = currentUser?.hosuid || currentUser?.loguid;
+                        if (!hospitalId) {
+                          Swal.fire("Error", "Hospital ID not found. Please login again.", "error");
+                          return;
+                        }
+                        const res = await hospitalService.updateWebsiteAbout({
+                          hosuid: hospitalId,
+                          about_title: websiteSettings.aboutTitle,
+                          about_description: websiteSettings.aboutDescription,
+                          about_image: aboutImageFile,
+                        });
+                        if (res.status) {
+                          if (res.about_image) {
+                            setWebsiteSettings((prev) => ({ ...prev, aboutImage: res.about_image || prev.aboutImage }));
+                            setAboutImageFile(null);
+                            if (aboutImagePreviewUrl) {
+                              URL.revokeObjectURL(aboutImagePreviewUrl);
+                              setAboutImagePreviewUrl("");
+                            }
+                          }
+                          Swal.fire("Success", "About information saved", "success");
+                        } else {
+                          Swal.fire("Error", res.message || "Failed to save about information", "error");
+                        }
+                      }}
+                    >
+                      Save About
+                    </Button>
                   </div>
                 </div>
 
@@ -889,9 +1359,29 @@ export default function HospitalProfile() {
                                   {banner.title || "Untitled"} {banner.subTitle ? `• ${banner.subTitle}` : ""}
                                 </div>
                               </div>
-                              <Button type="button" size="sm" variant="outline" onClick={() => openBannerPreview(banner)}>
-                                Preview
-                              </Button>
+                              <div className="flex items-center gap-2">
+                                <Badge
+                                  variant="secondary"
+                                  className={
+                                    banner.status === 1
+                                      ? "bg-emerald-100 text-emerald-800"
+                                      : "bg-gray-100 text-gray-700"
+                                  }
+                                >
+                                  {banner.status === 1 ? "Active" : "Inactive"}
+                                </Badge>
+                                <Switch
+                                  checked={banner.status === 1}
+                                  onCheckedChange={(checked) => handleBannerStatusToggle(banner.id, checked ? 1 : 0)}
+                                />
+                                <Button type="button" size="sm" variant="outline" onClick={() => openEditBanner(banner)}>
+                                  <Pencil className="h-4 w-4 mr-2" />
+                                  Edit
+                                </Button>
+                                <Button type="button" size="sm" variant="outline" onClick={() => openBannerPreview(banner)}>
+                                  Preview
+                                </Button>
+                              </div>
                             </div>
                             <div className="border-t bg-muted/10">
                               {banner.image ? (
@@ -922,6 +1412,7 @@ export default function HospitalProfile() {
                               <TableHead className="w-[96px]">Image</TableHead>
                               <TableHead>Title</TableHead>
                               <TableHead>Sub Title</TableHead>
+                              <TableHead className="w-[180px]">Status</TableHead>
                               <TableHead className="text-right w-[130px]">Action</TableHead>
                             </TableRow>
                           </TableHeader>
@@ -948,11 +1439,35 @@ export default function HospitalProfile() {
                                 </TableCell>
                                 <TableCell className="max-w-[260px] truncate">{banner.title || "Untitled"}</TableCell>
                                 <TableCell className="max-w-[260px] truncate">{banner.subTitle || "-"}</TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-2">
+                                    <Badge
+                                      variant="secondary"
+                                      className={
+                                        banner.status === 1
+                                          ? "bg-emerald-100 text-emerald-800"
+                                          : "bg-gray-100 text-gray-700"
+                                      }
+                                    >
+                                      {banner.status === 1 ? "Active" : "Inactive"}
+                                    </Badge>
+                                    <Switch
+                                      checked={banner.status === 1}
+                                      onCheckedChange={(checked) => handleBannerStatusToggle(banner.id, checked ? 1 : 0)}
+                                    />
+                                  </div>
+                                </TableCell>
                                 <TableCell className="text-right">
-                                  <Button type="button" size="sm" variant="outline" onClick={() => openBannerPreview(banner)}>
-                                    <Eye className="h-4 w-4 mr-2" />
-                                    Preview
-                                  </Button>
+                                  <div className="flex justify-end gap-2">
+                                    <Button type="button" size="sm" variant="outline" onClick={() => openEditBanner(banner)}>
+                                      <Pencil className="h-4 w-4 mr-2" />
+                                      Edit
+                                    </Button>
+                                    <Button type="button" size="sm" variant="outline" onClick={() => openBannerPreview(banner)}>
+                                      <Eye className="h-4 w-4 mr-2" />
+                                      Preview
+                                    </Button>
+                                  </div>
                                 </TableCell>
                               </TableRow>
                             ))}
@@ -963,10 +1478,7 @@ export default function HospitalProfile() {
                   )}
                 </div>
 
-                <div className="flex justify-end">
-                  <Button type="submit">Save Website Settings</Button>
-                </div>
-              </form>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

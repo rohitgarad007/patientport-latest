@@ -111,6 +111,7 @@ import HospitalInventoryMasters from "./pages/inventory/HospitalInventoryMasters
 import HospitalInventoryAddMedicine from "./pages/inventory/HospitalInventoryAddMedicine";
 import HospitalInventoryAddBatch from "./pages/inventory/HospitalInventoryAddBatch";
 import HospitalProfile from "./pages/HospitalProfile";
+import LiveHospitalWebsite from "./pages/LiveHospitalWebsite";
 import HSMedicalPage from "./pages/medical/HSMedicalPage";
 import HSMedicalRequests from "./pages/medical/HSMedicalRequests";
 import HospitalSharePatientInfo from "./pages/HospitalSharePatientInfo";
@@ -296,6 +297,7 @@ const App = () => {
             <Route path="/track-appointment/:appointmentId" element={<TrackAppintment />} />
             <Route path="/hospital/:hosuid" element={<HospitalChat />} />
             <Route path="/hospital-chat/:hospitalId/:hospitalName" element={<HospitalChat />} />
+            <Route path="/live-hospital/:hospital_name/:hospital_uid" element={<LiveHospitalWebsite />} />
 
             <Route path="/login" element={<LoginForm />} />
             <Route path="/sa-login" element={<SuperAdminLoginForm />} />

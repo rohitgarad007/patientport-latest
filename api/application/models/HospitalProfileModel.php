@@ -72,6 +72,14 @@ class HospitalProfileModel extends CI_Model {
         return $row ? (int)$row['id'] : null;
     }
 
+    public function get_web_template_by_hospital_id($hospital_id) {
+        $this->db->select('web_template');
+        $this->db->from('ms_hospitals');
+        $this->db->where('id', $hospital_id);
+        $row = $this->db->get()->row_array();
+        return $row && isset($row['web_template']) ? (int)$row['web_template'] : null;
+    }
+
     public function get_website_about_by_hospital_id($hospital_id) {
         $this->db->from('ms_hospitals_website_about');
         $this->db->where('hospital_id', $hospital_id);
@@ -123,13 +131,18 @@ class HospitalProfileModel extends CI_Model {
         $rows = [];
         $sort = 0;
         foreach ($banners as $banner) {
+            $status = 1;
+            if (isset($banner['status'])) {
+                $statusRaw = $banner['status'];
+                $status = ($statusRaw === 1 || $statusRaw === '1' || $statusRaw === true || $statusRaw === 'active') ? 1 : 0;
+            }
             $rows[] = [
                 'hospital_id' => $hospital_id,
                 'title' => isset($banner['title']) ? (string)$banner['title'] : '',
                 'sub_title' => isset($banner['sub_title']) ? (string)$banner['sub_title'] : '',
                 'banner_image' => isset($banner['banner_image']) ? (string)$banner['banner_image'] : '',
                 'sort_order' => $sort,
-                'status' => 1,
+                'status' => $status,
                 'isdelete' => 0,
             ];
             $sort++;
@@ -186,5 +199,31 @@ class HospitalProfileModel extends CI_Model {
         $ok = $this->db->insert('ms_hospitals_website_banners', $valid_data);
         if (!$ok) return null;
         return (int)$this->db->insert_id();
+    }
+
+    public function update_website_banner_status($hospital_id, $banner_id, $status) {
+        $this->db->where('hospital_id', $hospital_id);
+        $this->db->where('isdelete', 0);
+        $this->db->where('id', (int)$banner_id);
+        return $this->db->update('ms_hospitals_website_banners', ['status' => (int)$status]);
+    }
+
+    public function update_website_banner($hospital_id, $banner_id, $data) {
+        $table_fields = $this->db->list_fields('ms_hospitals_website_banners');
+        $valid_data = [];
+        foreach ($data as $key => $value) {
+            if (in_array($key, $table_fields)) {
+                $valid_data[$key] = $value;
+            }
+        }
+
+        if (empty($valid_data)) {
+            return false;
+        }
+
+        $this->db->where('hospital_id', $hospital_id);
+        $this->db->where('isdelete', 0);
+        $this->db->where('id', (int)$banner_id);
+        return $this->db->update('ms_hospitals_website_banners', $valid_data);
     }
 }

@@ -118,13 +118,21 @@ class HospitalProfileController extends CI_Controller {
                 'title' => $row['title'] ?? '',
                 'sub_title' => $row['sub_title'] ?? '',
                 'image' => $row['banner_image'] ?? '',
+                'status' => isset($row['status']) ? (int)$row['status'] : 1,
             ];
+        }
+
+        $templateId = $this->HospitalProfileModel->get_web_template_by_hospital_id($hospitalId);
+        $templateKey = 'template_1';
+        if (in_array($templateId, [1,2,3,4], true)) {
+            $templateKey = 'template_' . $templateId;
         }
 
         $settings = [
             'about_title' => $about['about_title'] ?? '',
             'about_description' => $about['about_description'] ?? '',
-            'website_template' => $about['website_template'] ?? '',
+            'about_image' => $about['about_image'] ?? '',
+            'website_template' => $templateKey,
             'banners' => $banners,
         ];
 
@@ -279,11 +287,14 @@ class HospitalProfileController extends CI_Controller {
                 $title = isset($banner['title']) ? trim((string)$banner['title']) : '';
                 $subTitle = isset($banner['sub_title']) ? trim((string)$banner['sub_title']) : '';
                 $image = isset($banner['image']) ? trim((string)$banner['image']) : '';
+                $statusRaw = $banner['status'] ?? 1;
+                $status = ($statusRaw === 1 || $statusRaw === '1' || $statusRaw === true || $statusRaw === 'active') ? 1 : 0;
 
                 $sanitizedBanners[] = [
                     'title' => $title,
                     'sub_title' => $subTitle,
                     'banner_image' => $image,
+                    'status' => $status,
                 ];
 
                 if (count($sanitizedBanners) >= $maxBanners) break;
@@ -367,6 +378,11 @@ class HospitalProfileController extends CI_Controller {
 
         $title = trim((string)$this->input->post('title'));
         $subTitle = trim((string)$this->input->post('sub_title'));
+        $statusRaw = $this->input->post('status');
+        $status = 1;
+        if ($statusRaw !== null && $statusRaw !== '') {
+            $status = ($statusRaw === 1 || $statusRaw === '1' || $statusRaw === true || $statusRaw === 'active') ? 1 : 0;
+        }
 
         if (empty($_FILES['banner_image']) || empty($_FILES['banner_image']['name'])) {
             echo json_encode(['status' => false, 'message' => 'Banner image is required']);
@@ -404,6 +420,7 @@ class HospitalProfileController extends CI_Controller {
             'title' => $title,
             'sub_title' => $subTitle,
             'banner_image' => $imageRelPath,
+            'status' => $status,
         ]);
 
         if (!$bannerId) {
@@ -419,9 +436,288 @@ class HospitalProfileController extends CI_Controller {
                 'title' => $title,
                 'sub_title' => $subTitle,
                 'image' => $imageRelPath,
+                'status' => $status,
                 'full_url' => rtrim(base_url(), '/') . '/' . $imageRelPath,
             ],
         ]);
+    }
+
+    public function update_website_banner() {
+        $hosuid = $this->input->post('hosuid');
+        $bannerId = $this->input->post('banner_id');
+        if (!$bannerId) {
+            $bannerId = $this->input->post('id');
+        }
+
+        if (!$hosuid || !$bannerId) {
+            echo json_encode(['status' => false, 'message' => 'Hospital UID and banner_id are required']);
+            return;
+        }
+
+        $hospitalId = $this->HospitalProfileModel->get_hospital_id_by_hosuid($hosuid);
+        if (!$hospitalId) {
+            echo json_encode(['status' => false, 'message' => 'Hospital not found']);
+            return;
+        }
+
+        $bannerRow = $this->db
+            ->where('hospital_id', $hospitalId)
+            ->where('isdelete', 0)
+            ->where('id', (int)$bannerId)
+            ->get('ms_hospitals_website_banners')
+            ->row_array();
+
+        if (!$bannerRow) {
+            echo json_encode(['status' => false, 'message' => 'Banner not found']);
+            return;
+        }
+
+        $titlePost = $this->input->post('title');
+        $subTitlePost = $this->input->post('sub_title');
+        $title = trim((string)$titlePost);
+        $subTitle = trim((string)$subTitlePost);
+        $statusRaw = $this->input->post('status');
+
+        $updateData = [];
+        if ($titlePost !== null) {
+            if ($title === '') {
+                echo json_encode(['status' => false, 'message' => 'Banner title is required']);
+                return;
+            }
+            $updateData['title'] = $title;
+        }
+        if ($subTitlePost !== null) {
+            $updateData['sub_title'] = $subTitle;
+        }
+        if ($statusRaw !== null && $statusRaw !== '') {
+            $updateData['status'] = ($statusRaw === 1 || $statusRaw === '1' || $statusRaw === true || $statusRaw === 'active') ? 1 : 0;
+        }
+
+        $imageRelPath = $bannerRow['banner_image'] ?? '';
+
+        if (!empty($_FILES['banner_image']) && !empty($_FILES['banner_image']['name'])) {
+            $uploadDir = FCPATH . 'assets/images/hospitals/' . $hospitalId . '/';
+            if (!is_dir($uploadDir)) {
+                if (!@mkdir($uploadDir, 0755, true)) {
+                    echo json_encode(['status' => false, 'message' => 'Failed to create upload directory']);
+                    return;
+                }
+            }
+
+            $config = [
+                'upload_path'   => $uploadDir,
+                'allowed_types' => 'jpg|jpeg|png|gif|webp',
+                'max_size'      => 5120,
+                'encrypt_name'  => TRUE,
+            ];
+            $this->load->library('upload', $config);
+
+            if (!$this->upload->do_upload('banner_image')) {
+                echo json_encode([
+                    'status' => false,
+                    'message' => $this->upload->display_errors('', ''),
+                ]);
+                return;
+            }
+
+            $ud = $this->upload->data();
+            $imageRelPath = 'assets/images/hospitals/' . $hospitalId . '/' . $ud['file_name'];
+            $updateData['banner_image'] = $imageRelPath;
+        }
+
+        if (empty($updateData)) {
+            echo json_encode(['status' => false, 'message' => 'No fields to update']);
+            return;
+        }
+
+        $ok = $this->HospitalProfileModel->update_website_banner($hospitalId, $bannerId, $updateData);
+        if (!$ok) {
+            echo json_encode(['status' => false, 'message' => 'Failed to update banner']);
+            return;
+        }
+
+        $outTitle = array_key_exists('title', $updateData) ? $updateData['title'] : ($bannerRow['title'] ?? '');
+        $outSubTitle = array_key_exists('sub_title', $updateData) ? $updateData['sub_title'] : ($bannerRow['sub_title'] ?? '');
+        $outStatus = array_key_exists('status', $updateData) ? (int)$updateData['status'] : (int)($bannerRow['status'] ?? 1);
+
+        echo json_encode([
+            'status' => true,
+            'message' => 'Banner updated successfully',
+            'banner' => [
+                'id' => (int)$bannerId,
+                'title' => $outTitle,
+                'sub_title' => $outSubTitle,
+                'image' => $imageRelPath,
+                'status' => $outStatus,
+                'full_url' => rtrim(base_url(), '/') . '/' . $imageRelPath,
+            ],
+        ]);
+    }
+
+    public function update_website_template() {
+        $raw = file_get_contents("php://input");
+        $requestData = json_decode($raw, true);
+
+        $data = [];
+        if (isset($requestData['data'])) {
+            try {
+                $decryptedJson = $this->decrypt_aes_from_js($requestData['data'], $this->AES_KEY);
+                $data = json_decode($decryptedJson, true);
+            } catch (Exception $e) {
+                echo json_encode(['status' => false, 'message' => 'Decryption failed: ' . $e->getMessage()]);
+                return;
+            }
+        } else {
+            $data = !empty($requestData) ? $requestData : $_POST;
+        }
+
+        $hosuid = $data['hosuid'] ?? null;
+        $templateId = isset($data['template_id']) ? (int)$data['template_id'] : null;
+
+        if (!$hosuid || !$templateId) {
+            echo json_encode(['status' => false, 'message' => 'hosuid and template_id are required']);
+            return;
+        }
+        if (!in_array($templateId, [1,2,3,4], true)) {
+            echo json_encode(['status' => false, 'message' => 'Invalid template_id']);
+            return;
+        }
+
+        $ok = $this->HospitalProfileModel->update_hospital_profile($hosuid, ['web_template' => $templateId]);
+        if ($ok) {
+            echo json_encode(['status' => true, 'message' => 'Website template updated successfully', 'data' => ['template_id' => $templateId]]);
+        } else {
+            echo json_encode(['status' => false, 'message' => 'Failed to update website template']);
+        }
+    }
+
+    public function update_website_about() {
+        $raw = file_get_contents("php://input");
+        $requestData = json_decode($raw, true);
+
+        $data = [];
+        if (isset($requestData['data'])) {
+            try {
+                $decryptedJson = $this->decrypt_aes_from_js($requestData['data'], $this->AES_KEY);
+                $data = json_decode($decryptedJson, true);
+            } catch (Exception $e) {
+                echo json_encode(['status' => false, 'message' => 'Decryption failed: ' . $e->getMessage()]);
+                return;
+            }
+        } else {
+            $data = !empty($requestData) ? $requestData : $_POST;
+        }
+
+        $hosuid = $data['hosuid'] ?? null;
+        if (!$hosuid) {
+            echo json_encode(['status' => false, 'message' => 'Hospital UID is required']);
+            return;
+        }
+
+        $hospitalId = $this->HospitalProfileModel->get_hospital_id_by_hosuid($hosuid);
+        if (!$hospitalId) {
+            echo json_encode(['status' => false, 'message' => 'Hospital not found']);
+            return;
+        }
+
+        $about_title = isset($data['about_title']) ? (string)$data['about_title'] : '';
+        $about_description = isset($data['about_description']) ? (string)$data['about_description'] : '';
+
+        $aboutImageRelPath = null;
+        if (!empty($_FILES['about_image']) && !empty($_FILES['about_image']['name'])) {
+            $subDir = 'abouts_image';
+            $uploadDir = FCPATH . 'assets/images/hospitals/' . $hospitalId . '/' . $subDir . '/';
+            if (!is_dir($uploadDir)) {
+                if (!@mkdir($uploadDir, 0755, true)) {
+                    echo json_encode(['status' => false, 'message' => 'Failed to create upload directory']);
+                    return;
+                }
+            }
+
+            $config = [
+                'upload_path'   => $uploadDir,
+                'allowed_types' => 'jpg|jpeg|png|gif|webp',
+                'max_size'      => 5120,
+                'encrypt_name'  => TRUE,
+            ];
+            $this->load->library('upload', $config);
+
+            if (!$this->upload->do_upload('about_image')) {
+                echo json_encode([
+                    'status' => false,
+                    'message' => $this->upload->display_errors('', ''),
+                ]);
+                return;
+            }
+
+            $ud = $this->upload->data();
+            $aboutImageRelPath = 'assets/images/hospitals/' . $hospitalId . '/' . $subDir . '/' . $ud['file_name'];
+        }
+
+        $aboutData = [
+            'about_title' => $about_title,
+            'about_description' => $about_description,
+            'status' => 1,
+            'isdelete' => 0,
+        ];
+        if (!empty($aboutImageRelPath)) {
+            $aboutData['about_image'] = $aboutImageRelPath;
+        }
+
+        $updated = $this->HospitalProfileModel->upsert_website_about($hospitalId, $aboutData);
+        if ($updated) {
+            $resp = ['status' => true, 'message' => 'About information updated successfully'];
+            if (!empty($aboutImageRelPath)) {
+                $resp['about_image'] = $aboutImageRelPath;
+                $resp['full_url'] = rtrim(base_url(), '/') . '/' . $aboutImageRelPath;
+            }
+            echo json_encode($resp);
+        } else {
+            echo json_encode(['status' => false, 'message' => 'Failed to update about information']);
+        }
+    }
+    public function change_website_banner_status() {
+        $raw = file_get_contents("php://input");
+        $requestData = json_decode($raw, true);
+
+        $data = [];
+        if (isset($requestData['data'])) {
+            try {
+                $decryptedJson = $this->decrypt_aes_from_js($requestData['data'], $this->AES_KEY);
+                $data = json_decode($decryptedJson, true);
+            } catch (Exception $e) {
+                echo json_encode(['status' => false, 'message' => 'Decryption failed: ' . $e->getMessage()]);
+                return;
+            }
+        } else {
+            $data = !empty($requestData) ? $requestData : $_POST;
+        }
+
+        $hosuid = $data['hosuid'] ?? null;
+        $bannerId = $data['banner_id'] ?? ($data['id'] ?? null);
+        $statusRaw = $data['status'] ?? null;
+
+        if (!$hosuid || !$bannerId || $statusRaw === null) {
+            echo json_encode(['status' => false, 'message' => 'hosuid, banner_id and status are required']);
+            return;
+        }
+
+        $hospitalId = $this->HospitalProfileModel->get_hospital_id_by_hosuid($hosuid);
+        if (!$hospitalId) {
+            echo json_encode(['status' => false, 'message' => 'Hospital not found']);
+            return;
+        }
+
+        $status = ($statusRaw === 1 || $statusRaw === '1' || $statusRaw === true || $statusRaw === 'active') ? 1 : 0;
+        $ok = $this->HospitalProfileModel->update_website_banner_status($hospitalId, $bannerId, $status);
+
+        if ($ok && $this->db->affected_rows() > 0) {
+            echo json_encode(['status' => true, 'message' => 'Banner status updated successfully', 'data' => ['banner_id' => $bannerId, 'status' => $status]]);
+        } elseif ($ok) {
+            echo json_encode(['status' => false, 'message' => 'Banner not found']);
+        } else {
+            echo json_encode(['status' => false, 'message' => 'Failed to update banner status']);
+        }
     }
 
     /**
