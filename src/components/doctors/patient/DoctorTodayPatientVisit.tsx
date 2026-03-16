@@ -6,16 +6,25 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Search, Clock, User, Phone, Grid3X3, List, Play, Eye, Calendar as CalendarIcon, ArrowUp, ArrowDown, CheckCircle, PauseCircle, PlayCircle, CheckCheck } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { getMyAppointmentsByDate, getMyEventSchedule, updateMyAppointmentStatus, updateMyQueuePositions } from "@/services/doctorService";
+import { connectDoctorAppointmentsSocket, getMyAppointmentsByDate, getMyEventSchedule, updateMyAppointmentStatus, updateMyQueuePositions } from "@/services/doctorService";
 import { useNavigate } from "react-router-dom";
 import type { Appointment, AppointmentStatus } from "@/types/appointment";
 
 type SlotKey = "morning" | "afternoon" | "evening";
+
+const asRecord = (v: unknown): Record<string, unknown> =>
+  v && typeof v === "object" ? (v as Record<string, unknown>) : {};
+
+const hasMessage = (v: unknown): v is { message: string } => {
+  if (!v || typeof v !== "object") return false;
+  if (!("message" in v)) return false;
+  return typeof (v as { message?: unknown }).message === "string";
+};
 
 const DoctorTodayPatientVisit = () => {
   const navigate = useNavigate();
@@ -110,98 +119,118 @@ const DoctorTodayPatientVisit = () => {
   });
 
   // Load doctorId (self) and appointments for selected date
-  const refreshAppointments = async (targetDateStr?: string) => {
+  const refreshAppointments = useCallback(async (targetDateStr?: string) => {
     try {
       setLoading(true);
       const dateStr = targetDateStr || selectedDateStr;
       const list = await getMyAppointmentsByDate(dateStr);
       // Expect the backend to return an array of appointment-like objects
-      const mapped: Appointment[] = (Array.isArray(list) ? list : []).map((item: any) => ({
-        id: String(item?.id ?? item?.appointmentId ?? ""),
-        tokenNumber: Number(item?.tokenNumber ?? item?.token ?? 0),
-        patient: {
-          id: String(item?.patient?.id ?? item?.patientId ?? ""),
-          name: String(item?.patient?.name ?? item?.patientName ?? "Unknown"),
-          phone: String(item?.patient?.phone ?? item?.patientPhone ?? ""),
-          age: Number(item?.patient?.age ?? item?.patientAge ?? 0),
-        },
-        doctor: {
-          id: String(item?.doctor?.id ?? item?.doctorId ?? doctorId ?? ""),
-          name: String(item?.doctor?.name ?? item?.doctorName ?? ""),
-          specialty: String(item?.doctor?.specialty ?? ""),
-          avatar: undefined,
-          availableDays: [],
-          schedules: [],
-        },
-        date: String(item?.date ?? item?.appointmentDate ?? dateStr),
-        timeSlot: {
-          id: String(item?.timeSlot?.id ?? item?.slotId ?? ""),
-          startTime: String(item?.timeSlot?.startTime ?? item?.startTime ?? ""),
-          endTime: String(item?.timeSlot?.endTime ?? item?.endTime ?? ""),
-          totalTokens: Number(item?.timeSlot?.totalTokens ?? item?.totalTokens ?? 0),
-          bookedTokens: Number(item?.timeSlot?.bookedTokens ?? item?.bookedTokens ?? 0),
-        },
-        status: String(item?.status ?? item?.appointmentStatus ?? "booked") as AppointmentStatus,
-        arrivalTime: String(item?.arrivalTime ?? ""),
-        consultationStartTime: String(item?.consultationStartTime ?? ""),
-        completedTime: String(item?.completedTime ?? ""),
-        queuePosition: Number(item?.queuePosition ?? 0),
-      }));
+      const mapped: Appointment[] = (Array.isArray(list) ? list : []).map((item: unknown) => {
+        const it = asRecord(item);
+        const patient = asRecord(it["patient"]);
+        const doctor = asRecord(it["doctor"]);
+        const timeSlot = asRecord(it["timeSlot"]);
+
+        return {
+          id: String(it["id"] ?? it["appointmentId"] ?? ""),
+          tokenNumber: Number(it["tokenNumber"] ?? it["token"] ?? 0),
+          patient: {
+            id: String(patient["id"] ?? it["patientId"] ?? ""),
+            name: String(patient["name"] ?? it["patientName"] ?? "Unknown"),
+            phone: String(patient["phone"] ?? it["patientPhone"] ?? ""),
+            age: Number(patient["age"] ?? it["patientAge"] ?? 0),
+          },
+          doctor: {
+            id: String(doctor["id"] ?? it["doctorId"] ?? doctorId ?? ""),
+            name: String(doctor["name"] ?? it["doctorName"] ?? ""),
+            specialty: String(doctor["specialty"] ?? ""),
+            avatar: undefined,
+            availableDays: [],
+            schedules: [],
+          },
+          date: String(it["date"] ?? it["appointmentDate"] ?? dateStr),
+          timeSlot: {
+            id: String(timeSlot["id"] ?? it["slotId"] ?? ""),
+            startTime: String(timeSlot["startTime"] ?? it["startTime"] ?? ""),
+            endTime: String(timeSlot["endTime"] ?? it["endTime"] ?? ""),
+            totalTokens: Number(timeSlot["totalTokens"] ?? it["totalTokens"] ?? 0),
+            bookedTokens: Number(timeSlot["bookedTokens"] ?? it["bookedTokens"] ?? 0),
+          },
+          status: String(it["status"] ?? it["appointmentStatus"] ?? "booked") as AppointmentStatus,
+          arrivalTime: String(it["arrivalTime"] ?? ""),
+          consultationStartTime: String(it["consultationStartTime"] ?? ""),
+          completedTime: String(it["completedTime"] ?? ""),
+          queuePosition: Number(it["queuePosition"] ?? 0),
+        };
+      });
       setAppointments(mapped);
       // Attempt to derive doctorId from the first mapped appointment if not already set
       if (!doctorId && mapped.length && mapped[0]?.doctor?.id) {
         setDoctorId(String(mapped[0].doctor.id));
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      toast.error(err?.message || "Failed to fetch appointments");
+      toast.error(hasMessage(err) ? err.message : "Failed to fetch appointments");
     } finally {
       setLoading(false);
     }
-  };
+  }, [doctorId, selectedDateStr]);
+
+  const refreshDaySlots = useCallback(async (targetDateStr?: string) => {
+    const dateStr = targetDateStr || selectedDateStr;
+    try {
+      const schedule = await getMyEventSchedule();
+      const scheduleArr = Array.isArray(schedule) ? schedule : [];
+      const day = scheduleArr.find((d) => String(asRecord(d)["date"] ?? "") === dateStr);
+      const slotsRaw = asRecord(day)["slots"];
+      const slotsArr = Array.isArray(slotsRaw) ? slotsRaw : [];
+      const normalizedSlots = slotsArr.map((s) => {
+        const sr = asRecord(s);
+        return {
+          start_time: String(sr["start_time"] ?? sr["startTime"] ?? ""),
+          end_time: String(sr["end_time"] ?? sr["endTime"] ?? ""),
+          type_name: typeof sr["type_name"] === "string" ? sr["type_name"] : typeof sr["typeName"] === "string" ? sr["typeName"] : undefined,
+          type_color: typeof sr["type_color"] === "string" ? sr["type_color"] : typeof sr["typeColor"] === "string" ? sr["typeColor"] : undefined,
+        };
+      });
+      setDaySlots(normalizedSlots);
+      setActiveSlotValue(normalizedSlots.length ? slotKey(normalizedSlots[0]) : "");
+    } catch (e: unknown) {
+      console.warn("Failed to load day slots", e);
+      setDaySlots([]);
+      setActiveSlotValue("");
+    }
+  }, [selectedDateStr]);
 
   useEffect(() => {
+    void refreshAppointments(selectedDateStr);
+  }, [refreshAppointments, selectedDateStr]);
+
+  useEffect(() => {
+    void refreshDaySlots(selectedDateStr);
+  }, [refreshDaySlots, selectedDateStr]);
+
+  useEffect(() => {
+    let closed = false;
+    let socket: { close: () => void } | null = null;
+
     (async () => {
-      try {
-        // Load appointments; doctorId will be inferred from returned items if present
-      } catch (e) {
-        console.warn("Initial load warning", e);
-      } finally {
-        // Always attempt to load appointments even if doctorId fallback is missing
-        refreshAppointments();
-      }
+      socket = await connectDoctorAppointmentsSocket({
+        onMessage: (message) => {
+          if (closed) return;
+          if (message?.event === "doctor_appointments_changed") {
+            void refreshAppointments(selectedDateStr);
+            void refreshDaySlots(selectedDateStr);
+          }
+        },
+      }).catch(() => null);
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
-  useEffect(() => {
-    refreshAppointments(selectedDateStr);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDateStr]);
-
-  useEffect(() => {
-    let mounted = true;
-    const loadDaySlots = async () => {
-      try {
-        const schedule: any[] = await getMyEventSchedule();
-        const day = Array.isArray(schedule) ? schedule.find((d: any) => d?.date === selectedDateStr) : null;
-        const slots = day?.slots || [];
-        if (mounted) {
-          setDaySlots(slots);
-          setActiveSlotValue(slots.length ? slotKey(slots[0]) : "");
-        }
-      } catch (e) {
-        console.warn("Failed to load day slots", e);
-        if (mounted) {
-          setDaySlots([]);
-          setActiveSlotValue("");
-        }
-      }
+    return () => {
+      closed = true;
+      socket?.close();
     };
-    loadDaySlots();
-    return () => { mounted = false; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDateStr]);
+  }, [refreshAppointments, refreshDaySlots, selectedDateStr]);
 
   const statusTimeLabel = (apt: Appointment) => {
     const d = (t?: string) => {
@@ -233,9 +262,9 @@ const DoctorTodayPatientVisit = () => {
         return;
       }
       await refreshAppointments(selectedDateStr);
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      toast.error(e?.message || "Failed to update status");
+      toast.error(hasMessage(e) ? e.message : "Failed to update status");
     }
   };
 
@@ -265,9 +294,9 @@ const DoctorTodayPatientVisit = () => {
       }));
       await refreshAppointments(selectedDateStr);
       toast.success("Queue updated");
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      toast.error(e?.message || "Failed to update queue");
+      toast.error(hasMessage(e) ? e.message : "Failed to update queue");
     }
   };
 

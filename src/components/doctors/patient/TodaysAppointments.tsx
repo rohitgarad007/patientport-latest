@@ -5,8 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, Eye } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { useEffect, useMemo, useState } from "react";
-import { getMyTodaysAppointmentsGrouped } from "@/services/doctorService";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { connectDoctorAppointmentsSocket, getMyTodaysAppointmentsGrouped } from "@/services/doctorService";
 
 type AptStatus = "active" | "waiting" | "arrived" | "booked" | "completed";
 
@@ -99,17 +99,39 @@ export function TodaysAppointments({ onViewPatient }: TodaysAppointmentsProps) {
     return formatTo12hr(raw);
   };
 
-  // Load today's appointments
-  useEffect(() => {
-    (async () => {
-      try {
-        const data = await getMyTodaysAppointmentsGrouped(today);
-        setGrouped(data);
-      } catch (err) {
-        console.error("Failed to load today's appointments", err);
-      }
-    })();
+  const refresh = useCallback(async () => {
+    try {
+      const data = await getMyTodaysAppointmentsGrouped(today);
+      setGrouped(data);
+    } catch (err) {
+      console.error("Failed to load today's appointments", err);
+    }
   }, [today]);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  useEffect(() => {
+    let closed = false;
+    let socket: { close: () => void } | null = null;
+
+    (async () => {
+      socket = await connectDoctorAppointmentsSocket({
+        onMessage: (message) => {
+          if (closed) return;
+          if (message?.event === "doctor_appointments_changed") {
+            void refresh();
+          }
+        },
+      }).catch(() => null);
+    })();
+
+    return () => {
+      closed = true;
+      socket?.close();
+    };
+  }, [refresh]);
 
   // Ordered list for doctor workflow
   const ordered = useMemo(() => {
