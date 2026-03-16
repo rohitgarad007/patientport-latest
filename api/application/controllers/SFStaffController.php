@@ -1920,34 +1920,38 @@ class SFStaffController  extends CI_Controller {
                 $patientName = $row['patient_name'] ?? '';
             }
 
+            $item = [
+                'id' => (string)$row['appointment_uid'],
+                'tokenNumber' => (int)($row['token_no'] ?? 0),
+                'patient' => [
+                    'id' => (string)($row['patient_id'] ?? ''),
+                    'name' => $patientName,
+                    'phone' => (string)($row['phone'] ?? ''),
+                    'age' => 0
+                ],
+                'doctor' => ['id' => (string)$row['doctor_id']],
+                'date' => $row['date'],
+                'timeSlot' => [
+                    'startTime' => $row['start_time'] ?? '',
+                    'endTime' => $row['end_time'] ?? ''
+                ],
+                'status' => strtolower($row['status']),
+                'queuePosition' => $row['queue_position'],
+                'arrivalTime' => $row['arrival_time'],
+                'consultationStartTime' => $row['consultation_start_time'],
+                'completedTime' => $row['completed_time']
+            ];
+
             $payload = json_encode([
-                'item' => [
-                    'id' => (string)$row['appointment_uid'],
-                    'tokenNumber' => (int)($row['token_no'] ?? 0),
-                    'patient' => [
-                        'id' => (string)($row['patient_id'] ?? ''),
-                        'name' => $patientName,
-                        'phone' => (string)($row['phone'] ?? ''),
-                        'age' => 0
-                    ],
-                    'doctor' => ['id' => (string)$row['doctor_id']],
-                    'date' => $row['date'],
-                    'timeSlot' => [
-                        'startTime' => $row['start_time'] ?? '',
-                        'endTime' => $row['end_time'] ?? ''
-                    ],
-                    'status' => strtolower($row['status']),
-                    'queuePosition' => $row['queue_position'],
-                    'arrivalTime' => $row['arrival_time'],
-                    'consultationStartTime' => $row['consultation_start_time'],
-                    'completedTime' => $row['completed_time']
-                ]
+                'item' => $item
             ]);
 
             $this->publishDoctorWs($doctorId, 'doctor_appointments_changed', [
+                'type' => 'appointment_updated',
                 'appointment_uid' => (string)$row['appointment_uid'],
                 'status' => strtolower((string)$row['status']),
                 'date' => (string)$row['date'],
+                'appointment' => $item,
             ]);
 
             echo json_encode([
@@ -2254,11 +2258,6 @@ class SFStaffController  extends CI_Controller {
                 return;
             }
 
-            $this->publishDoctorWs($doctorId, 'doctor_appointments_changed', [
-                'date' => (string)$date,
-                'type' => 'queue_positions_updated',
-            ]);
-
             /* ===============================
                FETCH UPDATED LIST
             =============================== */
@@ -2315,6 +2314,12 @@ class SFStaffController  extends CI_Controller {
 
             $payload = json_encode(['items' => $list]);
             $encryptedData = $this->encrypt_aes_for_js($payload, $AES_KEY);
+
+            $this->publishDoctorWs($doctorId, 'doctor_appointments_changed', [
+                'date' => (string)$date,
+                'type' => 'queue_positions_updated',
+                'items' => $list,
+            ]);
 
             echo json_encode([
                 'success' => true,

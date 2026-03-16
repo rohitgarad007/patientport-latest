@@ -708,11 +708,37 @@ class PublicHomeController extends CI_Controller {
                          ->update('ms_doctor_time_slots');
             }
 
+            $wsAppointment = [
+                'id' => (string)$appointmentUid,
+                'tokenNumber' => (int)($tokenNo ?? 0),
+                'patient' => [
+                    'id' => (string)($patientId ?? ''),
+                    'name' => (string)($name ?? ''),
+                    'phone' => (string)($phone ?? ''),
+                    'age' => 0,
+                ],
+                'doctor' => [
+                    'id' => (string)$doctorId
+                ],
+                'date' => (string)$dateStr,
+                'timeSlot' => [
+                    'id' => (string)($slotId ?? ''),
+                    'startTime' => (string)($slotRow['start_time'] ?? ''),
+                    'endTime' => (string)($slotRow['end_time'] ?? ''),
+                ],
+                'status' => (string)$initialStatus,
+                'queuePosition' => null,
+                'arrivalTime' => null,
+                'consultationStartTime' => null,
+                'completedTime' => null,
+            ];
+
             $this->publishDoctorWs($doctorId, 'doctor_appointments_changed', [
                 'type' => 'appointment_created',
                 'appointment_uid' => (string)$appointmentUid,
                 'status' => (string)$initialStatus,
                 'date' => (string)$dateStr,
+                'appointment' => $wsAppointment,
             ]);
 
             echo json_encode([

@@ -245,6 +245,49 @@ export function DcotorAppSidebar() {
         onMessage: (message) => {
           if (closed) return;
           if (message?.event === "doctor_appointments_changed") {
+            const payload = asRecord(message.payload);
+            const type = typeof payload["type"] === "string" ? payload["type"] : "";
+
+            if (type === "queue_positions_updated" && Array.isArray(payload["items"])) {
+              const items = (payload["items"] as unknown[]).map(normalizeAppointment);
+              const waiting = items.filter((a) => String(a.status ?? "").toLowerCase() === "waiting");
+              const arrived = items.filter((a) => String(a.status ?? "").toLowerCase() === "arrived");
+              const draft = items.filter((a) => String(a.status ?? "").toLowerCase() === "draft");
+              setTodaysGrouped({
+                waiting: waiting.sort((a, b) => Number(a.queuePosition ?? 0) - Number(b.queuePosition ?? 0)),
+                arrived,
+                draft,
+              });
+              return;
+            }
+
+            if (payload["appointment"]) {
+              const updated = normalizeAppointment(payload["appointment"]);
+              const status = String(updated.status ?? "").toLowerCase();
+              setTodaysGrouped((prev) => {
+                const without = {
+                  waiting: prev.waiting.filter((a) => a.id !== updated.id),
+                  arrived: prev.arrived.filter((a) => a.id !== updated.id),
+                  draft: prev.draft.filter((a) => a.id !== updated.id),
+                };
+
+                if (status === "waiting") {
+                  const next = [...without.waiting, updated].sort(
+                    (a, b) => Number(a.queuePosition ?? 0) - Number(b.queuePosition ?? 0)
+                  );
+                  return { ...without, waiting: next };
+                }
+                if (status === "arrived") {
+                  return { ...without, arrived: [...without.arrived, updated] };
+                }
+                if (status === "draft") {
+                  return { ...without, draft: [...without.draft, updated] };
+                }
+                return without;
+              });
+              return;
+            }
+
             void refreshTodaysGrouped();
           }
         },

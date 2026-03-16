@@ -165,16 +165,49 @@ class PatientTreatmentController extends CI_Controller {
             $this->PatientTreatmentModel->updateAppointmentStatus($data['appointment_id'], $apptStatus);
 
             // Publish websocket notification to the respective doctor so sidebar updates without refresh
-            $this->db->select('doctor_id, appointment_uid, date, status');
-            $this->db->from('ms_patient_appointment');
-            $this->db->where('id', $data['appointment_id']);
-            $aptRow = $this->db->get()->row_array();
+            $aptRow = $this->db
+                ->select('a.doctor_id, a.appointment_uid, a.patient_id, a.date, a.token_no, a.start_time, a.end_time, a.status, a.queue_position, a.arrival_time, a.consultation_start_time, a.completed_time, a.patient_name, a.phone, p.fname, p.lname, p.phone AS pphone')
+                ->from('ms_patient_appointment a')
+                ->join('ms_patient p', 'p.id = a.patient_id', 'left')
+                ->where('a.id', $data['appointment_id'])
+                ->limit(1)
+                ->get()
+                ->row_array();
             if ($aptRow && !empty($aptRow['doctor_id'])) {
+                $patientName = trim(($aptRow['fname'] ?? '') . ' ' . ($aptRow['lname'] ?? ''));
+                if ($patientName === '') {
+                    $patientName = $aptRow['patient_name'] ?? '';
+                }
+                $patientPhone = $aptRow['pphone'] ?? ($aptRow['phone'] ?? '');
+                $wsAppointment = [
+                    'id' => (string)($aptRow['appointment_uid'] ?? $data['appointment_id']),
+                    'tokenNumber' => (int)($aptRow['token_no'] ?? 0),
+                    'patient' => [
+                        'id' => (string)($aptRow['patient_id'] ?? ''),
+                        'name' => (string)$patientName,
+                        'phone' => (string)$patientPhone,
+                        'age' => 0,
+                    ],
+                    'doctor' => [
+                        'id' => (string)($aptRow['doctor_id'] ?? '')
+                    ],
+                    'date' => (string)($aptRow['date'] ?? ''),
+                    'timeSlot' => [
+                        'startTime' => (string)($aptRow['start_time'] ?? ''),
+                        'endTime' => (string)($aptRow['end_time'] ?? ''),
+                    ],
+                    'status' => strtolower((string)($aptRow['status'] ?? $apptStatus)),
+                    'queuePosition' => $aptRow['queue_position'] ?? null,
+                    'arrivalTime' => $aptRow['arrival_time'] ?? null,
+                    'consultationStartTime' => $aptRow['consultation_start_time'] ?? null,
+                    'completedTime' => $aptRow['completed_time'] ?? null,
+                ];
                 $this->publishDoctorWs($aptRow['doctor_id'], 'doctor_appointments_changed', [
                     'type' => 'treatment_saved',
                     'appointment_uid' => (string)($aptRow['appointment_uid'] ?? $data['appointment_id']),
                     'status' => strtolower((string)($aptRow['status'] ?? $apptStatus)),
                     'date' => (string)($aptRow['date'] ?? ''),
+                    'appointment' => $wsAppointment,
                 ]);
             }
 
