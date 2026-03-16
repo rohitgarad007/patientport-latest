@@ -7,6 +7,8 @@ import {
   Crown, Gem, Shield, Award, Quote, ChevronLeft, ChevronRight
 } from "lucide-react";
 
+import type { HospitalAmenityItem, HospitalPublicAbout, HospitalPublicDoctor, HospitalSpecializationItem } from "@/services/HospitalService";
+
 import heroImg1 from "@/assets/hero-hospital-1.jpg";
 import heroImg2 from "@/assets/hero-hospital-2.jpg";
 import heroImg3 from "@/assets/hero-hospital-3.jpg";
@@ -18,6 +20,8 @@ import doctor1 from "@/assets/doctor-5.jpg";
 import doctor2 from "@/assets/doctor-2.jpg";
 import doctor3 from "@/assets/doctor-1.jpg";
 import doctor4 from "@/assets/doctor-6.jpg";
+import maleDoctorImg from "@/assets/male-doctor.png";
+import femaleDoctorImg from "@/assets/female-doctor.png";
 import patient1 from "@/assets/patient-1.jpg";
 import patient2 from "@/assets/patient-2.jpg";
 import patient3 from "@/assets/patient-3.jpg";
@@ -57,15 +61,63 @@ const testimonials = [
 
 const navLinks = ["Home", "About", "Departments", "Doctors", "Testimonials", "Contact"];
 
+type Props = {
+  hospitalName?: string;
+  specializations?: HospitalSpecializationItem[];
+  doctors?: HospitalPublicDoctor[];
+  about?: HospitalPublicAbout | null;
+  amenities?: HospitalAmenityItem[];
+};
+
 // ─── Hospital 4: Royal Medical Institute ─────────────────────
 // Design: Luxury, dark navy with gold accents, elegant serif typography,
 // premium cards with borders, sophisticated animations, regal feel
-const LiveTemplate3 = () => {
+const LiveTemplate3 = ({ hospitalName, specializations, doctors: publicDoctors }: Props) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [slide, setSlide] = useState(0);
   const [tIdx, setTIdx] = useState(0);
   const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
+
+  const resolvedDepartments = (() => {
+    if (specializations && specializations.length > 0) {
+      const icons = [Heart, Brain, Bone, Baby, ScanLine, Ambulance, Shield, Award];
+      return specializations.map((s, idx) => ({
+        icon: icons[idx % icons.length],
+        name: String(s.name ?? ""),
+        desc: String(s.description ?? ""),
+      }));
+    }
+    return departments;
+  })();
+
+  const resolvedDoctors = (() => {
+    if (publicDoctors && publicDoctors.length > 0) {
+      const formatExp = (y?: string, m?: string) => {
+        const yy = Number(y || 0);
+        const mm = Number(m || 0);
+        if (!yy && !mm) return "—";
+        const parts: string[] = [];
+        if (yy) parts.push(`${yy}y`);
+        if (mm) parts.push(`${mm}m`);
+        return parts.join(" ");
+      };
+      const resolvePhoto = (src?: string, gender?: string) => {
+        const s = String(src ?? "");
+        if (s) return s;
+        const g = String(gender ?? "").trim().toUpperCase();
+        const isFemale = g === "F" || g === "FEMALE";
+        return isFemale ? femaleDoctorImg : maleDoctorImg;
+      };
+      return publicDoctors.map((d) => ({
+        photo: resolvePhoto(d.profile_image, d.gender),
+        name: d.name,
+        spec: d.specialization_name || "Specialist",
+        exp: formatExp(d.experience_year, d.experience_month),
+      }));
+    }
+    return doctors;
+  })();
 
   useEffect(() => { const h = () => setScrolled(window.scrollY > 50); window.addEventListener("scroll", h); return () => window.removeEventListener("scroll", h); }, []);
   const nextSlide = useCallback(() => setSlide(s => (s + 1) % slides.length), []);
@@ -86,8 +138,10 @@ const LiveTemplate3 = () => {
             <Link to="/"><ArrowLeft className="w-5 h-5" style={{ color: gold }} /></Link>
             <Crown className="w-8 h-8" style={{ color: gold }} />
             <div>
-              <span className="text-lg font-bold tracking-wider" style={{ color: "#fff" }}>ROYAL</span>
-              <span className="block text-[10px] tracking-[0.3em] uppercase" style={{ color: gold }}>Medical Institute</span>
+              <span className="text-lg font-bold tracking-wider" style={{ color: "#fff" }}>{hospitalName || "ROYAL"}</span>
+              {!hospitalName ? (
+                <span className="block text-[10px] tracking-[0.3em] uppercase" style={{ color: gold }}>Medical Institute</span>
+              ) : null}
             </div>
           </div>
           <nav className="hidden lg:flex items-center gap-6">
@@ -187,7 +241,7 @@ const LiveTemplate3 = () => {
             <h2 className="text-3xl md:text-4xl font-bold" style={{ color: "#fff" }}>Premier Departments</h2>
           </motion.div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {departments.map((d, i) => (
+            {resolvedDepartments.map((d, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
                 className="border p-8 group hover:border-[hsl(40,85%,55%)] transition-colors text-center" style={{ borderColor: "hsl(0,0%,100%,0.1)" }}>
                 <div className="w-16 h-16 mx-auto mb-5 border flex items-center justify-center group-hover:border-[hsl(40,85%,55%)] transition-colors" style={{ borderColor: "hsl(0,0%,100%,0.15)" }}>
@@ -213,7 +267,7 @@ const LiveTemplate3 = () => {
             <h2 className="text-3xl md:text-4xl font-bold" style={{ color: navy }}>Distinguished Physicians</h2>
           </motion.div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {doctors.map((d, i) => (
+            {resolvedDoctors.map((d, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
                 className="group">
                 <div className="relative overflow-hidden mb-4">
@@ -315,7 +369,7 @@ const LiveTemplate3 = () => {
         <div className="container mx-auto px-4">
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10">
             <div>
-              <div className="flex items-center gap-2 mb-4"><Crown className="w-7 h-7" style={{ color: gold }} /><div><span className="text-lg font-bold tracking-wider" style={{ color: "#fff" }}>ROYAL</span><span className="block text-[9px] tracking-[0.3em] uppercase" style={{ color: gold }}>Medical Institute</span></div></div>
+              <div className="flex items-center gap-2 mb-4"><Crown className="w-7 h-7" style={{ color: gold }} /><div><span className="text-lg font-bold tracking-wider" style={{ color: "#fff" }}>{hospitalName || "ROYAL"}</span>{!hospitalName ? <span className="block text-[9px] tracking-[0.3em] uppercase" style={{ color: gold }}>Medical Institute</span> : null}</div></div>
               <p className="text-sm" style={{ color: "hsl(0,0%,100%,0.4)" }}>Premium healthcare excellence since 1995. Serving distinguished patients worldwide.</p>
               <div className="flex gap-3 mt-4">{[Facebook, Twitter, Instagram, Linkedin].map((I, i) => <a key={i} href="#" className="w-8 h-8 border flex items-center justify-center hover:border-[hsl(40,85%,55%)] transition-colors" style={{ borderColor: "hsl(0,0%,100%,0.1)" }}><I className="w-4 h-4" style={{ color: "hsl(0,0%,100%,0.4)" }} /></a>)}</div>
             </div>
@@ -325,7 +379,7 @@ const LiveTemplate3 = () => {
             </div>
             <div>
               <h4 className="font-semibold mb-4 tracking-wide" style={{ color: gold }}>Departments</h4>
-              <ul className="space-y-2">{departments.map(d => <li key={d.name}><span className="text-sm" style={{ color: "hsl(0,0%,100%,0.4)" }}>{d.name}</span></li>)}</ul>
+              <ul className="space-y-2">{resolvedDepartments.map(d => <li key={d.name}><span className="text-sm" style={{ color: "hsl(0,0%,100%,0.4)" }}>{d.name}</span></li>)}</ul>
             </div>
             <div>
               <h4 className="font-semibold mb-4 tracking-wide" style={{ color: gold }}>Contact</h4>

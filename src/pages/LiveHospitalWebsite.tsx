@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, Suspense, lazy } from "react";
 import { useParams } from "react-router-dom";
 import { fetchPublicHospitalInfo } from "@/services/PublicHomeService";
-import { hospitalService, HospitalWebsiteSettings } from "@/services/HospitalService";
+import { hospitalService, HospitalAmenityItem, HospitalPublicAbout, HospitalPublicBanner, HospitalPublicDoctor, HospitalSpecializationItem, HospitalWebsiteSettings } from "@/services/HospitalService";
 
 const LiveTemplate1 = lazy(() => import("@/components/liveTemplates/LiveTemplate1"));
 const LiveTemplate2 = lazy(() => import("@/components/liveTemplates/LiveTemplate2"));
@@ -13,6 +13,12 @@ type Params = {
   hospital_uid?: string;
 };
 
+type HospitalContactInfo = {
+  address?: string;
+  phone?: string;
+  email?: string;
+};
+
 export default function LiveHospitalWebsite() {
   const params = useParams<Params>();
   const hospitalUid = String(params.hospital_uid ?? "");
@@ -20,7 +26,13 @@ export default function LiveHospitalWebsite() {
   const [loading, setLoading] = useState(true);
   const [invalid, setInvalid] = useState(false);
   const [hospitalName, setHospitalName] = useState("");
+  const [hospitalContact, setHospitalContact] = useState<HospitalContactInfo | null>(null);
   const [websiteSettings, setWebsiteSettings] = useState<HospitalWebsiteSettings | null>(null);
+  const [specializations, setSpecializations] = useState<HospitalSpecializationItem[]>([]);
+  const [doctors, setDoctors] = useState<HospitalPublicDoctor[]>([]);
+  const [about, setAbout] = useState<HospitalPublicAbout | null>(null);
+  const [amenities, setAmenities] = useState<HospitalAmenityItem[]>([]);
+  const [banners, setBanners] = useState<HospitalPublicBanner[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -41,11 +53,28 @@ export default function LiveHospitalWebsite() {
           return;
         }
         setHospitalName(String(info.name ?? ""));
+        setHospitalContact({
+          address: String(info.address ?? ""),
+          phone: String(info.phone ?? ""),
+          email: String(info.email ?? ""),
+        });
 
-        const web = await hospitalService.getWebsiteSettings(hospitalUid);
+        const [web, specs, docs, aboutInfo, amenityItems, bannerItems] = await Promise.all([
+          hospitalService.getWebsiteSettings(hospitalUid),
+          hospitalService.getPublicHospitalSpecializations(hospitalUid),
+          hospitalService.getPublicHospitalDoctors(hospitalUid),
+          hospitalService.getPublicHospitalAbout(hospitalUid),
+          hospitalService.getPublicHospitalAmenities(hospitalUid),
+          hospitalService.getPublicHospitalBanners(hospitalUid),
+        ]);
         if (cancelled) return;
 
         setWebsiteSettings(web);
+        setSpecializations(specs);
+        setDoctors(docs);
+        setAbout(aboutInfo);
+        setAmenities(amenityItems);
+        setBanners(bannerItems);
       } catch {
         if (!cancelled) setInvalid(true);
       } finally {
@@ -99,15 +128,14 @@ export default function LiveHospitalWebsite() {
       }
     >
       {templateId === 1 ? (
-        <LiveTemplate1 />
+        <LiveTemplate1 hospitalName={hospitalName} specializations={specializations} doctors={doctors} about={about} amenities={amenities} contact={hospitalContact} banners={banners} />
       ) : templateId === 2 ? (
-        <LiveTemplate2 />
+        <LiveTemplate2 hospitalName={hospitalName} specializations={specializations} doctors={doctors} about={about} amenities={amenities} />
       ) : templateId === 3 ? (
-        <LiveTemplate3 />
+        <LiveTemplate3 hospitalName={hospitalName} specializations={specializations} doctors={doctors} about={about} amenities={amenities} />
       ) : (
-        <LiveTemplate4 />
+        <LiveTemplate4 hospitalName={hospitalName} specializations={specializations} doctors={doctors} about={about} amenities={amenities} />
       )}
     </Suspense>
   );
 }
-

@@ -57,12 +57,12 @@ export const fetchDoctors = async (
 };
 
 // ✅ Add doctor
-export const addDoctor = async (data: any) => {
+export const addDoctor = async (data: Record<string, unknown>) => {
   const { apiUrl, headers } = await getAuthHeaders();
   const AES_KEY = await configService.getAesSecretKey();
-  const encryptedData: any = {};
+  const encryptedData: Record<string, string> = {};
   for (const key in data) {
-    if (data.hasOwnProperty(key)) {
+    if (Object.prototype.hasOwnProperty.call(data, key)) {
       encryptedData[key] = CryptoJS.AES.encrypt(
         String(data[key] ?? ""),
         AES_KEY
@@ -82,17 +82,17 @@ export const addDoctor = async (data: any) => {
 };
 
 // ✅ Update doctor
-export const updateDoctor = async (id: string, data: any) => {
+export const updateDoctor = async (id: string, data: Record<string, unknown>) => {
   const { apiUrl, headers } = await getAuthHeaders();
   const AES_KEY = await configService.getAesSecretKey();
 
   
 
-  const encryptedData: any = { id }; // Keep ID unencrypted if backend expects it unencrypted
+  const encryptedData: Record<string, string> = { id }; // Keep ID unencrypted if backend expects it unencrypted
   
 
   for (const key in data) {
-    if (data.hasOwnProperty(key) && key !== "email" && key !== "password") {
+    if (Object.prototype.hasOwnProperty.call(data, key) && key !== "email" && key !== "password") {
       encryptedData[key] = CryptoJS.AES.encrypt(
         String(data[key] ?? ""),
         AES_KEY
@@ -278,7 +278,7 @@ export const getMyTodaysAppointmentsGrouped = async (date?: string) => {
   const { apiUrl, headers } = await getAuthHeaders();
   const AES_KEY = await configService.getAesSecretKey();
 
-  const payload: any = {};
+  const payload: Record<string, string> = {};
   if (date) {
     payload.date = CryptoJS.AES.encrypt(String(date), AES_KEY).toString();
   }
@@ -299,12 +299,118 @@ export const getMyTodaysAppointmentsGrouped = async (date?: string) => {
   return { active: [], waiting: [], arrived: [], booked: [], completed: [], draft: [] };
 };
 
+export type DoctorAppointmentsWsMessage = {
+  event: string;
+  doctor_id?: string;
+  payload?: unknown;
+};
+
+export const connectDoctorAppointmentsSocket = async (opts: {
+  onMessage: (message: DoctorAppointmentsWsMessage) => void;
+  onOpen?: () => void;
+  onClose?: () => void;
+}) => {
+  let ws: WebSocket | null = null;
+  let closedByUser = false;
+  let reconnectAttempt = 0;
+  let reconnectTimer: number | null = null;
+
+  const getWsUrl = async () => {
+    const env = import.meta.env as unknown as Record<string, string | undefined>;
+    const rawBase =
+      env.VITE_DOCTOR_NOTIFICATIONS_WS_URL ||
+      env.VITE_WS_NOTIFICATIONS_URL ||
+      "";
+    const base =
+      rawBase ||
+      `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.hostname}:8081/ws`;
+
+    const profile = await getLoggedInDoctorProfile().catch(() => null);
+    const doctorId =
+      profile?.id ??
+      profile?.doctor_id ??
+      profile?.doctorId ??
+      profile?.doctorID ??
+      profile?.doctor ??
+      null;
+
+    if (!doctorId) throw new Error("Doctor id not found");
+
+    const url = new URL(base);
+    url.searchParams.set("doctor_id", String(doctorId));
+    return url.toString();
+  };
+
+  const scheduleReconnect = () => {
+    if (closedByUser) return;
+    if (reconnectTimer) window.clearTimeout(reconnectTimer);
+    const delay = Math.min(10000, 500 * Math.pow(2, reconnectAttempt));
+    reconnectAttempt = Math.min(reconnectAttempt + 1, 6);
+    reconnectTimer = window.setTimeout(() => {
+      void connect();
+    }, delay);
+  };
+
+  const connect = async () => {
+    try {
+      const url = await getWsUrl();
+      ws = new WebSocket(url);
+
+      ws.onopen = () => {
+        reconnectAttempt = 0;
+        opts.onOpen?.();
+      };
+
+      ws.onmessage = (ev) => {
+        try {
+          const parsed: unknown = JSON.parse(String(ev.data || "{}"));
+          if (!parsed || typeof parsed !== "object") return;
+          const record = parsed as Record<string, unknown>;
+          if (typeof record.event !== "string") return;
+          opts.onMessage(record as unknown as DoctorAppointmentsWsMessage);
+        } catch {
+          return;
+        }
+      };
+
+      ws.onclose = () => {
+        opts.onClose?.();
+        scheduleReconnect();
+      };
+
+      ws.onerror = () => {
+        try {
+          ws?.close();
+        } catch {
+          scheduleReconnect();
+        }
+      };
+    } catch {
+      scheduleReconnect();
+    }
+  };
+
+  void connect();
+
+  return {
+    close: () => {
+      closedByUser = true;
+      if (reconnectTimer) window.clearTimeout(reconnectTimer);
+      try {
+        ws?.close();
+      } catch {
+        return;
+      }
+    },
+  };
+};
+
 // Fetch logged-in doctor upcoming appointments (encrypted)
 export const getMyUpcomingAppointments = async (limitDays: number = 30) => {
   const { apiUrl, headers } = await getAuthHeaders();
   const AES_KEY = await configService.getAesSecretKey();
 
-  const payload: any = {};
+  const payload: Record<string, string> = {};
   if (limitDays && Number.isFinite(limitDays)) {
     payload.limitDays = CryptoJS.AES.encrypt(String(limitDays), AES_KEY).toString();
   }
@@ -366,11 +472,12 @@ export const updateMyAppointmentStatus = async (payload: {
       return { ...json, data: parsed.item };
     }
     return { ...json, data: null };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error updating appointment status (doctor):', error);
+    const message = error instanceof Error ? error.message : String(error || '');
     return {
       success: false,
-      message: error.message || 'Unexpected error while updating appointment status',
+      message: message || 'Unexpected error while updating appointment status',
       data: null,
     };
   }
@@ -411,11 +518,12 @@ export const updateMyQueuePositions = async (payload: {
       return { ...json, data: parsed.items ?? [] };
     }
     return { ...json, data: [] };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error updating queue positions (doctor):', error);
+    const message = error instanceof Error ? error.message : String(error || '');
     return {
       success: false,
-      message: error.message || 'Unexpected error while updating queue positions',
+      message: message || 'Unexpected error while updating queue positions',
       data: [],
     };
   }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
@@ -7,6 +7,8 @@ import {
   Building2, Send, Linkedin, Twitter, Facebook, Instagram, ArrowLeft,
   Shield, Award, Stethoscope, Activity, Quote
 } from "lucide-react";
+
+import type { HospitalAmenityItem, HospitalPublicAbout, HospitalPublicBanner, HospitalPublicDoctor, HospitalSpecializationItem } from "@/services/HospitalService";
 
 import heroImg1 from "@/assets/hero-hospital-1.jpg";
 import heroImg2 from "@/assets/hero-hospital-2.jpg";
@@ -19,10 +21,13 @@ import doctor1 from "@/assets/doctor-1.jpg";
 import doctor2 from "@/assets/doctor-2.jpg";
 import doctor3 from "@/assets/doctor-3.jpg";
 import doctor4 from "@/assets/doctor-4.jpg";
+import maleDoctorImg from "@/assets/male-doctor.png";
+import femaleDoctorImg from "@/assets/female-doctor.png";
 import patient1 from "@/assets/patient-1.jpg";
 import patient2 from "@/assets/patient-2.jpg";
 import patient3 from "@/assets/patient-3.jpg";
 import patient4 from "@/assets/patient-4.jpg";
+import { PaIcons } from "@/components/icons/PaIcons";
 
 // ─── Data ──────────────────────────────────────────────────────
 const slides = [
@@ -65,15 +70,136 @@ const stats = [
   { icon: Building2, value: "30+", label: "Departments" },
 ];
 
+type Props = {
+  hospitalName?: string;
+  specializations?: HospitalSpecializationItem[];
+  doctors?: HospitalPublicDoctor[];
+  about?: HospitalPublicAbout | null;
+  amenities?: HospitalAmenityItem[];
+  contact?: {
+    address?: string;
+    phone?: string;
+    email?: string;
+  } | null;
+  banners?: HospitalPublicBanner[];
+};
+
 // ─── Hospital 1: City General ──────────────────────────────────
 // Design: Classic clean layout, blue tones, horizontal card layouts,
 // centered content, traditional medical feel with rounded cards
-const LiveTemplate1 = () => {
+const LiveTemplate1 = ({ hospitalName, specializations, doctors: publicDoctors, about, amenities, contact, banners }: Props) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [slide, setSlide] = useState(0);
   const [testimonialIdx, setTestimonialIdx] = useState(0);
   const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
+
+  const resolvedDepartments = (() => {
+    if (specializations && specializations.length > 0) {
+      const icons = [Heart, Brain, Bone, Baby, ScanLine, Ambulance, Activity, Stethoscope];
+      return specializations.map((s, idx) => ({
+        icon: icons[idx % icons.length],
+        name: String(s.name ?? ""),
+        desc: String(s.description ?? ""),
+      }));
+    }
+    return departments;
+  })();
+
+  const resolvedDoctors = (() => {
+    if (publicDoctors && publicDoctors.length > 0) {
+      const formatExp = (y?: string, m?: string) => {
+        const yy = Number(y || 0);
+        const mm = Number(m || 0);
+        if (!yy && !mm) return "—";
+        const parts: string[] = [];
+        if (yy) parts.push(`${yy}y`);
+        if (mm) parts.push(`${mm}m`);
+        return parts.join(" ");
+      };
+      const resolvePhoto = (src?: string, gender?: string) => {
+        const s = String(src ?? "");
+        if (s) return s;
+        const g = String(gender ?? "").trim().toUpperCase();
+        const isFemale = g === "F" || g === "FEMALE";
+        return isFemale ? femaleDoctorImg : maleDoctorImg;
+      };
+      return publicDoctors.map((d) => {
+        const spec = d.specialization_name || "Specialist";
+        return {
+          photo: resolvePhoto(d.profile_image, d.gender),
+          name: d.name,
+          spec,
+          exp: formatExp(d.experience_year, d.experience_month),
+          desc: spec ? `Specialist in ${spec}` : "Specialist doctor",
+        };
+      });
+    }
+    return doctors;
+  })();
+
+  const resolvedAbout = (() => {
+    const defaultTitle = "Committed to Your Health & Well-Being";
+    const defaultDesc1 =
+      "City General Hospital has been a cornerstone of community healthcare for over 25 years, providing comprehensive medical services with a commitment to excellence and compassion.";
+    const defaultDesc2 =
+      "Our state-of-the-art facility houses over 500 beds, 30+ specialized departments, and a team of 200+ skilled doctors dedicated to delivering the highest quality of patient care.";
+
+    const hasDynamicAbout = Boolean(
+      about && (String(about.about_title ?? "").trim() || String(about.about_description ?? "").trim() || String(about.about_image ?? "").trim()),
+    );
+
+    if (!hasDynamicAbout) {
+      return { title: defaultTitle, p1: defaultDesc1, p2: defaultDesc2, image: aboutImg, isDynamic: false };
+    }
+
+    const title = String(about?.about_title ?? "").trim() || (hospitalName ? `About ${hospitalName}` : "About");
+    const desc = String(about?.about_description ?? "").trim();
+    const chunks = desc ? desc.split(/\r?\n\r?\n|\r?\n/).map((s) => s.trim()).filter(Boolean).slice(0, 2) : [];
+    const p1 = chunks[0] || "";
+    const p2 = chunks[1] || "";
+    const image = String(about?.about_image ?? "").trim() || aboutImg;
+    return { title, p1, p2, image, isDynamic: true };
+  })();
+
+  const resolvedAmenities = (() => {
+    const items = Array.isArray(amenities) ? amenities : [];
+    return items.filter((a) => Boolean(a?.name)).slice(0, 6);
+  })();
+
+  const resolvedContact = (() => {
+    const fallbackAddress = "123 Medical Center Drive, New York, NY 10001";
+    const fallbackPhone = "+1 (555) 123-4567";
+    const fallbackEmail = "info@LiveTemplate1.com";
+
+    const address = String(contact?.address ?? "").trim();
+    const phone = String(contact?.phone ?? "").trim();
+    const email = String(contact?.email ?? "").trim();
+    const hasDynamic = Boolean(address || phone || email);
+
+    return {
+      address: hasDynamic ? address : fallbackAddress,
+      phone: hasDynamic ? phone : fallbackPhone,
+      email: hasDynamic ? email : fallbackEmail,
+      isDynamic: hasDynamic,
+    };
+  })();
+
+  const resolvedSlides = useMemo(() => {
+    const items = Array.isArray(banners) ? banners : [];
+    const cleaned = items
+      .map((b) => ({
+        image: String(b.banner_image ?? "").trim(),
+        headline: String(b.title ?? "").trim() || (hospitalName ? `${hospitalName}` : ""),
+        desc: String(b.sub_title ?? "").trim(),
+        cta: "Book Appointment",
+      }))
+      .filter((b) => Boolean(b.image));
+
+    return cleaned.length > 0 ? cleaned : slides;
+  }, [banners, hospitalName]);
+
+  const activeSlide = resolvedSlides[slide] ?? resolvedSlides[0];
 
   useEffect(() => {
     const h = () => setScrolled(window.scrollY > 50);
@@ -81,7 +207,15 @@ const LiveTemplate1 = () => {
     return () => window.removeEventListener("scroll", h);
   }, []);
 
-  const nextSlide = useCallback(() => setSlide(s => (s + 1) % slides.length), []);
+  useEffect(() => {
+    const n = resolvedSlides.length;
+    if (n > 0 && slide >= n) setSlide(0);
+  }, [resolvedSlides.length, slide]);
+
+  const nextSlide = useCallback(() => {
+    const n = resolvedSlides.length;
+    setSlide((s) => (n > 0 ? (s + 1) % n : 0));
+  }, [resolvedSlides.length]);
   useEffect(() => { const t = setInterval(nextSlide, 5000); return () => clearInterval(t); }, [nextSlide]);
   useEffect(() => { const t = setInterval(() => setTestimonialIdx(i => (i + 1) % testimonials.length), 4000); return () => clearInterval(t); }, []);
 
@@ -102,7 +236,7 @@ const LiveTemplate1 = () => {
             <div className="w-10 h-10 rounded-full bg-[hsl(0,0%,100%,0.2)] flex items-center justify-center">
               <Stethoscope className="w-5 h-5" style={{ color: "#fff" }} />
             </div>
-            <span className="text-lg font-bold" style={{ color: "#fff" }}>City General Hospital</span>
+            <span className="text-lg font-bold" style={{ color: "#fff" }}>{hospitalName || "City General Hospital"}</span>
           </div>
           <nav className="hidden lg:flex items-center gap-6">
             {navLinks.map(l => (
@@ -126,7 +260,7 @@ const LiveTemplate1 = () => {
 
       {/* ── HERO: Full-width slider with left-aligned text ── */}
       <section id="home" className="relative h-screen overflow-hidden">
-        {slides.map((s, i) => (
+        {resolvedSlides.map((s, i) => (
           <div key={i} className={`absolute inset-0 transition-opacity duration-1000 ${i === slide ? "opacity-100 z-10" : "opacity-0 z-0"}`}>
             <img src={s.image} alt={s.headline} className="w-full h-full object-cover" />
             <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, hsla(210,80%,25%,0.85), hsla(210,80%,45%,0.4))" }} />
@@ -138,17 +272,17 @@ const LiveTemplate1 = () => {
               <div className="inline-block bg-[hsl(0,0%,100%,0.15)] backdrop-blur-sm rounded-full px-4 py-1.5 mb-6">
                 <span className="text-sm font-medium" style={{ color: "#fff" }}>🏥 Trusted Healthcare Since 2001</span>
               </div>
-              <h1 className="text-4xl md:text-6xl font-extrabold mb-5 leading-tight animate-fade-up" style={{ color: "#fff" }}>{slides[slide].headline}</h1>
-              <p className="text-lg mb-8 animate-fade-up-delay-1" style={{ color: "hsl(0,0%,100%,0.8)" }}>{slides[slide].desc}</p>
+              <h1 className="text-4xl md:text-6xl font-extrabold mb-5 leading-tight animate-fade-up" style={{ color: "#fff" }}>{activeSlide?.headline}</h1>
+              <p className="text-lg mb-8 animate-fade-up-delay-1" style={{ color: "hsl(0,0%,100%,0.8)" }}>{activeSlide?.desc}</p>
               <div className="flex gap-4 animate-fade-up-delay-2">
-                <button className="bg-[hsl(0,0%,100%)] text-[hsl(210,80%,35%)] px-8 py-3.5 rounded-full font-bold text-lg hover:scale-105 transition-transform">{slides[slide].cta}</button>
+                <button onClick={() => scrollTo("contact")} className="bg-[hsl(0,0%,100%)] text-[hsl(210,80%,35%)] px-8 py-3.5 rounded-full font-bold text-lg hover:scale-105 transition-transform">{activeSlide?.cta}</button>
                 <button className="border-2 border-[hsl(0,0%,100%,0.4)] px-8 py-3.5 rounded-full font-semibold hover:bg-[hsl(0,0%,100%,0.1)] transition-colors" style={{ color: "#fff" }}>Watch Video</button>
               </div>
             </div>
           </div>
         </div>
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 flex gap-3">
-          {slides.map((_, i) => (
+          {resolvedSlides.map((_, i) => (
             <button key={i} onClick={() => setSlide(i)} className={`h-2 rounded-full transition-all ${i === slide ? "w-10 bg-[hsl(0,0%,100%)]" : "w-2 bg-[hsl(0,0%,100%,0.4)]"}`} />
           ))}
         </div>
@@ -174,37 +308,55 @@ const LiveTemplate1 = () => {
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <motion.div initial={{ opacity: 0, x: -50 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="relative">
-              <img src={aboutImg} alt="About us" className="rounded-3xl shadow-xl w-full" />
-              <div className="absolute -bottom-6 -right-6 bg-[hsl(210,80%,45%)] rounded-2xl p-6 shadow-lg hidden md:block">
-                <div className="text-3xl font-extrabold" style={{ color: "#fff" }}>25+</div>
-                <div className="text-sm" style={{ color: "hsl(0,0%,100%,0.8)" }}>Years of Excellence</div>
-              </div>
+              <img src={resolvedAbout.image} alt="About us" className="rounded-3xl shadow-xl w-full" />
+              {!resolvedAbout.isDynamic ? (
+                <div className="absolute -bottom-6 -right-6 bg-[hsl(210,80%,45%)] rounded-2xl p-6 shadow-lg hidden md:block">
+                  <div className="text-3xl font-extrabold" style={{ color: "#fff" }}>25+</div>
+                  <div className="text-sm" style={{ color: "hsl(0,0%,100%,0.8)" }}>Years of Excellence</div>
+                </div>
+              ) : null}
             </motion.div>
             <motion.div initial={{ opacity: 0, x: 50 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
               <span className="text-[hsl(210,80%,45%)] font-semibold text-sm uppercase tracking-wider">About Us</span>
-              <h2 className="text-3xl md:text-4xl font-bold text-[hsl(220,20%,15%)] mt-2 mb-6">Committed to Your Health & Well-Being</h2>
-              <p className="text-[hsl(215,16%,47%)] leading-relaxed mb-4">City General Hospital has been a cornerstone of community healthcare for over 25 years, providing comprehensive medical services with a commitment to excellence and compassion.</p>
-              <p className="text-[hsl(215,16%,47%)] leading-relaxed mb-6">Our state-of-the-art facility houses over 500 beds, 30+ specialized departments, and a team of 200+ skilled doctors dedicated to delivering the highest quality of patient care.</p>
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="flex items-center gap-3 bg-[hsl(210,80%,95%)] rounded-xl p-4">
-                  <Shield className="w-8 h-8 text-[hsl(210,80%,45%)]" />
-                  <div>
-                    <div className="font-semibold text-sm text-[hsl(220,20%,15%)]">Our Mission</div>
-                    <div className="text-xs text-[hsl(215,16%,47%)]">Accessible quality care</div>
+              <h2 className="text-3xl md:text-4xl font-bold text-[hsl(220,20%,15%)] mt-2 mb-6">{resolvedAbout.title}</h2>
+              {resolvedAbout.p1 ? <p className="text-[hsl(215,16%,47%)] leading-relaxed mb-4">{resolvedAbout.p1}</p> : null}
+              {resolvedAbout.p2 ? <p className="text-[hsl(215,16%,47%)] leading-relaxed mb-6">{resolvedAbout.p2}</p> : null}
+              {!resolvedAbout.isDynamic ? (
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div className="flex items-center gap-3 bg-[hsl(210,80%,95%)] rounded-xl p-4">
+                    <Shield className="w-8 h-8 text-[hsl(210,80%,45%)]" />
+                    <div>
+                      <div className="font-semibold text-sm text-[hsl(220,20%,15%)]">Our Mission</div>
+                      <div className="text-xs text-[hsl(215,16%,47%)]">Accessible quality care</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 bg-[hsl(160,60%,95%)] rounded-xl p-4">
+                    <Award className="w-8 h-8 text-[hsl(160,60%,45%)]" />
+                    <div>
+                      <div className="font-semibold text-sm text-[hsl(220,20%,15%)]">Our Vision</div>
+                      <div className="text-xs text-[hsl(215,16%,47%)]">Trusted healthcare leader</div>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 bg-[hsl(160,60%,95%)] rounded-xl p-4">
-                  <Award className="w-8 h-8 text-[hsl(160,60%,45%)]" />
-                  <div>
-                    <div className="font-semibold text-sm text-[hsl(220,20%,15%)]">Our Vision</div>
-                    <div className="text-xs text-[hsl(215,16%,47%)]">Trusted healthcare leader</div>
-                  </div>
-                </div>
-              </div>
+              ) : null}
               <div className="flex flex-wrap gap-3">
-                {["24/7 Emergency", "Advanced Labs", "International Care", "Cashless Insurance"].map((h, i) => (
-                  <span key={i} className="bg-[hsl(210,80%,95%)] text-[hsl(210,80%,45%)] px-4 py-1.5 rounded-full text-sm font-medium">✓ {h}</span>
-                ))}
+                {resolvedAmenities.length > 0
+                  ? resolvedAmenities.map((a, i) => {
+                      const iconKey = String(a.icon ?? "").trim();
+                      const iconSrc = iconKey ? (PaIcons as Record<string, string>)[iconKey] : "";
+                      return (
+                        <span
+                          key={String(a.id ?? i)}
+                          className="bg-[hsl(210,80%,95%)] text-[hsl(210,80%,45%)] px-4 py-1.5 rounded-full text-sm font-medium inline-flex items-center gap-2"
+                        >
+                          {iconSrc ? <img src={iconSrc} alt="" className="w-4 h-4 object-contain" /> : <span>✓</span>}
+                          {a.name}
+                        </span>
+                      );
+                    })
+                  : ["24/7 Emergency", "Advanced Labs", "International Care", "Cashless Insurance"].map((h, i) => (
+                      <span key={i} className="bg-[hsl(210,80%,95%)] text-[hsl(210,80%,45%)] px-4 py-1.5 rounded-full text-sm font-medium">✓ {h}</span>
+                    ))}
               </div>
             </motion.div>
           </div>
@@ -220,7 +372,7 @@ const LiveTemplate1 = () => {
             <div className="w-16 h-1 bg-[hsl(210,80%,45%)] mx-auto mt-4 rounded-full" />
           </motion.div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {departments.map((d, i) => (
+            {resolvedDepartments.map((d, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
                 className="bg-[hsl(0,0%,100%)] rounded-2xl p-8 shadow-md hover:shadow-xl transition-all group hover:-translate-y-1 border border-[hsl(210,30%,94%)]">
                 <div className="w-16 h-16 rounded-2xl bg-[hsl(210,80%,95%)] flex items-center justify-center mb-5 group-hover:bg-[hsl(210,80%,45%)] transition-colors">
@@ -243,7 +395,7 @@ const LiveTemplate1 = () => {
             <div className="w-16 h-1 bg-[hsl(210,80%,45%)] mx-auto mt-4 rounded-full" />
           </motion.div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {doctors.map((d, i) => (
+            {resolvedDoctors.map((d, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
                 className="bg-[hsl(0,0%,100%)] rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all group">
                 <div className="relative overflow-hidden">
@@ -313,10 +465,12 @@ const LiveTemplate1 = () => {
             <div>
               <div className="space-y-4 mb-8">
                 {[
-                  { icon: MapPin, text: "123 Medical Center Drive, New York, NY 10001" },
-                  { icon: Phone, text: "+1 (555) 123-4567" },
-                  { icon: Mail, text: "info@LiveTemplate1.com" },
-                ].map((c, i) => (
+                  { icon: MapPin, text: resolvedContact.address },
+                  { icon: Phone, text: resolvedContact.phone },
+                  { icon: Mail, text: resolvedContact.email },
+                ]
+                  .filter((c) => Boolean(String(c.text || "").trim()))
+                  .map((c, i) => (
                   <div key={i} className="flex items-center gap-4 bg-[hsl(210,80%,95%)] rounded-xl p-4">
                     <c.icon className="w-6 h-6 text-[hsl(210,80%,45%)]" />
                     <span className="text-[hsl(215,16%,47%)]">{c.text}</span>
@@ -336,7 +490,7 @@ const LiveTemplate1 = () => {
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <Stethoscope className="w-8 h-8" style={{ color: "#fff" }} />
-                <span className="text-lg font-bold" style={{ color: "#fff" }}>City General</span>
+                <span className="text-lg font-bold" style={{ color: "#fff" }}>{hospitalName || "City General"}</span>
               </div>
               <p className="text-sm leading-relaxed" style={{ color: "hsl(0,0%,100%,0.6)" }}>Committed to providing exceptional healthcare services with compassion and excellence since 2001.</p>
               <div className="flex gap-3 mt-4">
@@ -349,14 +503,14 @@ const LiveTemplate1 = () => {
             </div>
             <div>
               <h4 className="font-semibold mb-4" style={{ color: "#fff" }}>Departments</h4>
-              <ul className="space-y-2">{departments.map(d => <li key={d.name}><span className="text-sm" style={{ color: "hsl(0,0%,100%,0.6)" }}>{d.name}</span></li>)}</ul>
+              <ul className="space-y-2">{resolvedDepartments.map(d => <li key={d.name}><span className="text-sm" style={{ color: "hsl(0,0%,100%,0.6)" }}>{d.name}</span></li>)}</ul>
             </div>
             <div>
               <h4 className="font-semibold mb-4" style={{ color: "#fff" }}>Contact Info</h4>
               <div className="space-y-3 text-sm" style={{ color: "hsl(0,0%,100%,0.6)" }}>
-                <p>123 Medical Center Drive, New York, NY 10001</p>
-                <p>+1 (555) 123-4567</p>
-                <p>info@LiveTemplate1.com</p>
+                {resolvedContact.address ? <p>{resolvedContact.address}</p> : null}
+                {resolvedContact.phone ? <p>{resolvedContact.phone}</p> : null}
+                {resolvedContact.email ? <p>{resolvedContact.email}</p> : null}
               </div>
             </div>
           </div>

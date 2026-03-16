@@ -7,6 +7,8 @@ import {
   Leaf, TreePine, Sprout, Eye, Target, ChevronLeft, ChevronRight, Quote
 } from "lucide-react";
 
+import type { HospitalAmenityItem, HospitalPublicAbout, HospitalPublicDoctor, HospitalSpecializationItem } from "@/services/HospitalService";
+
 import heroImg1 from "@/assets/hero-hospital-1.jpg";
 import heroImg2 from "@/assets/hero-hospital-2.jpg";
 import heroImg3 from "@/assets/hero-hospital-3.jpg";
@@ -18,6 +20,8 @@ import doctor1 from "@/assets/doctor-5.jpg";
 import doctor2 from "@/assets/doctor-6.jpg";
 import doctor3 from "@/assets/doctor-3.jpg";
 import doctor4 from "@/assets/doctor-4.jpg";
+import maleDoctorImg from "@/assets/male-doctor.png";
+import femaleDoctorImg from "@/assets/female-doctor.png";
 import patient1 from "@/assets/patient-1.jpg";
 import patient2 from "@/assets/patient-2.jpg";
 import patient3 from "@/assets/patient-3.jpg";
@@ -57,15 +61,63 @@ const testimonials = [
 
 const navLinks = ["Home", "About Us", "Departments", "Doctors", "Testimonials", "Contact"];
 
+type Props = {
+  hospitalName?: string;
+  specializations?: HospitalSpecializationItem[];
+  doctors?: HospitalPublicDoctor[];
+  about?: HospitalPublicAbout | null;
+  amenities?: HospitalAmenityItem[];
+};
+
 // ─── Hospital 2: Green Valley ──────────────────────────────────
 // Design: Organic shapes, wave section dividers, nature-inspired greens,
 // rounded card designs, earthy tones, overlapping elements
-const LiveTemplate2 = () => {
+const LiveTemplate2 = ({ hospitalName, specializations, doctors: publicDoctors }: Props) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [slide, setSlide] = useState(0);
   const [tIdx, setTIdx] = useState(0);
   const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
+
+  const resolvedDepartments = (() => {
+    if (specializations && specializations.length > 0) {
+      const icons = [Heart, Brain, Bone, Baby, ScanLine, Ambulance, Eye, Target];
+      return specializations.map((s, idx) => ({
+        icon: icons[idx % icons.length],
+        name: String(s.name ?? ""),
+        desc: String(s.description ?? ""),
+      }));
+    }
+    return departments;
+  })();
+
+  const resolvedDoctors = (() => {
+    if (publicDoctors && publicDoctors.length > 0) {
+      const formatExp = (y?: string, m?: string) => {
+        const yy = Number(y || 0);
+        const mm = Number(m || 0);
+        if (!yy && !mm) return "—";
+        const parts: string[] = [];
+        if (yy) parts.push(`${yy}y`);
+        if (mm) parts.push(`${mm}m`);
+        return parts.join(" ");
+      };
+      const resolvePhoto = (src?: string, gender?: string) => {
+        const s = String(src ?? "");
+        if (s) return s;
+        const g = String(gender ?? "").trim().toUpperCase();
+        const isFemale = g === "F" || g === "FEMALE";
+        return isFemale ? femaleDoctorImg : maleDoctorImg;
+      };
+      return publicDoctors.map((d) => ({
+        photo: resolvePhoto(d.profile_image, d.gender),
+        name: d.name,
+        spec: d.specialization_name || "Specialist",
+        exp: formatExp(d.experience_year, d.experience_month),
+      }));
+    }
+    return doctors;
+  })();
 
   useEffect(() => { const h = () => setScrolled(window.scrollY > 50); window.addEventListener("scroll", h); return () => window.removeEventListener("scroll", h); }, []);
   const nextSlide = useCallback(() => setSlide(s => (s + 1) % slides.length), []);
@@ -82,7 +134,7 @@ const LiveTemplate2 = () => {
           <div className="flex items-center gap-3">
             <Link to="/"><ArrowLeft className="w-5 h-5" style={{ color: "#fff" }} /></Link>
             <Leaf className="w-8 h-8" style={{ color: "#fff" }} />
-            <span className="text-lg font-bold" style={{ color: "#fff" }}>Green Valley</span>
+            <span className="text-lg font-bold" style={{ color: "#fff" }}>{hospitalName || "Green Valley"}</span>
           </div>
           <nav className="hidden lg:flex items-center gap-6">
             {navLinks.map(l => <button key={l} onClick={() => scrollTo(l.toLowerCase().replace(/\s/g, "-"))} className="text-sm font-medium hover:opacity-80" style={{ color: "#fff" }}>{l}</button>)}
@@ -175,7 +227,7 @@ const LiveTemplate2 = () => {
             <h2 className="text-3xl md:text-4xl font-bold text-[hsl(220,20%,15%)] mt-2">Medical Departments</h2>
           </motion.div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {departments.map((d, i) => (
+            {resolvedDepartments.map((d, i) => (
               <motion.div key={i} initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}
                 className="bg-[hsl(0,0%,100%)] rounded-3xl p-6 shadow-sm hover:shadow-lg transition-all border-l-4 border-[hsl(152,55%,38%)] group hover:-translate-y-1">
                 <div className="flex items-start gap-4">
@@ -201,7 +253,7 @@ const LiveTemplate2 = () => {
             <h2 className="text-3xl md:text-4xl font-bold text-[hsl(220,20%,15%)] mt-2">Our Expert Physicians</h2>
           </motion.div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {doctors.map((d, i) => (
+            {resolvedDoctors.map((d, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
                 className="text-center group">
                 <div className="relative w-48 h-48 mx-auto mb-6">
@@ -290,7 +342,7 @@ const LiveTemplate2 = () => {
         <div className="container mx-auto px-4">
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10">
             <div>
-              <div className="flex items-center gap-2 mb-4"><Leaf className="w-7 h-7" style={{ color: "#fff" }} /><span className="text-lg font-bold" style={{ color: "#fff" }}>Green Valley</span></div>
+              <div className="flex items-center gap-2 mb-4"><Leaf className="w-7 h-7" style={{ color: "#fff" }} /><span className="text-lg font-bold" style={{ color: "#fff" }}>{hospitalName || "Green Valley"}</span></div>
               <p className="text-sm" style={{ color: "hsl(0,0%,100%,0.6)" }}>Healing the whole person through integrative healthcare since 2005.</p>
               <div className="flex gap-3 mt-4">{[Facebook, Twitter, Instagram, Linkedin].map((I, i) => <a key={i} href="#" className="w-8 h-8 rounded-full bg-[hsl(0,0%,100%,0.1)] flex items-center justify-center hover:bg-[hsl(0,0%,100%,0.2)]"><I className="w-4 h-4" style={{ color: "#fff" }} /></a>)}</div>
             </div>
@@ -300,7 +352,7 @@ const LiveTemplate2 = () => {
             </div>
             <div>
               <h4 className="font-semibold mb-4" style={{ color: "#fff" }}>Departments</h4>
-              <ul className="space-y-2">{departments.map(d => <li key={d.name}><span className="text-sm" style={{ color: "hsl(0,0%,100%,0.6)" }}>{d.name}</span></li>)}</ul>
+              <ul className="space-y-2">{resolvedDepartments.map(d => <li key={d.name}><span className="text-sm" style={{ color: "hsl(0,0%,100%,0.6)" }}>{d.name}</span></li>)}</ul>
             </div>
             <div>
               <h4 className="font-semibold mb-4" style={{ color: "#fff" }}>Contact</h4>

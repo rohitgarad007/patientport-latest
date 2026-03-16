@@ -32,6 +32,50 @@ export interface HospitalWebsiteSettings {
   banners: HospitalWebsiteBanner[];
 }
 
+export interface HospitalSpecializationItem {
+  id: string;
+  name: string;
+  description: string;
+  status?: number | string | null;
+}
+
+export interface HospitalPublicDoctor {
+  id: string;
+  docuid: string;
+  hosuid?: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  gender?: string;
+  profile_image?: string;
+  specialization_id?: string;
+  specialization_name?: string;
+  experience_year?: string;
+  experience_month?: string;
+  consultation_fee?: string;
+}
+
+export interface HospitalPublicAbout {
+  about_title: string;
+  about_description: string;
+  about_image: string;
+}
+
+export interface HospitalPublicBanner {
+  id: string;
+  title: string;
+  sub_title: string;
+  banner_image: string;
+}
+
+export interface HospitalAmenityItem {
+  id: string;
+  amenityuid: string;
+  hosuid: string;
+  name: string;
+  icon?: string;
+}
+
 class HospitalService {
   // Hardcoded key to match backend (should be in secure config ideally)
   private AES_KEY = "RohitGaradHos@173414";
@@ -321,6 +365,170 @@ class HospitalService {
       console.error("Error updating website banner:", error);
       return { status: false, message: "Failed to update banner" };
     }
+  }
+
+  async getPublicHospitalSpecializations(hosuid: string): Promise<HospitalSpecializationItem[]> {
+    const API_URL = await configService.getApiUrl();
+    const response = await fetch(`${API_URL}/public_hospital_specializations`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ hosuid }),
+    });
+    if (!response.ok) throw new Error("Failed to fetch hospital specializations");
+    const json: unknown = await response.json();
+    const root = (json && typeof json === "object" ? (json as Record<string, unknown>) : {}) as Record<string, unknown>;
+    const rawItems = Array.isArray(root.items) ? root.items : Array.isArray(root.data) ? root.data : [];
+
+    return rawItems
+      .map((it) => (it && typeof it === "object" ? (it as Record<string, unknown>) : null))
+      .filter((it): it is Record<string, unknown> => Boolean(it))
+      .map((row) => ({
+        id: String((row.id ?? row.speuid) ?? ""),
+        name: String(row.name ?? ""),
+        description: String(row.description ?? ""),
+        status: (row.status ?? null) as HospitalSpecializationItem["status"],
+      }));
+  }
+
+  async getPublicHospitalDoctors(hosuid: string): Promise<HospitalPublicDoctor[]> {
+    const API_URL = await configService.getApiUrl();
+    const response = await fetch(`${API_URL}/public_hospital_doctors`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ hosuid }),
+    });
+    if (!response.ok) throw new Error("Failed to fetch hospital doctors");
+    const json: unknown = await response.json();
+    const root = (json && typeof json === "object" ? (json as Record<string, unknown>) : {}) as Record<string, unknown>;
+    const rawItems = Array.isArray(root.items) ? root.items : Array.isArray(root.data) ? root.data : [];
+
+    const normalizeImage = (p: string) => {
+      const s = p || "";
+      if (!s) return "";
+      if (s.startsWith("http://") || s.startsWith("https://") || s.startsWith("data:")) return s;
+      return `${API_URL}/${s.replace(/^\/+/, "")}`;
+    };
+
+    return rawItems
+      .map((it) => (it && typeof it === "object" ? (it as Record<string, unknown>) : null))
+      .filter((it): it is Record<string, unknown> => Boolean(it))
+      .map((row) => {
+        const profile = String(row.profile_image ?? "");
+        return {
+          id: String(row.id ?? ""),
+          docuid: String(row.docuid ?? ""),
+          hosuid: String(row.hosuid ?? ""),
+          name: String(row.name ?? ""),
+          email: String(row.email ?? ""),
+          phone: String(row.phone ?? ""),
+          gender: String(row.gender ?? ""),
+          profile_image: normalizeImage(profile),
+          specialization_id: String(row.specialization_id ?? ""),
+          specialization_name: String(row.specialization_name ?? ""),
+          experience_year: String(row.experience_year ?? ""),
+          experience_month: String(row.experience_month ?? ""),
+          consultation_fee: String(row.consultation_fee ?? ""),
+        };
+      })
+      .filter((d) => Boolean(d.id) && Boolean(d.name));
+  }
+
+  async getPublicHospitalAbout(hosuid: string): Promise<HospitalPublicAbout | null> {
+    const API_URL = await configService.getApiUrl();
+    const response = await fetch(`${API_URL}/public_hospital_about`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ hosuid }),
+    });
+    if (!response.ok) throw new Error("Failed to fetch hospital about");
+    const json: unknown = await response.json();
+    const root = (json && typeof json === "object" ? (json as Record<string, unknown>) : {}) as Record<string, unknown>;
+    const aboutRaw = root.about && typeof root.about === "object" ? (root.about as Record<string, unknown>) : null;
+    if (!aboutRaw) return null;
+
+    const normalizeImage = (p: string) => {
+      const s = p || "";
+      if (!s) return "";
+      if (s.startsWith("http://") || s.startsWith("https://") || s.startsWith("data:")) return s;
+      return `${API_URL}/${s.replace(/^\/+/, "")}`;
+    };
+
+    return {
+      about_title: String(aboutRaw.about_title ?? ""),
+      about_description: String(aboutRaw.about_description ?? ""),
+      about_image: normalizeImage(String(aboutRaw.about_image ?? "")),
+    };
+  }
+
+  async getPublicHospitalAmenities(hosuid: string): Promise<HospitalAmenityItem[]> {
+    const API_URL = await configService.getApiUrl();
+    const response = await fetch(`${API_URL}/public_hospital_amenities`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ hosuid }),
+    });
+    if (!response.ok) throw new Error("Failed to fetch hospital amenities");
+    const json: unknown = await response.json();
+    const root = (json && typeof json === "object" ? (json as Record<string, unknown>) : {}) as Record<string, unknown>;
+    const rawItems = Array.isArray(root.items) ? root.items : Array.isArray(root.data) ? root.data : [];
+
+    return rawItems
+      .map((it) => (it && typeof it === "object" ? (it as Record<string, unknown>) : null))
+      .filter((it): it is Record<string, unknown> => Boolean(it))
+      .map((row) => ({
+        id: String(row.id ?? ""),
+        amenityuid: String(row.amenityuid ?? ""),
+        hosuid: String(row.hosuid ?? ""),
+        name: String(row.name ?? ""),
+        icon: String(row.icon ?? ""),
+      }))
+      .filter((a) => Boolean(a.id) && Boolean(a.name));
+  }
+
+  async getPublicHospitalBanners(hosuid: string): Promise<HospitalPublicBanner[]> {
+    const API_URL = await configService.getApiUrl();
+    const response = await fetch(`${API_URL}/public_hospital_banners`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ hosuid }),
+    });
+    if (!response.ok) throw new Error("Failed to fetch hospital banners");
+    const json: unknown = await response.json();
+    const root = (json && typeof json === "object" ? (json as Record<string, unknown>) : {}) as Record<string, unknown>;
+    const rawItems = Array.isArray(root.items) ? root.items : Array.isArray(root.data) ? root.data : [];
+
+    const normalizeImage = (p: string) => {
+      const s = p || "";
+      if (!s) return "";
+      if (s.startsWith("http://") || s.startsWith("https://") || s.startsWith("data:")) return s;
+      return `${API_URL}/${s.replace(/^\/+/, "")}`;
+    };
+
+    return rawItems
+      .map((it) => (it && typeof it === "object" ? (it as Record<string, unknown>) : null))
+      .filter((it): it is Record<string, unknown> => Boolean(it))
+      .map((row) => ({
+        id: String(row.id ?? ""),
+        title: String(row.title ?? ""),
+        sub_title: String(row.sub_title ?? ""),
+        banner_image: normalizeImage(String(row.banner_image ?? row.image ?? "")),
+      }))
+      .filter((b) => Boolean(b.id) && Boolean(b.banner_image));
   }
 }
 

@@ -57,6 +57,7 @@ class PublicHomeController extends CI_Controller {
             $hospitalName = isset($row['name']) ? $row['name'] : (isset($row['hospital_name']) ? $row['hospital_name'] : null);
             $phone = isset($row['phone']) ? $row['phone'] : null;
             $address = isset($row['address']) ? $row['address'] : null;
+            $email = isset($row['email']) ? $row['email'] : null;
 
             echo json_encode([
                 'success' => true,
@@ -66,10 +67,348 @@ class PublicHomeController extends CI_Controller {
                     'hosuid' => $hosuid,
                     'phone' => $phone,
                     'address' => $address,
+                    'email' => $email,
                 ],
             ]);
         } catch (Exception $e) {
             echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function GetHospitalSpecializationsByHosuid() {
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            http_response_code(200);
+            echo json_encode(['success' => true]);
+            return;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'GET' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+            return;
+        }
+
+        try {
+            $raw = $this->input->raw_input_stream;
+            $body = json_decode($raw, true);
+            $hosuid = trim($body['hosuid'] ?? $this->input->post('hosuid') ?? $this->input->get('hosuid') ?? '');
+
+            if ($hosuid === '') {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'hosuid is required',
+                    'items' => [],
+                ]);
+                return;
+            }
+
+            if (!$this->db->table_exists('ms_hospitals_specialization')) {
+                echo json_encode([
+                    'success' => true,
+                    'items' => [],
+                ]);
+                return;
+            }
+
+            $this->db->select('speuid as id, name, description, status');
+            $this->db->from('ms_hospitals_specialization');
+            $this->db->where('hosuid', $hosuid);
+            $this->db->where('isdelete', 0);
+            $this->db->where('status', 1);
+            $this->db->order_by('name', 'ASC');
+            $items = $this->db->get()->result_array();
+
+            echo json_encode([
+                'success' => true,
+                'hosuid' => $hosuid,
+                'count' => count($items),
+                'items' => $items,
+            ]);
+        } catch (Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'items' => [],
+            ]);
+        }
+    }
+
+    public function GetHospitalDoctorsByHosuid() {
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            http_response_code(200);
+            echo json_encode(['success' => true]);
+            return;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'GET' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+            return;
+        }
+
+        try {
+            $raw = $this->input->raw_input_stream;
+            $body = json_decode($raw, true);
+            $hosuid = trim($body['hosuid'] ?? $this->input->post('hosuid') ?? $this->input->get('hosuid') ?? '');
+
+            if ($hosuid === '') {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'hosuid is required',
+                    'items' => [],
+                ]);
+                return;
+            }
+
+            if (!$this->db->table_exists('ms_doctors')) {
+                echo json_encode([
+                    'success' => true,
+                    'items' => [],
+                ]);
+                return;
+            }
+
+            $this->db->select('
+                d.id,
+                d.docuid,
+                d.hosuid,
+                d.name,
+                d.email,
+                d.phone,
+                d.gender,
+                d.profile_image,
+                d.specialization_id,
+                d.experience_year,
+                d.experience_month,
+                d.consultation_fee,
+                COALESCE(hs.name, ds.specialization_name, "") AS specialization_name
+            ', false);
+            $this->db->from('ms_doctors d');
+            if ($this->db->table_exists('ms_hospitals_specialization')) {
+                $this->db->join('ms_hospitals_specialization hs', 'hs.speuid = d.specialization_id AND hs.isdelete = 0', 'left');
+            }
+            if ($this->db->table_exists('ms_doctor_specializations')) {
+                $this->db->join('ms_doctor_specializations ds', 'ds.id = d.specialization_id', 'left');
+            }
+            $this->db->where('d.hosuid', $hosuid);
+            if ($this->db->field_exists('isdelete', 'ms_doctors')) {
+                $this->db->where('d.isdelete', 0);
+            }
+            if ($this->db->field_exists('status', 'ms_doctors')) {
+                $this->db->where('d.status', 1);
+            }
+            $this->db->order_by('d.name', 'ASC');
+            $items = $this->db->get()->result_array();
+
+            echo json_encode([
+                'success' => true,
+                'hosuid' => $hosuid,
+                'count' => count($items),
+                'items' => $items,
+            ]);
+        } catch (Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'items' => [],
+            ]);
+        }
+    }
+
+    public function GetHospitalAboutByHosuid() {
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            http_response_code(200);
+            echo json_encode(['success' => true]);
+            return;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'GET' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+            return;
+        }
+
+        try {
+            $raw = $this->input->raw_input_stream;
+            $body = json_decode($raw, true);
+            $hosuid = trim($body['hosuid'] ?? $this->input->post('hosuid') ?? $this->input->get('hosuid') ?? '');
+
+            if ($hosuid === '') {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'hosuid is required',
+                    'about' => null,
+                ]);
+                return;
+            }
+
+            if (!$this->db->table_exists('ms_hospitals')) {
+                echo json_encode(['success' => true, 'about' => null]);
+                return;
+            }
+
+            $this->db->select('id');
+            $this->db->from('ms_hospitals');
+            $this->db->where('hosuid', $hosuid);
+            if ($this->db->field_exists('isdelete', 'ms_hospitals')) $this->db->where('isdelete', 0);
+            if ($this->db->field_exists('status', 'ms_hospitals')) $this->db->where('status', 1);
+            $hospital = $this->db->get()->row_array();
+            if (!$hospital || !isset($hospital['id'])) {
+                echo json_encode(['success' => true, 'about' => null]);
+                return;
+            }
+
+            if (!$this->db->table_exists('ms_hospitals_website_about')) {
+                echo json_encode(['success' => true, 'about' => null]);
+                return;
+            }
+
+            $this->db->select('about_title, about_description, about_image');
+            $this->db->from('ms_hospitals_website_about');
+            $this->db->where('hospital_id', (int)$hospital['id']);
+            if ($this->db->field_exists('isdelete', 'ms_hospitals_website_about')) $this->db->where('isdelete', 0);
+            if ($this->db->field_exists('status', 'ms_hospitals_website_about')) $this->db->where('status', 1);
+            $about = $this->db->get()->row_array();
+
+            echo json_encode([
+                'success' => true,
+                'hosuid' => $hosuid,
+                'hospital_id' => (int)$hospital['id'],
+                'about' => $about ?: null,
+            ]);
+        } catch (Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'about' => null,
+            ]);
+        }
+    }
+
+    public function GetHospitalAmenitiesByHosuid() {
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            http_response_code(200);
+            echo json_encode(['success' => true]);
+            return;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'GET' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+            return;
+        }
+
+        try {
+            $raw = $this->input->raw_input_stream;
+            $body = json_decode($raw, true);
+            $hosuid = trim($body['hosuid'] ?? $this->input->post('hosuid') ?? $this->input->get('hosuid') ?? '');
+
+            if ($hosuid === '') {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'hosuid is required',
+                    'items' => [],
+                ]);
+                return;
+            }
+
+            if (!$this->db->table_exists('ms_hospitals_amenity')) {
+                echo json_encode(['success' => true, 'items' => []]);
+                return;
+            }
+
+            $this->db->select('id, amenityuid, hosuid, name, icon, status');
+            $this->db->from('ms_hospitals_amenity');
+            $this->db->where('hosuid', $hosuid);
+            if ($this->db->field_exists('isdelete', 'ms_hospitals_amenity')) $this->db->where('isdelete', 0);
+            if ($this->db->field_exists('status', 'ms_hospitals_amenity')) $this->db->where('status', 1);
+            $this->db->order_by('id', 'DESC');
+            $items = $this->db->get()->result_array();
+
+            echo json_encode([
+                'success' => true,
+                'hosuid' => $hosuid,
+                'count' => count($items),
+                'items' => $items,
+            ]);
+        } catch (Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'items' => [],
+            ]);
+        }
+    }
+
+    public function GetHospitalBannersByHosuid() {
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            http_response_code(200);
+            echo json_encode(['success' => true]);
+            return;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'GET' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+            return;
+        }
+
+        try {
+            $raw = $this->input->raw_input_stream;
+            $body = json_decode($raw, true);
+            $hosuid = trim($body['hosuid'] ?? $this->input->post('hosuid') ?? $this->input->get('hosuid') ?? '');
+
+            if ($hosuid === '') {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'hosuid is required',
+                    'items' => [],
+                ]);
+                return;
+            }
+
+            if (!$this->db->table_exists('ms_hospitals')) {
+                echo json_encode(['success' => true, 'items' => []]);
+                return;
+            }
+
+            $this->db->select('id');
+            $this->db->from('ms_hospitals');
+            $this->db->where('hosuid', $hosuid);
+            if ($this->db->field_exists('isdelete', 'ms_hospitals')) $this->db->where('isdelete', 0);
+            if ($this->db->field_exists('status', 'ms_hospitals')) $this->db->where('status', 1);
+            $hospital = $this->db->get()->row_array();
+            if (!$hospital || !isset($hospital['id'])) {
+                echo json_encode(['success' => true, 'items' => []]);
+                return;
+            }
+
+            if (!$this->db->table_exists('ms_hospitals_website_banners')) {
+                echo json_encode(['success' => true, 'items' => []]);
+                return;
+            }
+
+            $this->db->select('id, title, sub_title, banner_image, status');
+            $this->db->from('ms_hospitals_website_banners');
+            $this->db->where('hospital_id', (int)$hospital['id']);
+            if ($this->db->field_exists('isdelete', 'ms_hospitals_website_banners')) $this->db->where('isdelete', 0);
+            if ($this->db->field_exists('status', 'ms_hospitals_website_banners')) $this->db->where('status', 1);
+            $this->db->order_by('id', 'DESC');
+            $items = $this->db->get()->result_array();
+
+            echo json_encode([
+                'success' => true,
+                'hosuid' => $hosuid,
+                'hospital_id' => (int)$hospital['id'],
+                'count' => count($items),
+                'items' => $items,
+            ]);
+        } catch (Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'items' => [],
+            ]);
         }
     }
 
@@ -368,6 +707,13 @@ class PublicHomeController extends CI_Controller {
                          ->where('id', $slotId)
                          ->update('ms_doctor_time_slots');
             }
+
+            $this->publishDoctorWs($doctorId, 'doctor_appointments_changed', [
+                'type' => 'appointment_created',
+                'appointment_uid' => (string)$appointmentUid,
+                'status' => (string)$initialStatus,
+                'date' => (string)$dateStr,
+            ]);
 
             echo json_encode([
                 'success' => true,
@@ -1883,6 +2229,42 @@ class PublicHomeController extends CI_Controller {
         if ($hour < 12) return 'morning';
         if ($hour < 17) return 'afternoon';
         return 'evening';
+    }
+
+    private function publishDoctorWs($doctorId, $event, $payload = []){
+        $url = getenv('WS_NOTIFICATIONS_PUBLISH_URL');
+        if (!$url) {
+            $url = 'http://localhost:8081/publish';
+        }
+
+        $body = json_encode([
+            'doctor_id' => (string)$doctorId,
+            'event' => (string)$event,
+            'payload' => $payload,
+        ]);
+
+        if (!$body) return;
+
+        $ch = curl_init($url);
+        if (!$ch) return;
+
+        $headers = [
+            'Content-Type: application/json',
+        ];
+
+        $secret = getenv('WS_PUBLISH_SECRET');
+        if ($secret) {
+            $headers[] = 'X-WS-SECRET: ' . $secret;
+        }
+
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 500);
+        curl_setopt($ch, CURLOPT_TIMEOUT_MS, 1000);
+        curl_exec($ch);
+        curl_close($ch);
     }
 
     // ... existing code ...

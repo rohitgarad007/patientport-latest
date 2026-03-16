@@ -7,6 +7,8 @@ import {
   Zap, Activity, Cpu, Wifi, ChevronRight, Quote, ArrowRight
 } from "lucide-react";
 
+import type { HospitalAmenityItem, HospitalPublicAbout, HospitalPublicDoctor, HospitalSpecializationItem } from "@/services/HospitalService";
+
 import heroImg1 from "@/assets/hero-hospital-1.jpg";
 import heroImg2 from "@/assets/hero-hospital-2.jpg";
 import heroImg3 from "@/assets/hero-hospital-3.jpg";
@@ -18,10 +20,13 @@ import doctor1 from "@/assets/doctor-1.jpg";
 import doctor2 from "@/assets/doctor-6.jpg";
 import doctor3 from "@/assets/doctor-5.jpg";
 import doctor4 from "@/assets/doctor-2.jpg";
+import maleDoctorImg from "@/assets/male-doctor.png";
+import femaleDoctorImg from "@/assets/female-doctor.png";
 import patient1 from "@/assets/patient-1.jpg";
 import patient2 from "@/assets/patient-2.jpg";
 import patient3 from "@/assets/patient-3.jpg";
 import patient4 from "@/assets/patient-4.jpg";
+import { PaIcons } from "@/components/icons/PaIcons";
 
 const slides = [
   { image: heroImg1, headline: "Innovation in Healthcare", desc: "Transforming patient outcomes through AI-assisted diagnostics and telemedicine.", tag: "🚀 Next-Gen Medicine" },
@@ -57,15 +62,90 @@ const testimonials = [
 
 const navLinks = ["Home", "About", "Departments", "Doctors", "Testimonials", "Contact"];
 
+type Props = {
+  hospitalName?: string;
+  specializations?: HospitalSpecializationItem[];
+  doctors?: HospitalPublicDoctor[];
+  about?: HospitalPublicAbout | null;
+  amenities?: HospitalAmenityItem[];
+};
+
 // ─── Hospital 3: Sunrise Healthcare ──────────────────────────
 // Design: Bold, geometric, asymmetric grids, teal/coral accents,
 // large typography, tech-forward, angular card designs
-const LiveTemplate4 = () => {
+const LiveTemplate4 = ({ hospitalName, specializations, doctors: publicDoctors, about, amenities }: Props) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [slide, setSlide] = useState(0);
   const [tIdx, setTIdx] = useState(0);
   const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
+
+  const resolvedDepartments = (() => {
+    if (specializations && specializations.length > 0) {
+      const icons = [Heart, Brain, Bone, Baby, ScanLine, Ambulance, Cpu, Wifi];
+      return specializations.map((s, idx) => ({
+        icon: icons[idx % icons.length],
+        name: String(s.name ?? ""),
+        desc: String(s.description ?? ""),
+      }));
+    }
+    return departments;
+  })();
+
+  const resolvedAbout = (() => {
+    const defaultTitle = "Transforming Healthcare Through Innovation";
+    const defaultDesc1 = "Sunrise Healthcare represents a new era of patient-centered medical excellence, where AI meets compassion to deliver transformative care outcomes.";
+    const defaultDesc2 = "With a 400-bed smart facility, we serve over 100,000 patients annually using cutting-edge diagnostic AI, robotic surgery, and telemedicine platforms.";
+
+    const hasDynamicAbout = Boolean(
+      about && (String(about.about_title ?? "").trim() || String(about.about_description ?? "").trim() || String(about.about_image ?? "").trim()),
+    );
+
+    if (!hasDynamicAbout) {
+      return { title: defaultTitle, p1: defaultDesc1, p2: defaultDesc2, image: aboutImg };
+    }
+
+    const title = String(about?.about_title ?? "").trim() || (hospitalName ? `About ${hospitalName}` : "About");
+    const desc = String(about?.about_description ?? "").trim();
+    const chunks = desc ? desc.split(/\r?\n\r?\n|\r?\n/).map((s) => s.trim()).filter(Boolean).slice(0, 2) : [];
+    const p1 = chunks[0] || "";
+    const p2 = chunks[1] || "";
+    const image = String(about?.about_image ?? "").trim() || aboutImg;
+    return { title, p1, p2, image };
+  })();
+
+  const resolvedAmenities = (() => {
+    const items = Array.isArray(amenities) ? amenities : [];
+    return items.filter((a) => Boolean(a?.name)).slice(0, 4);
+  })();
+
+  const resolvedDoctors = (() => {
+    if (publicDoctors && publicDoctors.length > 0) {
+      const formatExp = (y?: string, m?: string) => {
+        const yy = Number(y || 0);
+        const mm = Number(m || 0);
+        if (!yy && !mm) return "—";
+        const parts: string[] = [];
+        if (yy) parts.push(`${yy}y`);
+        if (mm) parts.push(`${mm}m`);
+        return parts.join(" ");
+      };
+      const resolvePhoto = (src?: string, gender?: string) => {
+        const s = String(src ?? "");
+        if (s) return s;
+        const g = String(gender ?? "").trim().toUpperCase();
+        const isFemale = g === "F" || g === "FEMALE";
+        return isFemale ? femaleDoctorImg : maleDoctorImg;
+      };
+      return publicDoctors.map((d) => ({
+        photo: resolvePhoto(d.profile_image, d.gender),
+        name: d.name,
+        spec: d.specialization_name || "Specialist",
+        exp: formatExp(d.experience_year, d.experience_month),
+      }));
+    }
+    return doctors;
+  })();
 
   useEffect(() => { const h = () => setScrolled(window.scrollY > 50); window.addEventListener("scroll", h); return () => window.removeEventListener("scroll", h); }, []);
   const nextSlide = useCallback(() => setSlide(s => (s + 1) % slides.length), []);
@@ -83,7 +163,7 @@ const LiveTemplate4 = () => {
             <Link to="/"><ArrowLeft className={`w-5 h-5 ${scrolled ? "text-[hsl(185,62%,38%)]" : ""}`} style={!scrolled ? { color: "#fff" } : {}} /></Link>
             <div className="flex items-center gap-2">
               <Zap className={`w-7 h-7 ${scrolled ? "text-[hsl(185,62%,38%)]" : ""}`} style={!scrolled ? { color: "#fff" } : {}} />
-              <span className={`text-lg font-extrabold tracking-tight ${scrolled ? "text-[hsl(220,20%,15%)]" : ""}`} style={!scrolled ? { color: "#fff" } : {}}>SUNRISE</span>
+              <span className={`text-lg font-extrabold tracking-tight ${scrolled ? "text-[hsl(220,20%,15%)]" : ""}`} style={!scrolled ? { color: "#fff" } : {}}>{hospitalName || "SUNRISE"}</span>
             </div>
           </div>
           <nav className="hidden lg:flex items-center gap-6">
@@ -134,24 +214,43 @@ const LiveTemplate4 = () => {
           <div className="grid lg:grid-cols-12 gap-8">
             <div className="lg:col-span-5">
               <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div className="inline-flex items-center gap-2 bg-[hsl(185,62%,94%)] text-[hsl(185,62%,38%)] px-4 py-1.5 rounded-lg text-sm font-semibold mb-4"><Activity className="w-4 h-4" /> About Sunrise</div>
-                <h2 className="text-4xl md:text-5xl font-black text-[hsl(220,20%,15%)] leading-tight mb-6">Transforming Healthcare Through Innovation</h2>
-                <p className="text-[hsl(215,16%,47%)] leading-relaxed mb-4">Sunrise Healthcare represents a new era of patient-centered medical excellence, where AI meets compassion to deliver transformative care outcomes.</p>
-                <p className="text-[hsl(215,16%,47%)] leading-relaxed mb-8">With a 400-bed smart facility, we serve over 100,000 patients annually using cutting-edge diagnostic AI, robotic surgery, and telemedicine platforms.</p>
+                <div className="inline-flex items-center gap-2 bg-[hsl(185,62%,94%)] text-[hsl(185,62%,38%)] px-4 py-1.5 rounded-lg text-sm font-semibold mb-4"><Activity className="w-4 h-4" /> {hospitalName ? `About ${hospitalName}` : "About Sunrise"}</div>
+                <h2 className="text-4xl md:text-5xl font-black text-[hsl(220,20%,15%)] leading-tight mb-6">{resolvedAbout.title}</h2>
+                {resolvedAbout.p1 ? <p className="text-[hsl(215,16%,47%)] leading-relaxed mb-4">{resolvedAbout.p1}</p> : null}
+                {resolvedAbout.p2 ? <p className="text-[hsl(215,16%,47%)] leading-relaxed mb-8">{resolvedAbout.p2}</p> : null}
                 <div className="grid grid-cols-2 gap-4">
-                  {[{ icon: Cpu, label: "AI Diagnostics", desc: "Real-time analysis" }, { icon: Wifi, label: "Telemedicine", desc: "Remote consultations" }].map((f, i) => (
-                    <div key={i} className="bg-gradient-to-br from-[hsl(185,62%,96%)] to-[hsl(340,65%,96%)] rounded-xl p-4">
-                      <f.icon className="w-8 h-8 text-[hsl(185,62%,38%)] mb-2" />
-                      <div className="font-bold text-sm text-[hsl(220,20%,15%)]">{f.label}</div>
-                      <div className="text-xs text-[hsl(215,16%,47%)]">{f.desc}</div>
-                    </div>
-                  ))}
+                  {resolvedAmenities.length > 0
+                    ? resolvedAmenities.map((a, i) => {
+                        const iconKey = String(a.icon ?? "").trim();
+                        const iconSrc = iconKey ? (PaIcons as Record<string, string>)[iconKey] : "";
+                        return (
+                          <div
+                            key={String(a.id ?? i)}
+                            className="bg-gradient-to-br from-[hsl(185,62%,96%)] to-[hsl(340,65%,96%)] rounded-xl p-4"
+                          >
+                            {iconSrc ? (
+                              <img src={iconSrc} alt="" className="w-8 h-8 mb-2 object-contain" />
+                            ) : (
+                              <Activity className="w-8 h-8 text-[hsl(185,62%,38%)] mb-2" />
+                            )}
+                            <div className="font-bold text-sm text-[hsl(220,20%,15%)]">{a.name}</div>
+                            <div className="text-xs text-[hsl(215,16%,47%)]">Available</div>
+                          </div>
+                        );
+                      })
+                    : [{ icon: Cpu, label: "AI Diagnostics", desc: "Real-time analysis" }, { icon: Wifi, label: "Telemedicine", desc: "Remote consultations" }].map((f, i) => (
+                        <div key={i} className="bg-gradient-to-br from-[hsl(185,62%,96%)] to-[hsl(340,65%,96%)] rounded-xl p-4">
+                          <f.icon className="w-8 h-8 text-[hsl(185,62%,38%)] mb-2" />
+                          <div className="font-bold text-sm text-[hsl(220,20%,15%)]">{f.label}</div>
+                          <div className="text-xs text-[hsl(215,16%,47%)]">{f.desc}</div>
+                        </div>
+                      ))}
                 </div>
               </motion.div>
             </div>
             <div className="lg:col-span-7">
               <motion.div initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} className="relative">
-                <img src={aboutImg} alt="About" className="rounded-2xl shadow-xl w-full" />
+                <img src={resolvedAbout.image} alt="About" className="rounded-2xl shadow-xl w-full" />
                 <div className="absolute bottom-4 left-4 right-4 bg-[hsl(0,0%,100%)]/90 backdrop-blur-md rounded-xl p-4 grid grid-cols-4 gap-4">
                   {[{ v: "20+", l: "Years" }, { v: "180+", l: "Doctors" }, { v: "100K+", l: "Patients" }, { v: "28+", l: "Depts" }].map((s, i) => (
                     <div key={i} className="text-center">
@@ -174,7 +273,7 @@ const LiveTemplate4 = () => {
             <h2 className="text-3xl md:text-4xl font-black mt-2" style={{ color: "#fff" }}>Specialized Departments</h2>
           </motion.div>
           <div className="grid md:grid-cols-2 gap-4">
-            {departments.map((d, i) => (
+            {resolvedDepartments.map((d, i) => (
               <motion.div key={i} initial={{ opacity: 0, x: i % 2 === 0 ? -30 : 30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}
                 className="flex items-center gap-5 bg-[hsl(0,0%,100%,0.05)] border border-[hsl(0,0%,100%,0.08)] rounded-xl p-5 hover:bg-[hsl(0,0%,100%,0.1)] transition-colors group cursor-pointer">
                 <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[hsl(185,62%,38%)] to-[hsl(340,65%,55%)] flex items-center justify-center flex-shrink-0">
@@ -202,7 +301,7 @@ const LiveTemplate4 = () => {
             <p className="text-[hsl(215,16%,47%)] max-w-md mt-3 md:mt-0">World-class physicians leading innovation in their respective fields.</p>
           </motion.div>
           <div className="grid sm:grid-cols-2 gap-6">
-            {doctors.map((d, i) => (
+            {resolvedDoctors.map((d, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
                 className="flex gap-5 bg-[hsl(0,0%,100%)] rounded-xl border border-[hsl(214,32%,91%)] p-4 hover:shadow-lg transition-all group">
                 <img src={d.photo} alt={d.name} className="w-28 h-28 rounded-xl object-cover flex-shrink-0 group-hover:scale-105 transition-transform" />
@@ -293,7 +392,7 @@ const LiveTemplate4 = () => {
         <div className="container mx-auto px-4">
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10">
             <div>
-              <div className="flex items-center gap-2 mb-4"><Zap className="w-7 h-7 text-[hsl(185,62%,55%)]" /><span className="text-lg font-extrabold tracking-tight" style={{ color: "#fff" }}>SUNRISE</span></div>
+              <div className="flex items-center gap-2 mb-4"><Zap className="w-7 h-7 text-[hsl(185,62%,55%)]" /><span className="text-lg font-extrabold tracking-tight" style={{ color: "#fff" }}>{hospitalName || "SUNRISE"}</span></div>
               <p className="text-sm" style={{ color: "hsl(0,0%,100%,0.5)" }}>Transforming healthcare through innovation, research, and patient commitment since 2006.</p>
               <div className="flex gap-3 mt-4">{[Facebook, Twitter, Instagram, Linkedin].map((I, i) => <a key={i} href="#" className="w-8 h-8 rounded-lg bg-[hsl(0,0%,100%,0.05)] flex items-center justify-center hover:bg-[hsl(0,0%,100%,0.1)]"><I className="w-4 h-4" style={{ color: "hsl(0,0%,100%,0.5)" }} /></a>)}</div>
             </div>
@@ -303,7 +402,7 @@ const LiveTemplate4 = () => {
             </div>
             <div>
               <h4 className="font-semibold mb-4" style={{ color: "#fff" }}>Departments</h4>
-              <ul className="space-y-2">{departments.map(d => <li key={d.name}><span className="text-sm" style={{ color: "hsl(0,0%,100%,0.5)" }}>{d.name}</span></li>)}</ul>
+              <ul className="space-y-2">{resolvedDepartments.map(d => <li key={d.name}><span className="text-sm" style={{ color: "hsl(0,0%,100%,0.5)" }}>{d.name}</span></li>)}</ul>
             </div>
             <div>
               <h4 className="font-semibold mb-4" style={{ color: "#fff" }}>Contact</h4>

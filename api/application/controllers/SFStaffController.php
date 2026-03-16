@@ -1944,6 +1944,12 @@ class SFStaffController  extends CI_Controller {
                 ]
             ]);
 
+            $this->publishDoctorWs($doctorId, 'doctor_appointments_changed', [
+                'appointment_uid' => (string)$row['appointment_uid'],
+                'status' => strtolower((string)$row['status']),
+                'date' => (string)$row['date'],
+            ]);
+
             echo json_encode([
                 'success' => true,
                 'data' => $this->encrypt_aes_for_js($payload, $AES_KEY)
@@ -1973,6 +1979,42 @@ class SFStaffController  extends CI_Controller {
         if (!$this->db->field_exists('completed_time', $table)) {
             $this->db->query("ALTER TABLE `ms_patient_appointment` ADD COLUMN `completed_time` DATETIME NULL DEFAULT NULL AFTER `consultation_start_time`");
         }
+    }
+
+    private function publishDoctorWs($doctorId, $event, $payload = []){
+        $url = getenv('WS_NOTIFICATIONS_PUBLISH_URL');
+        if (!$url) {
+            $url = 'http://localhost:8081/publish';
+        }
+
+        $body = json_encode([
+            'doctor_id' => (string)$doctorId,
+            'event' => (string)$event,
+            'payload' => $payload,
+        ]);
+
+        if (!$body) return;
+
+        $ch = curl_init($url);
+        if (!$ch) return;
+
+        $headers = [
+            'Content-Type: application/json',
+        ];
+
+        $secret = getenv('WS_PUBLISH_SECRET');
+        if ($secret) {
+            $headers[] = 'X-WS-SECRET: ' . $secret;
+        }
+
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 500);
+        curl_setopt($ch, CURLOPT_TIMEOUT_MS, 1000);
+        curl_exec($ch);
+        curl_close($ch);
     }
 
     // Persist queue order for waiting patients
@@ -2211,6 +2253,11 @@ class SFStaffController  extends CI_Controller {
                 ]);
                 return;
             }
+
+            $this->publishDoctorWs($doctorId, 'doctor_appointments_changed', [
+                'date' => (string)$date,
+                'type' => 'queue_positions_updated',
+            ]);
 
             /* ===============================
                FETCH UPDATED LIST
@@ -2522,5 +2569,3 @@ class SFStaffController  extends CI_Controller {
 
 
 }
-
-

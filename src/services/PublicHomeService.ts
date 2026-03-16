@@ -4,6 +4,9 @@ export interface PublicHospitalInfo {
   id: number;
   name: string;
   hosuid?: string;
+  phone?: string;
+  address?: string;
+  email?: string;
 }
 
 // Fetch hospital details by public hosuid (e.g., HOS_68ce387acd6a3)
@@ -24,6 +27,9 @@ export const fetchPublicHospitalInfo = async (hosuid: string): Promise<PublicHos
     id,
     name,
     hosuid: String(item.hosuid ?? hosuid),
+    phone: String(item.phone ?? ""),
+    address: String(item.address ?? ""),
+    email: String(item.email ?? ""),
   };
 };
 

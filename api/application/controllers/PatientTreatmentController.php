@@ -164,6 +164,20 @@ class PatientTreatmentController extends CI_Controller {
             $apptStatus = ($saveData['treatment_status'] === 'completed') ? 'completed' : 'draft';
             $this->PatientTreatmentModel->updateAppointmentStatus($data['appointment_id'], $apptStatus);
 
+            // Publish websocket notification to the respective doctor so sidebar updates without refresh
+            $this->db->select('doctor_id, appointment_uid, date, status');
+            $this->db->from('ms_patient_appointment');
+            $this->db->where('id', $data['appointment_id']);
+            $aptRow = $this->db->get()->row_array();
+            if ($aptRow && !empty($aptRow['doctor_id'])) {
+                $this->publishDoctorWs($aptRow['doctor_id'], 'doctor_appointments_changed', [
+                    'type' => 'treatment_saved',
+                    'appointment_uid' => (string)($aptRow['appointment_uid'] ?? $data['appointment_id']),
+                    'status' => strtolower((string)($aptRow['status'] ?? $apptStatus)),
+                    'date' => (string)($aptRow['date'] ?? ''),
+                ]);
+            }
+
             $response = ['success' => true, 'message' => 'Treatment saved successfully', 'id' => $result];
         } else {
             $response = ['success' => false, 'message' => 'Failed to save treatment'];
@@ -214,6 +228,43 @@ class PatientTreatmentController extends CI_Controller {
         // Encrypt Response
         $encryptedResponse = $this->encrypt_aes_for_js(json_encode($response), $this->AES_KEY);
         echo json_encode(['success' => true, 'data' => $encryptedResponse, 'rowData' => $response]);
+    }
+
+    // --- WebSocket Publish Helper ---
+    private function publishDoctorWs($doctorId, $event, $payload = []){
+        $url = getenv('WS_NOTIFICATIONS_PUBLISH_URL');
+        if (!$url) {
+            $url = 'http://localhost:8081/publish';
+        }
+
+        $body = json_encode([
+            'doctor_id' => (string)$doctorId,
+            'event' => (string)$event,
+            'payload' => $payload,
+        ]);
+
+        if (!$body) return;
+
+        $ch = curl_init($url);
+        if (!$ch) return;
+
+        $headers = [
+            'Content-Type: application/json',
+        ];
+
+        $secret = getenv('WS_PUBLISH_SECRET');
+        if ($secret) {
+            $headers[] = 'X-WS-SECRET: ' . $secret;
+        }
+
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 500);
+        curl_setopt($ch, CURLOPT_TIMEOUT_MS, 1000);
+        curl_exec($ch);
+        curl_close($ch);
     }
 
     public function get_lab_report_view() {
