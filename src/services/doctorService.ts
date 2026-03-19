@@ -20,6 +20,29 @@ const getAuthHeaders = async () => {
   };
 };
 
+const getDoctorIdFromCookie = (): string | null => {
+  const raw = Cookies.get("userInfo");
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    const candidates = [
+      parsed["id"],
+      parsed["doctor_id"],
+      parsed["doctorId"],
+      parsed["doctorID"],
+      parsed["doctor"],
+    ];
+    for (const c of candidates) {
+      if (c === null || c === undefined) continue;
+      const s = String(c).trim();
+      if (s) return s;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+};
+
 // ======================
 // Doctor CRUD operations
 // ======================
@@ -314,6 +337,7 @@ export const connectDoctorAppointmentsSocket = async (opts: {
   let closedByUser = false;
   let reconnectAttempt = 0;
   let reconnectTimer: number | null = null;
+  let doctorIdPromise: Promise<string> | null = null;
 
   const getWsUrl = async () => {
     const env = import.meta.env as unknown as Record<string, string | undefined>;
@@ -321,18 +345,36 @@ export const connectDoctorAppointmentsSocket = async (opts: {
       env.VITE_DOCTOR_NOTIFICATIONS_WS_URL ||
       env.VITE_WS_NOTIFICATIONS_URL ||
       "";
+    const normalizedRawBase = rawBase.startsWith("https://")
+      ? rawBase.replace(/^https:/, "wss:")
+      : rawBase.startsWith("http://")
+        ? rawBase.replace(/^http:/, "ws:")
+        : rawBase;
     const base =
-      rawBase ||
+      normalizedRawBase ||
       `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.hostname}:8081/ws`;
 
-    const profile = await getLoggedInDoctorProfile().catch(() => null);
+    const fromCookie = getDoctorIdFromCookie();
     const doctorId =
-      profile?.id ??
-      profile?.doctor_id ??
-      profile?.doctorId ??
-      profile?.doctorID ??
-      profile?.doctor ??
-      null;
+      fromCookie ||
+      (await (doctorIdPromise ??
+        (doctorIdPromise = getLoggedInDoctorProfile()
+          .then((profile) => {
+            const id =
+              profile?.id ??
+              profile?.doctor_id ??
+              profile?.doctorId ??
+              profile?.doctorID ??
+              profile?.doctor ??
+              null;
+            const s = id === null || id === undefined ? "" : String(id).trim();
+            if (!s) throw new Error("Doctor id not found");
+            return s;
+          })
+          .catch((e) => {
+            doctorIdPromise = null;
+            throw e;
+          }))));
 
     if (!doctorId) throw new Error("Doctor id not found");
 
