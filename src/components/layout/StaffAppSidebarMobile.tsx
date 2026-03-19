@@ -121,7 +121,7 @@ export function StaffAppSidebar() {
       setLoading(true);
       try {
         const response = await fetchStaffPermissions();
-        setPermissions(response);
+        setPermissions(response && typeof response === "object" ? response : {});
       } catch (err) {
         console.error("Error fetching staff permissions:", err);
       } finally {

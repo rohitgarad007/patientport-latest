@@ -166,7 +166,7 @@ class PatientTreatmentController extends CI_Controller {
 
             // Publish websocket notification to the respective doctor so sidebar updates without refresh
             $aptRow = $this->db
-                ->select('a.doctor_id, a.appointment_uid, a.patient_id, a.date, a.token_no, a.start_time, a.end_time, a.status, a.queue_position, a.arrival_time, a.consultation_start_time, a.completed_time, a.patient_name, a.phone, p.fname, p.lname, p.phone AS pphone')
+                ->select('a.hospital_id, a.doctor_id, a.appointment_uid, a.patient_id, a.date, a.token_no, a.start_time, a.end_time, a.status, a.queue_position, a.arrival_time, a.consultation_start_time, a.completed_time, a.patient_name, a.phone, p.fname, p.lname, p.phone AS pphone')
                 ->from('ms_patient_appointment a')
                 ->join('ms_patient p', 'p.id = a.patient_id', 'left')
                 ->where('a.id', $data['appointment_id'])
@@ -209,6 +209,16 @@ class PatientTreatmentController extends CI_Controller {
                     'date' => (string)($aptRow['date'] ?? ''),
                     'appointment' => $wsAppointment,
                 ]);
+
+                if (!empty($aptRow['hospital_id'])) {
+                    $this->publishStaffHospitalWs($aptRow['hospital_id'], 'staff_appointments_changed', [
+                        'type' => 'treatment_saved',
+                        'appointment_uid' => (string)($aptRow['appointment_uid'] ?? $data['appointment_id']),
+                        'status' => strtolower((string)($aptRow['status'] ?? $apptStatus)),
+                        'date' => (string)($aptRow['date'] ?? ''),
+                        'appointment' => $wsAppointment,
+                    ]);
+                }
             }
 
             $response = ['success' => true, 'message' => 'Treatment saved successfully', 'id' => $result];
@@ -272,6 +282,42 @@ class PatientTreatmentController extends CI_Controller {
 
         $body = json_encode([
             'doctor_id' => (string)$doctorId,
+            'event' => (string)$event,
+            'payload' => $payload,
+        ]);
+
+        if (!$body) return;
+
+        $ch = curl_init($url);
+        if (!$ch) return;
+
+        $headers = [
+            'Content-Type: application/json',
+        ];
+
+        $secret = getenv('WS_PUBLISH_SECRET');
+        if ($secret) {
+            $headers[] = 'X-WS-SECRET: ' . $secret;
+        }
+
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 500);
+        curl_setopt($ch, CURLOPT_TIMEOUT_MS, 1000);
+        curl_exec($ch);
+        curl_close($ch);
+    }
+
+    private function publishStaffHospitalWs($hospitalId, $event, $payload = []){
+        $url = getenv('WS_NOTIFICATIONS_PUBLISH_URL');
+        if (!$url) {
+            $url = 'http://localhost:8081/publish';
+        }
+
+        $body = json_encode([
+            'hospital_id' => (string)$hospitalId,
             'event' => (string)$event,
             'payload' => $payload,
         ]);

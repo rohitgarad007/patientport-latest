@@ -194,8 +194,10 @@ export const changeStaffStatus = async (
   return res.json();
 };
 
-let cachedPermissions: string[] | null = null;
-let fetchPromise: Promise<string[]> | null = null;
+type StaffPermissions = Record<string, string>;
+
+let cachedPermissions: StaffPermissions | null = null;
+let fetchPromise: Promise<StaffPermissions> | null = null;
 
 export const fetchStaffPermissions = async (forceRefresh = false) => {
   if (cachedPermissions && !forceRefresh) return cachedPermissions;
@@ -218,20 +220,21 @@ export const fetchStaffPermissions = async (forceRefresh = false) => {
       if (!res.ok) throw new Error("Failed to fetch staff permissions");
 
       const json = await res.json();
-      let permissions: string[] = [];
+      let permissions: StaffPermissions = {};
 
       if (json.success && json.data) {
         const AES_KEY = await configService.getAesSecretKey();
         const decrypted = decryptAESFromPHP(json.data, AES_KEY);
-        permissions = decrypted ? JSON.parse(decrypted) : [];
+        const parsed = decrypted ? (JSON.parse(decrypted) as unknown) : null;
+        permissions = parsed && typeof parsed === "object" ? (parsed as StaffPermissions) : {};
       }
 
       cachedPermissions = permissions;
       return permissions;
     } catch (err) {
       console.error("fetchStaffPermissions error:", err);
-      cachedPermissions = [];
-      return [];
+      cachedPermissions = {};
+      return {};
     } finally {
       fetchPromise = null; // clear the promise so future calls can retry if needed
     }
@@ -239,5 +242,4 @@ export const fetchStaffPermissions = async (forceRefresh = false) => {
 
   return fetchPromise;
 };
-
 

@@ -65,7 +65,7 @@ const StaffProtectedRoute = ({ permissionId }: StaffProtectedRouteProps) => {
         if (!permissionId) {
           setHasAccess(true);
         } else {
-          setHasAccess(permissions.includes(permissionId));
+          setHasAccess(permissions?.[permissionId] === "1");
         }
       } catch (err) {
         console.error("StaffProtectedRoute error:", err);

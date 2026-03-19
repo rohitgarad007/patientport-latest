@@ -1,4 +1,4 @@
-import { NavLink, useLocation, Navigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate, Navigate } from "react-router-dom";
 import Cookies from "js-cookie";
 import { useEffect, useState } from "react";
 import { PaIcons } from "@/components/icons/PaIcons";
@@ -10,6 +10,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { connectStaffAppointmentsSocket, getTodaysAppointmentsGrouped } from "@/services/SfstaffUseService";
 
 interface Permission {
   id: string;
@@ -24,12 +28,157 @@ interface RoleGroup {
   permissions: Permission[];
 }
 
+type SidebarAppointment = {
+  id: string;
+  tokenNumber: number;
+  patient: { id: string; name: string; phone?: string; age?: number };
+  date?: string;
+  timeSlot?: { id?: string; startTime?: string; endTime?: string };
+  status?: string;
+  queuePosition?: number | null;
+  arrivalTime?: string | null;
+  consultationStartTime?: string | null;
+  completedTime?: string | null;
+  statusTime?: string | null;
+};
+
+const asRecord = (v: unknown): Record<string, unknown> =>
+  v && typeof v === "object" ? (v as Record<string, unknown>) : {};
+
+const normalizeAppointment = (item: unknown): SidebarAppointment => {
+  const it = asRecord(item);
+  const patient = asRecord(it["patient"]);
+  const timeSlot = asRecord(it["timeSlot"]);
+
+  return {
+    id: String(it["id"] ?? it["appointmentId"] ?? it["appointment_uid"] ?? ""),
+    tokenNumber: Number(it["tokenNumber"] ?? it["token"] ?? it["token_no"] ?? 0),
+    patient: {
+      id: String(patient["id"] ?? it["patientId"] ?? it["patient_id"] ?? ""),
+      name: String(patient["name"] ?? it["patientName"] ?? it["patient_name"] ?? "Unknown"),
+      phone: String(patient["phone"] ?? it["patientPhone"] ?? it["phone"] ?? ""),
+      age: Number(patient["age"] ?? it["patientAge"] ?? it["age"] ?? 0),
+    },
+    date: String(it["date"] ?? it["appointmentDate"] ?? ""),
+    timeSlot: {
+      id: String(timeSlot["id"] ?? it["slotId"] ?? it["slot_id"] ?? ""),
+      startTime: String(timeSlot["startTime"] ?? it["startTime"] ?? it["start_time"] ?? ""),
+      endTime: String(timeSlot["endTime"] ?? it["endTime"] ?? it["end_time"] ?? ""),
+    },
+    status: String(it["status"] ?? it["appointmentStatus"] ?? it["appointment_status"] ?? ""),
+    queuePosition: (it["queuePosition"] as number | null | undefined) ?? (it["queue_position"] as number | null | undefined) ?? null,
+    arrivalTime: (it["arrivalTime"] as string | null | undefined) ?? (it["arrival_time"] as string | null | undefined) ?? null,
+    consultationStartTime:
+      (it["consultationStartTime"] as string | null | undefined) ??
+      (it["consultation_start_time"] as string | null | undefined) ??
+      null,
+    completedTime: (it["completedTime"] as string | null | undefined) ?? (it["completed_time"] as string | null | undefined) ?? null,
+    statusTime: (it["statusTime"] as string | null | undefined) ?? (it["status_time"] as string | null | undefined) ?? null,
+  };
+};
+
+const formatTo12hr = (time?: string | null) => {
+  if (!time) return "";
+  let hhmm = "";
+  if (/^\d{2}:\d{2}/.test(time)) hhmm = time.substring(0, 5);
+  else if (time.includes(" ")) hhmm = time.split(" ")[1]?.substring(0, 5) ?? "";
+  if (!hhmm) return "";
+  const [HH, MM] = hhmm.split(":");
+  let h = Number(HH);
+  const ampm = h >= 12 ? "PM" : "AM";
+  h = h % 12 || 12;
+  return `${h}:${MM} ${ampm}`;
+};
+
+const deriveStatusTime = (apt: SidebarAppointment) => {
+  const status = String(apt.status ?? "");
+  const raw =
+    apt.statusTime ||
+    (status === "arrived" || status === "waiting"
+      ? apt.arrivalTime
+      : status === "active"
+        ? apt.consultationStartTime
+        : status === "completed"
+          ? apt.completedTime
+          : apt.timeSlot?.startTime) ||
+    "";
+  return formatTo12hr(raw);
+};
+
+const NotificationPopover = ({
+  item,
+  onItemClick,
+  onViewAll,
+}: {
+  item: { title: string; icon: string; badge: number; data: SidebarAppointment[] };
+  onItemClick?: (apt: SidebarAppointment) => void;
+  onViewAll?: () => void;
+}) => {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="icon" className="relative rounded-full hover:bg-muted">
+          <img src={item.icon} alt={item.title} className="w-6 h-6" />
+          {item.badge > 0 ? (
+            <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 rounded-full bg-red-500 hover:bg-red-600 text-[10px] text-white">
+              {item.badge}
+            </Badge>
+          ) : null}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-80 p-0 shadow-lg border-border">
+        <div className="flex items-center justify-between px-4 py-3 border-b">
+          <h4 className="font-semibold text-sm">{item.title}</h4>
+          <Badge variant="secondary" className="bg-blue-50 text-blue-600 hover:bg-blue-100">
+            {item.badge} Today
+          </Badge>
+        </div>
+        <ScrollArea className="h-[300px]">
+          <div className="flex flex-col">
+            {item.data && item.data.length > 0 ? (
+              item.data.slice(0, 20).map((apt, index) => (
+                <div
+                  key={apt.id || index}
+                  onClick={() => onItemClick?.(apt)}
+                  className="flex items-start gap-3 px-4 py-3 hover:bg-muted/50 transition-colors border-b last:border-0 cursor-pointer"
+                >
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-foreground line-clamp-1">{apt.patient?.name}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-1">
+                      Token #{apt.tokenNumber}
+                      {apt.timeSlot?.startTime ? ` • ${formatTo12hr(apt.timeSlot.startTime)}` : ""}
+                      {deriveStatusTime(apt) ? ` • ${deriveStatusTime(apt)}` : ""}
+                    </p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="px-4 py-8 text-center text-sm text-muted-foreground">No patients</div>
+            )}
+          </div>
+        </ScrollArea>
+        <div className="px-4 py-3 border-t">
+          <Button variant="ghost" className="w-full" onClick={onViewAll}>
+            View All
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+};
+
 export function StaffAppSidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [permissions, setPermissions] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [todaysGrouped, setTodaysGrouped] = useState<{
+    waiting: SidebarAppointment[];
+    arrived: SidebarAppointment[];
+    booked: SidebarAppointment[];
+  }>({ waiting: [], arrived: [], booked: [] });
 
   const categoryIcons: Record<string, any> = {
     Patient: PaIcons.patients,
@@ -135,7 +284,7 @@ export function StaffAppSidebar() {
         setCurrentUser(parsedUser);
 
         const response = await fetchStaffPermissions();
-        setPermissions(response);
+        setPermissions(response && typeof response === "object" ? response : {});
       } catch (err) {
         console.error(err);
       } finally {
@@ -145,11 +294,114 @@ export function StaffAppSidebar() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    let attempt = 0;
+    let timer: number | null = null;
+
+    const refresh = async () => {
+      const data: unknown = await getTodaysAppointmentsGrouped();
+      const root = asRecord(data);
+      const waitingRaw = root["waiting"];
+      const arrivedRaw = root["arrived"];
+      const bookedRaw = root["booked"];
+      const waiting = (Array.isArray(waitingRaw) ? waitingRaw : []).map(normalizeAppointment);
+      const arrived = (Array.isArray(arrivedRaw) ? arrivedRaw : []).map(normalizeAppointment);
+      const booked = (Array.isArray(bookedRaw) ? bookedRaw : []).map(normalizeAppointment);
+      setTodaysGrouped({
+        waiting: waiting.sort((a, b) => Number(a.queuePosition ?? 0) - Number(b.queuePosition ?? 0)),
+        arrived,
+        booked,
+      });
+    };
+
+    const run = async () => {
+      try {
+        await refresh();
+      } catch (e) {
+        if (cancelled) return;
+        const delay = Math.min(10000, 500 * Math.pow(2, attempt));
+        attempt = Math.min(attempt + 1, 6);
+        timer = window.setTimeout(() => void run(), delay);
+      }
+    };
+
+    void run();
+
+    return () => {
+      cancelled = true;
+      if (timer) window.clearTimeout(timer);
+    };
+  }, []);
+
+  useEffect(() => {
+    let closed: { close: () => void } | null = null;
+    let cancelled = false;
+    const connect = async () => {
+      try {
+        closed = await connectStaffAppointmentsSocket({
+          onMessage: (msg) => {
+            if (!msg?.event) return;
+            if (msg.event === "staff_appointments_changed") {
+              void getTodaysAppointmentsGrouped().then((data) => {
+                if (cancelled) return;
+                const root = asRecord(data);
+                const waitingRaw = root["waiting"];
+                const arrivedRaw = root["arrived"];
+                const bookedRaw = root["booked"];
+                const waiting = (Array.isArray(waitingRaw) ? waitingRaw : []).map(normalizeAppointment);
+                const arrived = (Array.isArray(arrivedRaw) ? arrivedRaw : []).map(normalizeAppointment);
+                const booked = (Array.isArray(bookedRaw) ? bookedRaw : []).map(normalizeAppointment);
+                setTodaysGrouped({
+                  waiting: waiting.sort((a, b) => Number(a.queuePosition ?? 0) - Number(b.queuePosition ?? 0)),
+                  arrived,
+                  booked,
+                });
+              });
+            }
+          },
+        });
+      } catch {
+        return;
+      }
+    };
+    void connect();
+    return () => {
+      cancelled = true;
+      try {
+        closed?.close();
+      } catch {
+        return;
+      }
+    };
+  }, []);
+
   if (loading) return <div>Loading...</div>;
+
+  const notificationItems = [
+    {
+      title: "Arrived",
+      icon: PaIcons.approve2Icon,
+      badge: todaysGrouped.arrived.length,
+      data: todaysGrouped.arrived,
+    },
+    {
+      title: "Waiting",
+      icon: PaIcons.patients,
+      badge: todaysGrouped.waiting.length,
+      data: todaysGrouped.waiting,
+    },
+    {
+      title: "Booked",
+      icon: PaIcons.calendar2,
+      badge: todaysGrouped.booked.length,
+      data: todaysGrouped.booked,
+    },
+  ];
 
   const filteredMenu = groupedPermissions
     .map((group) => {
-      const items = group.permissions.filter((p) => permissions[p.id] === "1");
+      const items = group.permissions.filter((p) => permissions?.[p.id] === "1");
       return items.length
         ? {
             title: group.category,
@@ -187,6 +439,14 @@ export function StaffAppSidebar() {
           </NavLink>
 
           <nav className="flex items-center gap-6">
+            {notificationItems.map((item) => (
+              <NotificationPopover
+                key={item.title}
+                item={item}
+                onItemClick={() => navigate("/sf-appointment-list")}
+                onViewAll={() => navigate("/sf-appointment-list")}
+              />
+            ))}
             {filteredMenu.map((item: any) =>
               item.children && item.children.length ? (
                 <DropdownMenu key={item.title}>
@@ -267,6 +527,27 @@ export function StaffAppSidebar() {
               <button onClick={() => setActiveCategory(null)} className="text-gray-400 text-sm">
                 Close ✕
               </button>
+            </div>
+            <div className="flex items-center justify-end gap-2 mb-3">
+              {notificationItems.map((item) => (
+                <Button
+                  key={item.title}
+                  variant="ghost"
+                  size="icon"
+                  className="relative rounded-full hover:bg-muted"
+                  onClick={() => {
+                    setActiveCategory(null);
+                    navigate("/sf-appointment-list");
+                  }}
+                >
+                  <img src={item.icon} alt={item.title} className="w-6 h-6" />
+                  {item.badge > 0 ? (
+                    <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 rounded-full bg-red-500 hover:bg-red-600 text-[10px] text-white">
+                      {item.badge}
+                    </Badge>
+                  ) : null}
+                </Button>
+              ))}
             </div>
             <div className="grid grid-cols-2 gap-3">
               {filteredMenu

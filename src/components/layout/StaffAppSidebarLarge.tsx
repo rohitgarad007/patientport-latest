@@ -144,7 +144,7 @@ export function StaffAppSidebar() {
         setCurrentUser(parsedUser);
 
         const response = await fetchStaffPermissions();
-        setPermissions(response); // API returns { patient_list: "1", view_patients: "0", ... }
+        setPermissions(response && typeof response === "object" ? response : {}); // API returns { patient_list: "1", view_patients: "0", ... }
       } catch (err) {
         console.error(err);
       } finally {

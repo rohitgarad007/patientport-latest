@@ -110,6 +110,134 @@ class SFStaffController  extends CI_Controller {
         }
     }
 
+    public function getLoggedInStaffProfile(){
+        $userToken = $this->input->get_request_header('Authorization');
+        $splitToken = explode(" ", $userToken);
+        $token = isset($splitToken[1]) ? $splitToken[1] : '';
+
+        try {
+            $token = verifyAuthToken($token);
+            if (!$token) throw new Exception("Unauthorized");
+
+            $tokenData = is_string($token) ? json_decode($token, true) : $token;
+            $loguid = $tokenData['loguid'] ?? null;
+
+            if (!$loguid) {
+                echo json_encode([
+                    "success" => false,
+                    "message" => "Invalid user token or insufficient privileges"
+                ]);
+                return;
+            }
+
+            $staffInfo = $this->StaffCommonModel->get_logstaffInfoWithAccess($loguid);
+            if (!$staffInfo) {
+                echo json_encode([
+                    "success" => false,
+                    "message" => "Staff profile not found"
+                ]);
+                return;
+            }
+
+            $AES_KEY = "RohitGaradHos@173414";
+            $encryptedData = $this->encrypt_aes_for_js(json_encode($staffInfo), $AES_KEY);
+
+            echo json_encode([
+                "success" => true,
+                "data" => $encryptedData
+            ]);
+        } catch (Exception $e) {
+            echo json_encode([
+                "success" => false,
+                "message" => "Error: " . $e->getMessage()
+            ]);
+        }
+    }
+
+    public function getTodaysAppointmentsGrouped(){
+        $userToken = $this->input->get_request_header('Authorization');
+        $splitToken = explode(" ", $userToken);
+        $token = isset($splitToken[1]) ? $splitToken[1] : '';
+
+        try {
+            $token = verifyAuthToken($token);
+            if (!$token) throw new Exception("Unauthorized");
+
+            $tokenData = is_string($token) ? json_decode($token, true) : $token;
+            $loguid = $tokenData['loguid'] ?? null;
+
+            if (!$loguid) {
+                echo json_encode([
+                    "success" => false,
+                    "message" => "Invalid user token or insufficient privileges"
+                ]);
+                return;
+            }
+
+            $staffInfo = $this->StaffCommonModel->get_logstaffInfo($loguid);
+            if (!$staffInfo) {
+                echo json_encode([
+                    "success" => false,
+                    "message" => "Staff hospital not found"
+                ]);
+                return;
+            }
+
+            $AES_KEY = "RohitGaradHos@173414";
+            $body = json_decode(file_get_contents("php://input"), true);
+            $dateEnc = is_array($body) ? ($body['date'] ?? null) : null;
+            $date = $dateEnc ? $this->decrypt_aes_from_js($dateEnc, $AES_KEY) : date('Y-m-d');
+
+            $hospitalId = $staffInfo['hospital_id'];
+            if (empty($hospitalId) && !empty($staffInfo['hosuid'])) {
+                $hospital = $this->db->get_where('ms_hospitals', ['hosuid' => $staffInfo['hosuid']])->row_array();
+                if ($hospital) {
+                    $hospitalId = $hospital['id'];
+                }
+            }
+
+            if (empty($hospitalId)) {
+                echo json_encode([
+                    "success" => false,
+                    "message" => "Hospital ID not found for this staff"
+                ]);
+                return;
+            }
+
+            $appointments = $this->StaffCommonModel->get_today_appointments($hospitalId, $date);
+            $grouped = [
+                'waiting' => [],
+                'arrived' => [],
+                'booked' => [],
+            ];
+
+            foreach ($appointments as $apt) {
+                $status = strtolower(trim($apt['status'] ?? ''));
+                if ($status === 'waiting') {
+                    $grouped['waiting'][] = $apt;
+                    continue;
+                }
+                if ($status === 'arrived') {
+                    $grouped['arrived'][] = $apt;
+                    continue;
+                }
+                $grouped['booked'][] = $apt;
+            }
+
+            $encryptedData = $this->encrypt_aes_for_js(json_encode($grouped), $AES_KEY);
+            echo json_encode([
+                "success" => true,
+                "data" => $encryptedData,
+                "rowData" => $grouped
+            ]);
+        } catch (Exception $e) {
+            echo json_encode([
+                "success" => false,
+                "message" => "Error: " . $e->getMessage()
+            ]);
+        }
+    }
+
     // AES Encryption function compatible with JS decryption
     public function encrypt_aes_for_js($plainText, $passphrase) {
         $salt = openssl_random_pseudo_bytes(8);
@@ -1576,7 +1704,7 @@ class SFStaffController  extends CI_Controller {
 
 
             $apt = $this->db
-                ->select('id, appointment_uid, doctor_id, patient_id, date, token_no, start_time, end_time, status, queue_position, arrival_time')
+                ->select('id, appointment_uid, hospital_id, doctor_id, patient_id, date, token_no, start_time, end_time, status, queue_position, arrival_time')
                 ->from('ms_patient_appointment')
                 ->group_start()
                     ->where('appointment_uid', $appointmentUid)
@@ -1902,7 +2030,7 @@ class SFStaffController  extends CI_Controller {
                FETCH UPDATED RECORD (id OR uid)
             =============================== */
             $row = $this->db
-                ->select('a.appointment_uid, a.patient_id, a.doctor_id, a.date, a.token_no, a.start_time, a.end_time,
+                ->select('a.appointment_uid, a.hospital_id, a.patient_id, a.doctor_id, a.date, a.token_no, a.start_time, a.end_time,
                           a.status, a.queue_position, a.arrival_time, a.consultation_start_time, a.completed_time,
                           p.fname, p.lname, p.phone, a.patient_name')
                 ->from('ms_patient_appointment a')
@@ -1954,6 +2082,17 @@ class SFStaffController  extends CI_Controller {
                 'appointment' => $item,
             ]);
 
+            $hospitalIdForWs = $apt['hospital_id'] ?? ($row['hospital_id'] ?? null);
+            if (!empty($hospitalIdForWs)) {
+                $this->publishStaffHospitalWs($hospitalIdForWs, 'staff_appointments_changed', [
+                    'type' => 'appointment_updated',
+                    'appointment_uid' => (string)$row['appointment_uid'],
+                    'status' => strtolower((string)$row['status']),
+                    'date' => (string)$row['date'],
+                    'appointment' => $item,
+                ]);
+            }
+
             echo json_encode([
                 'success' => true,
                 'data' => $this->encrypt_aes_for_js($payload, $AES_KEY)
@@ -1993,6 +2132,42 @@ class SFStaffController  extends CI_Controller {
 
         $body = json_encode([
             'doctor_id' => (string)$doctorId,
+            'event' => (string)$event,
+            'payload' => $payload,
+        ]);
+
+        if (!$body) return;
+
+        $ch = curl_init($url);
+        if (!$ch) return;
+
+        $headers = [
+            'Content-Type: application/json',
+        ];
+
+        $secret = getenv('WS_PUBLISH_SECRET');
+        if ($secret) {
+            $headers[] = 'X-WS-SECRET: ' . $secret;
+        }
+
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 500);
+        curl_setopt($ch, CURLOPT_TIMEOUT_MS, 1000);
+        curl_exec($ch);
+        curl_close($ch);
+    }
+
+    private function publishStaffHospitalWs($hospitalId, $event, $payload = []){
+        $url = getenv('WS_NOTIFICATIONS_PUBLISH_URL');
+        if (!$url) {
+            $url = 'http://localhost:8081/publish';
+        }
+
+        $body = json_encode([
+            'hospital_id' => (string)$hospitalId,
             'event' => (string)$event,
             'payload' => $payload,
         ]);

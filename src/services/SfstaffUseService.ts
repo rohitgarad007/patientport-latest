@@ -161,6 +161,219 @@ export const getTodayAppointments = async () => {
   }
 };
 
+const getStaffHospitalIdFromCookie = (): string | null => {
+  const raw = Cookies.get("userInfo");
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    const candidates = [
+      parsed["hospital_id"],
+      parsed["hospitalId"],
+      parsed["hospitalID"],
+      parsed["hospital"],
+    ];
+    for (const c of candidates) {
+      if (c === null || c === undefined) continue;
+      const s = String(c).trim();
+      if (!s) continue;
+      if (!/^\d+$/.test(s)) continue;
+      return s;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+};
+
+export const getLoggedInStaffProfile = async () => {
+  try {
+    const { apiUrl, headers } = await getAuthHeaders();
+    const AES_KEY = await configService.getAesSecretKey();
+
+    const response = await fetch(`${apiUrl}/sf_staff_getLoggedInProfile`, {
+      method: "GET",
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch staff profile: ${response.statusText}`);
+    }
+
+    const json = await response.json();
+    if (json.success && json.data) {
+      const decrypted = decryptAESFromPHP(json.data, AES_KEY);
+      const parsedData = decrypted ? JSON.parse(decrypted) : null;
+      return parsedData;
+    }
+    return null;
+  } catch (error: any) {
+    console.error("Error fetching staff profile:", error);
+    return null;
+  }
+};
+
+export const getTodaysAppointmentsGrouped = async (date?: string) => {
+  try {
+    const { apiUrl, headers } = await getAuthHeaders();
+    const AES_KEY = await configService.getAesSecretKey();
+
+    const payload: Record<string, string> = {};
+    if (date) {
+      payload.date = CryptoJS.AES.encrypt(String(date), AES_KEY).toString();
+    }
+
+    const response = await fetch(`${apiUrl}/sf_staff_getTodaysAppointmentsGrouped`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch today's grouped appointments: ${response.statusText}`);
+    }
+
+    const json = await response.json();
+    if (json.success && json.data) {
+      const decrypted = decryptAESFromPHP(json.data, AES_KEY);
+      const parsedData = decrypted
+        ? JSON.parse(decrypted)
+        : { waiting: [], arrived: [], booked: [] };
+      return parsedData;
+    }
+    return { waiting: [], arrived: [], booked: [] };
+  } catch (error: any) {
+    console.error("Error fetching today's grouped appointments:", error);
+    return { waiting: [], arrived: [], booked: [] };
+  }
+};
+
+export type StaffAppointmentsWsMessage = {
+  event: string;
+  hospital_id?: string;
+  staff_id?: string;
+  payload?: unknown;
+};
+
+export const connectStaffAppointmentsSocket = async (opts: {
+  onMessage: (message: StaffAppointmentsWsMessage) => void;
+  onOpen?: () => void;
+  onClose?: () => void;
+}) => {
+  let ws: WebSocket | null = null;
+  let closedByUser = false;
+  let reconnectAttempt = 0;
+  let reconnectTimer: number | null = null;
+  let hospitalIdPromise: Promise<string> | null = null;
+
+  const getWsUrl = async () => {
+    const env = import.meta.env as unknown as Record<string, string | undefined>;
+    const rawBase =
+      env.VITE_STAFF_NOTIFICATIONS_WS_URL ||
+      env.VITE_WS_NOTIFICATIONS_URL ||
+      "";
+    const normalizedRawBase = rawBase.startsWith("https://")
+      ? rawBase.replace(/^https:/, "wss:")
+      : rawBase.startsWith("http://")
+        ? rawBase.replace(/^http:/, "ws:")
+        : rawBase;
+    const base =
+      normalizedRawBase ||
+      `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.hostname}:8081/ws`;
+
+    const fromCookie = getStaffHospitalIdFromCookie();
+    const hospitalId =
+      fromCookie ||
+      (await (hospitalIdPromise ??
+        (hospitalIdPromise = getLoggedInStaffProfile()
+          .then((profile) => {
+            const id =
+              profile?.hospital_id ??
+              profile?.hospitalId ??
+              profile?.hospitalID ??
+              profile?.hospital ??
+              null;
+            const s = id === null || id === undefined ? "" : String(id).trim();
+            if (!s || !/^\d+$/.test(s)) throw new Error("Hospital id not found");
+            return s;
+          })
+          .catch((e) => {
+            hospitalIdPromise = null;
+            throw e;
+          }))));
+
+    if (!hospitalId) throw new Error("Hospital id not found");
+
+    const url = new URL(base);
+    url.searchParams.delete("doctor_id");
+    url.searchParams.delete("staff_id");
+    url.searchParams.set("hospital_id", String(hospitalId));
+    return url.toString();
+  };
+
+  const scheduleReconnect = () => {
+    if (closedByUser) return;
+    if (reconnectTimer) window.clearTimeout(reconnectTimer);
+    const delay = Math.min(10000, 500 * Math.pow(2, reconnectAttempt));
+    reconnectAttempt = Math.min(reconnectAttempt + 1, 6);
+    reconnectTimer = window.setTimeout(() => {
+      void connect();
+    }, delay);
+  };
+
+  const connect = async () => {
+    try {
+      const url = await getWsUrl();
+      ws = new WebSocket(url);
+
+      ws.onopen = () => {
+        reconnectAttempt = 0;
+        opts.onOpen?.();
+      };
+
+      ws.onmessage = (ev) => {
+        try {
+          const parsed: unknown = JSON.parse(String(ev.data || "{}"));
+          if (!parsed || typeof parsed !== "object") return;
+          const record = parsed as Record<string, unknown>;
+          if (typeof record.event !== "string") return;
+          opts.onMessage(record as unknown as StaffAppointmentsWsMessage);
+        } catch {
+          return;
+        }
+      };
+
+      ws.onclose = () => {
+        opts.onClose?.();
+        scheduleReconnect();
+      };
+
+      ws.onerror = () => {
+        try {
+          ws?.close();
+        } catch {
+          scheduleReconnect();
+        }
+      };
+    } catch {
+      scheduleReconnect();
+    }
+  };
+
+  await connect();
+
+  return {
+    close: () => {
+      closedByUser = true;
+      if (reconnectTimer) window.clearTimeout(reconnectTimer);
+      try {
+        ws?.close();
+      } catch {
+        return;
+      }
+    },
+  };
+};
+
 
 // -------------------------------
 // 🧑‍⚕️ Fetch Doctor Schedule (encrypted request)

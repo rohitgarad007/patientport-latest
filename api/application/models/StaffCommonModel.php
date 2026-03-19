@@ -191,8 +191,8 @@ class StaffCommonModel extends CI_Model{
 	    return $query->result_array();
 	}
 
-    public function get_today_appointments($hospital_id) {
-        $today = date('Y-m-d');
+    public function get_today_appointments($hospital_id, $date = null) {
+        $selDate = !empty($date) ? $date : date('Y-m-d');
         $this->db->select('
             pa.id,
             pa.appointment_uid,
@@ -211,7 +211,7 @@ class StaffCommonModel extends CI_Model{
         $this->db->join('ms_doctors d', 'd.id = pa.doctor_id', 'left');
         $this->db->join('ms_patient p', 'p.id = pa.patient_id', 'left');
         $this->db->where('pa.hospital_id', $hospital_id);
-        $this->db->where('pa.date', $today);
+        $this->db->where('pa.date', $selDate);
         $this->db->order_by('pa.start_time', 'ASC');
         $query = $this->db->get();
         return $query->result_array();
