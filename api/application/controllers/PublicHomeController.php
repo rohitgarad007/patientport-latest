@@ -645,7 +645,8 @@ class PublicHomeController extends CI_Controller {
             }
 
             $max = isset($slotRow['max_appointments']) ? intval($slotRow['max_appointments']) : 0;
-            $bookSlotCol = isset($slotRow['book_slot']) ? intval($slotRow['book_slot']) : $this->_countBookedAppointments($source, $slotId, $doctorId, $dateStr);
+            // Always compute per-date booked count from appointments
+            $bookSlotCol = $this->_countBookedAppointments($source, $slotId, $doctorId, $dateStr);
             $availableCount = max(0, $max - $bookSlotCol);
             $tokenNo = $bookSlotCol + 1; // next token number for this slot/date
 
@@ -2170,8 +2171,8 @@ class PublicHomeController extends CI_Controller {
                 foreach ($eventSlots as $s) {
                     $slotId = isset($s['id']) ? intval($s['id']) : null;
                     $max = isset($s['max_appointments']) ? intval($s['max_appointments']) : 0;
-                    // If column doesn't exist, fallback to appointment count
-                    $bookSlot = isset($s['book_slot']) ? intval($s['book_slot']) : $this->_countBookedAppointments('event', $slotId, $doctorId, $dateStr);
+                    // Always compute per-date booked count from appointments
+                    $bookSlot = $this->_countBookedAppointments('event', $slotId, $doctorId, $dateStr);
                     $availableCount = max(0, $max - $bookSlot);
 
                     $slots[] = [
@@ -2207,7 +2208,8 @@ class PublicHomeController extends CI_Controller {
                     foreach ($timeSlots as $s) {
                         $slotId = isset($s['id']) ? intval($s['id']) : null;
                         $max = isset($s['max_appointments']) ? intval($s['max_appointments']) : 0;
-                        $bookSlot = isset($s['book_slot']) ? intval($s['book_slot']) : $this->_countBookedAppointments('master', $slotId, $doctorId, $dateStr);
+                        // Always compute per-date booked count from appointments
+                        $bookSlot = $this->_countBookedAppointments('master', $slotId, $doctorId, $dateStr);
                         $availableCount = max(0, $max - $bookSlot);
 
                         $slots[] = [
