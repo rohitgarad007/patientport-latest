@@ -21,7 +21,7 @@ const getAuthHeaders = async () => {
 
 export const fetchMasterLabTests = async (page = 1, limit = 10, search = "", department = "all", status = "all") => {
   const { apiUrl, headers } = await getAuthHeaders();
-  const res = await fetch(`${apiUrl}laboratories_lab_test_list`, {
+  const res = await fetch(`${apiUrl}/laboratories_lab_test_list`, {
     method: "POST",
     headers,
     body: JSON.stringify({ page, limit, search, department, status }),
@@ -38,7 +38,7 @@ export const fetchMasterLabTests = async (page = 1, limit = 10, search = "", dep
 
 export const fetchRecentOrders = async () => {
   const { apiUrl, headers } = await getAuthHeaders();
-  const res = await fetch(`${apiUrl}laboratories_recent_orders`, {
+  const res = await fetch(`${apiUrl}/laboratories_recent_orders`, {
     method: "POST",
     headers,
   });
@@ -54,7 +54,7 @@ export const fetchRecentOrders = async () => {
 
 export const fetchAllOrders = async () => {
   const { apiUrl, headers } = await getAuthHeaders();
-  const res = await fetch(`${apiUrl}laboratories_all_orders`, {
+  const res = await fetch(`${apiUrl}/laboratories_all_orders`, {
     method: "POST",
     headers,
   });
@@ -70,7 +70,7 @@ export const fetchAllOrders = async () => {
 
 export const fetchDashboardStats = async () => {
   const { apiUrl, headers } = await getAuthHeaders();
-  const res = await fetch(`${apiUrl}laboratories_dashboard_stats`, {
+  const res = await fetch(`${apiUrl}/laboratories_dashboard_stats`, {
     method: "POST",
     headers,
   });
@@ -89,7 +89,7 @@ export const uploadGeneratedReport = async (formData: FormData) => {
   // Remove Content-Type header to let browser set it with boundary for FormData
   const { "Content-Type": contentType, ...restHeaders } = headers;
   
-  const res = await fetch(`${apiUrl}laboratories_upload_report`, {
+  const res = await fetch(`${apiUrl}/laboratories_upload_report`, {
     method: "POST",
     headers: restHeaders,
     body: formData,
@@ -101,7 +101,7 @@ export const uploadGeneratedReport = async (formData: FormData) => {
 
 export const fetchProcessingQueue = async () => {
   const { apiUrl, headers } = await getAuthHeaders();
-  const res = await fetch(`${apiUrl}laboratories_processing_queue`, {
+  const res = await fetch(`${apiUrl}/laboratories_processing_queue`, {
     method: "POST",
     headers,
   });
@@ -117,7 +117,7 @@ export const fetchProcessingQueue = async () => {
 
 export const fetchValidationQueue = async () => {
   const { apiUrl, headers } = await getAuthHeaders();
-  const res = await fetch(`${apiUrl}laboratories_validation_queue`, {
+  const res = await fetch(`${apiUrl}/laboratories_validation_queue`, {
     method: "POST",
     headers,
   });
@@ -133,7 +133,7 @@ export const fetchValidationQueue = async () => {
 
 export const fetchCompletedReports = async () => {
   const { apiUrl, headers } = await getAuthHeaders();
-  const res = await fetch(`${apiUrl}laboratories_reports_completed`, {
+  const res = await fetch(`${apiUrl}/laboratories_reports_completed`, {
     method: "POST",
     headers,
   });
@@ -148,7 +148,7 @@ export const fetchCompletedReports = async () => {
 };
 export const cloneMasterTests = async (ids: string[]) => {
   const { apiUrl, headers } = await getAuthHeaders();
-  const res = await fetch(`${apiUrl}laboratories_clone_master`, {
+  const res = await fetch(`${apiUrl}/laboratories_clone_master`, {
     method: "POST",
     headers,
     body: JSON.stringify({ ids }),
@@ -159,7 +159,7 @@ export const cloneMasterTests = async (ids: string[]) => {
 
 export const getMasterLabTestById = async (id: string) => {
   const { apiUrl, headers } = await getAuthHeaders();
-  const res = await fetch(`${apiUrl}laboratories_testinfo_get`, {
+  const res = await fetch(`${apiUrl}/laboratories_testinfo_get`, {
     method: "POST",
     headers,
     body: JSON.stringify({ id }),
@@ -179,7 +179,7 @@ export const addMasterLabTest = async (data: any) => {
   const AES_KEY = await configService.getAesSecretKey();
   const encryptedPayload = CryptoJS.AES.encrypt(JSON.stringify(data), AES_KEY).toString();
   
-  const res = await fetch(`${apiUrl}laboratories_testInfo_add`, {
+  const res = await fetch(`${apiUrl}/laboratories_testInfo_add`, {
     method: "POST",
     headers,
     body: JSON.stringify({ encrypted_payload: encryptedPayload }),
@@ -195,7 +195,7 @@ export const updateMasterLabTest = async (id: string, data: any) => {
   const payload = { ...data, id };
   const encryptedPayload = CryptoJS.AES.encrypt(JSON.stringify(payload), AES_KEY).toString();
 
-  const res = await fetch(`${apiUrl}laboratories_testInfo_update`, {
+  const res = await fetch(`${apiUrl}/laboratories_testInfo_update`, {
     method: "POST",
     headers,
     body: JSON.stringify({ encrypted_payload: encryptedPayload }),
@@ -206,7 +206,7 @@ export const updateMasterLabTest = async (id: string, data: any) => {
 
 export const deleteMasterLabTest = async (id: string) => {
   const { apiUrl, headers } = await getAuthHeaders();
-  const res = await fetch(`${apiUrl}laboratories_testInfo_delete`, {
+  const res = await fetch(`${apiUrl}/laboratories_testInfo_delete`, {
     method: "POST",
     headers,
     body: JSON.stringify({ id }),
@@ -217,7 +217,7 @@ export const deleteMasterLabTest = async (id: string) => {
 
 export const fetchMasterCatalog = async (search = "", department = "all") => {
   const { apiUrl, headers } = await getAuthHeaders();
-  const res = await fetch(`${apiUrl}laboratories_master_catalog`, {
+  const res = await fetch(`${apiUrl}/laboratories_master_catalog`, {
     method: "POST",
     headers,
     body: JSON.stringify({ search, department }),
@@ -237,7 +237,7 @@ export const collectSample = async (data: any) => {
   const AES_KEY = await configService.getAesSecretKey();
   const encryptedPayload = CryptoJS.AES.encrypt(JSON.stringify(data), AES_KEY).toString();
 
-  const res = await fetch(`${apiUrl}laboratories_collect_sample`, {
+  const res = await fetch(`${apiUrl}/laboratories_collect_sample`, {
     method: "POST",
     headers,
     body: JSON.stringify({ encrypted_payload: encryptedPayload }),
@@ -255,7 +255,7 @@ export const collectSample = async (data: any) => {
 
 export const saveDraft = async (data: any) => {
   const { apiUrl, headers } = await getAuthHeaders();
-  const res = await fetch(`${apiUrl}laboratories_save_draft`, {
+  const res = await fetch(`${apiUrl}/laboratories_save_draft`, {
     method: "POST",
     headers,
     body: JSON.stringify(data),
@@ -266,7 +266,7 @@ export const saveDraft = async (data: any) => {
 
 export const getDrafts = async (orderId: string, testId?: string) => {
   const { apiUrl, headers } = await getAuthHeaders();
-  const res = await fetch(`${apiUrl}laboratories_get_drafts`, {
+  const res = await fetch(`${apiUrl}/laboratories_get_drafts`, {
     method: "POST",
     headers,
     body: JSON.stringify({ order_id: orderId, test_id: testId }),
@@ -283,7 +283,7 @@ export const getDrafts = async (orderId: string, testId?: string) => {
 
 export const submitValidation = async (orderId: string, testId?: string) => {
   const { apiUrl, headers } = await getAuthHeaders();
-  const res = await fetch(`${apiUrl}laboratories_submit_validation`, {
+  const res = await fetch(`${apiUrl}/laboratories_submit_validation`, {
     method: "POST",
     headers,
     body: JSON.stringify({ order_id: orderId, test_id: testId }),
@@ -294,7 +294,7 @@ export const submitValidation = async (orderId: string, testId?: string) => {
 
 export const fetchCollectedSamples = async (orderId: string, testId?: string) => {
   const { apiUrl, headers } = await getAuthHeaders();
-  const res = await fetch(`${apiUrl}laboratories_collected_samples`, {
+  const res = await fetch(`${apiUrl}/laboratories_collected_samples`, {
     method: "POST",
     headers,
     body: JSON.stringify({ order_id: orderId, test_id: testId || "" }),
@@ -311,7 +311,7 @@ export const fetchCollectedSamples = async (orderId: string, testId?: string) =>
 
 export const updateLabOrderStatus = async (orderId: string, status: string) => {
   const { apiUrl, headers } = await getAuthHeaders();
-  const res = await fetch(`${apiUrl}laboratories_update_order_status`, {
+  const res = await fetch(`${apiUrl}/laboratories_update_order_status`, {
     method: "POST",
     headers,
     body: JSON.stringify({ order_id: orderId, status }),
@@ -329,7 +329,7 @@ export const updateLabOrderStatus = async (orderId: string, status: string) => {
 
 export const approveAndGenerateReport = async (orderId: string, testIds?: string[], comments?: string) => {
   const { apiUrl, headers } = await getAuthHeaders();
-  const res = await fetch(`${apiUrl}laboratories_approve_generate_report`, {
+  const res = await fetch(`${apiUrl}/laboratories_approve_generate_report`, {
     method: "POST",
     headers,
     body: JSON.stringify({ order_id: orderId, test_ids: testIds, comments }),
@@ -340,7 +340,7 @@ export const approveAndGenerateReport = async (orderId: string, testIds?: string
 
 export const fetchReportDetails = async (orderId: string) => {
   const { apiUrl, headers } = await getAuthHeaders();
-  const res = await fetch(`${apiUrl}laboratories_report_details?order_id=${orderId}`, {
+  const res = await fetch(`${apiUrl}/laboratories_report_details?order_id=${orderId}`, {
     method: "GET",
     headers,
   });
@@ -357,7 +357,7 @@ export const fetchReportDetails = async (orderId: string) => {
 
 export const toggleReportVisibility = async (treatmentId: string, visible: boolean) => {
   const { apiUrl, headers } = await getAuthHeaders();
-  const res = await fetch(`${apiUrl}laboratories_toggle_report_visibility`, {
+  const res = await fetch(`${apiUrl}/laboratories_toggle_report_visibility`, {
     method: "POST",
     headers,
     body: JSON.stringify({ treatment_id: treatmentId, visible: visible ? 1 : 0 }),
@@ -376,7 +376,7 @@ export const toggleReportVisibility = async (treatmentId: string, visible: boole
 // Package Management
 export const fetchPackages = async () => {
   const { apiUrl, headers } = await getAuthHeaders();
-  const res = await fetch(`${apiUrl}lab_packages_list`, {
+  const res = await fetch(`${apiUrl}/lab_packages_list`, {
     method: "GET",
     headers,
   });
@@ -395,7 +395,7 @@ export const addPackage = async (data: any) => {
   const AES_KEY = await configService.getAesSecretKey();
   const encryptedPayload = CryptoJS.AES.encrypt(JSON.stringify(data), AES_KEY).toString();
 
-  const res = await fetch(`${apiUrl}lab_packages_add`, {
+  const res = await fetch(`${apiUrl}/lab_packages_add`, {
     method: "POST",
     headers,
     body: JSON.stringify({ encrypted_payload: encryptedPayload }),
@@ -410,7 +410,7 @@ export const updatePackage = async (id: string, data: any) => {
   const payload = { ...data, id };
   const encryptedPayload = CryptoJS.AES.encrypt(JSON.stringify(payload), AES_KEY).toString();
 
-  const res = await fetch(`${apiUrl}lab_packages_update`, {
+  const res = await fetch(`${apiUrl}/lab_packages_update`, {
     method: "POST",
     headers,
     body: JSON.stringify({ encrypted_payload: encryptedPayload }),
@@ -424,7 +424,7 @@ export const deletePackage = async (id: string) => {
   const AES_KEY = await configService.getAesSecretKey();
   const encryptedPayload = CryptoJS.AES.encrypt(JSON.stringify({ id }), AES_KEY).toString();
 
-  const res = await fetch(`${apiUrl}lab_packages_delete`, {
+  const res = await fetch(`${apiUrl}/lab_packages_delete`, {
     method: "POST",
     headers,
     body: JSON.stringify({ encrypted_payload: encryptedPayload }),

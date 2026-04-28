@@ -39,6 +39,7 @@ type SidebarAppointment = {
   arrivalTime?: string | null;
   consultationStartTime?: string | null;
   completedTime?: string | null;
+  createdAt?: string | null;
   statusTime?: string | null;
 };
 
@@ -73,6 +74,7 @@ const normalizeAppointment = (item: unknown): SidebarAppointment => {
       (it["consultation_start_time"] as string | null | undefined) ??
       null,
     completedTime: (it["completedTime"] as string | null | undefined) ?? (it["completed_time"] as string | null | undefined) ?? null,
+    createdAt: (it["createdAt"] as string | null | undefined) ?? (it["created_at"] as string | null | undefined) ?? null,
     statusTime: (it["statusTime"] as string | null | undefined) ?? (it["status_time"] as string | null | undefined) ?? null,
   };
 };
@@ -92,6 +94,9 @@ const formatTo12hr = (time?: string | null) => {
 
 const deriveStatusTime = (apt: SidebarAppointment) => {
   const status = String(apt.status ?? "");
+  if (status === "booked") {
+    return formatTo12hr(apt.createdAt || "");
+  }
   const raw =
     apt.statusTime ||
     (status === "arrived" || status === "waiting"
@@ -103,6 +108,17 @@ const deriveStatusTime = (apt: SidebarAppointment) => {
           : apt.timeSlot?.startTime) ||
     "";
   return formatTo12hr(raw);
+};
+
+const statusLabel = (status?: string) => {
+  const s = String(status ?? "").toLowerCase();
+  if (s === "waiting") return "Waiting";
+  if (s === "arrived") return "Arrived";
+  if (s === "active") return "Active";
+  if (s === "completed") return "Completed";
+  if (s === "booked") return "Booked";
+  if (s === "draft") return "Draft";
+  return "Status";
 };
 
 const NotificationPopover = ({
@@ -145,9 +161,8 @@ const NotificationPopover = ({
                   <div className="flex-1">
                     <p className="text-sm font-medium text-foreground line-clamp-1">{apt.patient?.name}</p>
                     <p className="text-xs text-muted-foreground line-clamp-1">
-                      Token #{apt.tokenNumber}
-                      {apt.timeSlot?.startTime ? ` • ${formatTo12hr(apt.timeSlot.startTime)}` : ""}
-                      {deriveStatusTime(apt) ? ` • ${deriveStatusTime(apt)}` : ""}
+                      Token #{apt.tokenNumber > 0 ? apt.tokenNumber : "-"}
+                      {formatTo12hr(apt.createdAt || "") ? ` • ${formatTo12hr(apt.createdAt || "")}` : ""}
                     </p>
                   </div>
                 </div>

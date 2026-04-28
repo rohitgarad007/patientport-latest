@@ -38,21 +38,7 @@ export function AdminAppSidebar() {
       url: "/super-dashboard",
       icon: PaIcons.dashboard,
     },
-    /*{
-      title: "Hospitals",
-      url: "/super-hospitals",
-      icon: PaIcons.hospital,
-    },
-    {
-      title: "Doctors",
-      url: "/super-doctors",
-      icon: PaIcons.doctors,
-    },
-    {
-      title: "Staff",
-      url: "/super-staff",
-      icon: PaIcons.staff,
-    },*/
+    
     {
       title: "Hierarchy",
       icon: PaIcons.LaboratoryIcon,
@@ -92,6 +78,22 @@ export function AdminAppSidebar() {
           title: "Test Master",
           url: "/super-lab-test-master",
           icon: PaIcons.MastersIcon,
+        },
+      ],
+    },
+    {
+      title: "Manage AI",
+      icon: PaIcons.manageAIIcon,
+      children: [
+        {
+          title: "Manage Open AI",
+          url: "/super-manage-open-ai",
+          icon: PaIcons.manageAIIcon2,
+        },
+        {
+          title: "AI Prescription Suggestions",
+          url: "/super-ai-prescription-suggestions",
+          icon: PaIcons.aiprescriptionIcon,
         },
       ],
     },

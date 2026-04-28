@@ -34,7 +34,16 @@ import { Appointment, Doctor } from '@/types/appointment';
 import { toast } from 'sonner';
 import { format, parse } from 'date-fns';
 
+const getTodayStr = () => {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+
 export default function ReceptionAppointmentList() {
+  const today = getTodayStr();
   const formatDisplayDateTime = (raw?: string) => {
     if (!raw) return '';
     let dt: Date | null = null;
@@ -59,15 +68,6 @@ export default function ReceptionAppointmentList() {
   const [priorityDialogOpen, setPriorityDialogOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [insertAfter, setInsertAfter] = useState<number>(2);
-
-  // Today in YYYY-MM-DD
-  const today = useMemo(() => {
-    const d = new Date();
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-  }, []);
 
   // Load doctors on mount
   useEffect(() => {

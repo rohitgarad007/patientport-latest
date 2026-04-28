@@ -121,6 +121,10 @@ import manageScreenIcon from "@/assets/images/003-automation.png";
 import maleDcotorIcon from "@/assets/images/001-doctor.png";
 import femaleDcotorIcon from "@/assets/images/004-doctor-3.png";
 
+import manageAIIcon from "@/assets/images/003-technology.png";
+import manageAIIcon2 from "@/assets/images/002-ai-technology.png";
+import aiprescriptionIcon from "@/assets/images/005-edit.png";
+
 
 export const PaIcons = {
   age: ageIcon,
@@ -237,6 +241,12 @@ export const PaIcons = {
   manageScreenIcon: manageScreenIcon,
    maleDcotorIcon: maleDcotorIcon,
   femaleDcotorIcon: femaleDcotorIcon,
+  
+  manageAIIcon: manageAIIcon,
+  manageAIIcon2: manageAIIcon2,
+  aiprescriptionIcon: aiprescriptionIcon,
+
+
 
 
 };

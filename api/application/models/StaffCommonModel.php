@@ -193,26 +193,41 @@ class StaffCommonModel extends CI_Model{
 
     public function get_today_appointments($hospital_id, $date = null) {
         $selDate = !empty($date) ? $date : date('Y-m-d');
-        $this->db->select('
-            pa.id,
-            pa.appointment_uid,
-            pa.date,
-            pa.start_time,
-            pa.end_time,
-            pa.status,
-            pa.created_at,
-            d.name as doctor_name,
-            d.profile_image as doctor_image,
-            CONCAT(p.fname, " ", p.lname) as patient_name,
-            p.gender as patient_gender,
-            p.dob as patient_dob
-        ', FALSE);
+        $select = [
+            'pa.id',
+            'pa.appointment_uid',
+            'pa.hospital_id',
+            'pa.doctor_id',
+            'pa.date',
+            'pa.start_time',
+            'pa.end_time',
+            'pa.status',
+            'pa.created_at',
+            'd.name as doctor_name',
+            'd.profile_image as doctor_image',
+            'CONCAT(p.fname, " ", p.lname) as patient_name',
+            'p.gender as patient_gender',
+            'p.dob as patient_dob',
+        ];
+        if ($this->db->field_exists('token_no', 'ms_patient_appointment')) { $select[] = 'pa.token_no'; }
+        if ($this->db->field_exists('patient_id', 'ms_patient_appointment')) { $select[] = 'pa.patient_id'; }
+        if ($this->db->field_exists('phone', 'ms_patient_appointment')) { $select[] = 'pa.phone'; }
+        if ($this->db->field_exists('slot_id', 'ms_patient_appointment')) { $select[] = 'pa.slot_id'; }
+        if ($this->db->field_exists('source', 'ms_patient_appointment')) { $select[] = 'pa.source'; }
+        if ($this->db->field_exists('queue_position', 'ms_patient_appointment')) { $select[] = 'pa.queue_position'; }
+        if ($this->db->field_exists('arrival_time', 'ms_patient_appointment')) { $select[] = 'pa.arrival_time'; }
+        if ($this->db->field_exists('consultation_start_time', 'ms_patient_appointment')) { $select[] = 'pa.consultation_start_time'; }
+        if ($this->db->field_exists('completed_time', 'ms_patient_appointment')) { $select[] = 'pa.completed_time'; }
+        $this->db->select(implode(",\n", $select), FALSE);
         $this->db->from('ms_patient_appointment pa');
         $this->db->join('ms_doctors d', 'd.id = pa.doctor_id', 'left');
         $this->db->join('ms_patient p', 'p.id = pa.patient_id', 'left');
         $this->db->where('pa.hospital_id', $hospital_id);
         $this->db->where('pa.date', $selDate);
         $this->db->order_by('pa.start_time', 'ASC');
+        if ($this->db->field_exists('queue_position', 'ms_patient_appointment')) {
+            $this->db->order_by('pa.queue_position', 'ASC');
+        }
         $query = $this->db->get();
         return $query->result_array();
     }

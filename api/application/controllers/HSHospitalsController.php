@@ -23,6 +23,126 @@ class HSHospitalsController  extends CI_Controller {
     }
 
     /* ===== Doctors List Code Start Here ===== */
+    public function getScreenAppointmentsGrouped() {
+        if (strtoupper($_SERVER['REQUEST_METHOD']) === 'OPTIONS') {
+            exit;
+        }
+        $userToken = $this->input->get_request_header('Authorization');
+        $splitToken = explode(" ", $userToken);
+        $token = isset($splitToken[1]) ? $splitToken[1] : '';
+        try {
+            // Validate and decode token
+            $token = verifyAuthToken($token);
+            if (!$token) throw new Exception("Unauthorized");
+
+            $tokenData = is_string($token) ? json_decode($token, true) : $token;
+
+            $hrole = $tokenData['role'] ?? null;
+            $loguid = $tokenData['loguid'] ?? null;
+
+            // Optional: you can check specific roles if needed, allowing staff, hospital_admin, or doctors
+            if (!$loguid) {
+                echo json_encode([
+                    "success" => false,
+                    "message" => "Invalid user token"
+                ]);
+                return;
+            }
+            
+            $rawData = json_decode(file_get_contents("php://input"), true);
+            $AES_KEY = "RohitGaradHos@173414";
+            
+            $encryptedDoctorIds = isset($rawData['doctorIds']) ? $rawData['doctorIds'] : '';
+            $doctorIds = [];
+            if ($encryptedDoctorIds) {
+                 $doctorIdsStr = $this->decrypt_aes_from_js($encryptedDoctorIds, $AES_KEY);
+                 $doctorIds = json_decode($doctorIdsStr, true);
+            } else {
+                 $doctorIds = isset($rawData['doctorIds']) ? $rawData['doctorIds'] : [];
+            }
+
+            if (empty($doctorIds)) {
+                $encryptedResponse = $this->encrypt_aes_for_js(json_encode(["waiting" => [], "arrived" => [], "draft" => []]), $AES_KEY);
+                echo json_encode(["success" => true, "data" => $encryptedResponse]);
+                return;
+            }
+
+            $appointments = $this->HospitalCommonModel->get_DoctorsAppointmentsToday($doctorIds);
+            
+            $grouped = [
+                'waiting' => [],
+                'arrived' => [],
+                'draft' => [],
+                'booked' => []
+            ];
+
+            foreach ($appointments as $apt) {
+                $statusRaw = isset($apt['status']) ? strtolower(trim($apt['status'])) : 'booked';
+
+                if ($statusRaw === 'in-consultation') {
+                    $status = 'active';
+                } elseif (in_array($statusRaw, ['booked','arrived','waiting','active','completed','draft'])) {
+                    $status = $statusRaw;
+                } else {
+                    $status = 'booked';
+                }
+
+                $item = [
+                    'id' => (string)$apt['appointment_uid'],
+                    'tokenNumber' => (int)($apt['token_no'] ?? 0),
+                    'patient' => [
+                        'id' => (string)($apt['patient_id'] ?? ''),
+                        'name' => (string)($apt['patient_name'] ?? ''),
+                    ],
+                    'doctor' => [
+                        'id' => (string)($apt['doctor_id'] ?? '')
+                    ],
+                    'status' => $status,
+                    'time' => $apt['start_time'] ?? '',
+                    'created_at' => $apt['created_at'] ?? '',
+                    'queuePosition' => (int)($apt['queue_position'] ?? 0),
+                    'arrivalTime' => (string)($apt['arrival_time'] ?? ''),
+                    'consultationStartTime' => (string)($apt['consultation_start_time'] ?? ''),
+                    'completedTime' => (string)($apt['completed_time'] ?? '')
+                ];
+
+                if ($status === 'waiting') {
+                    $grouped['waiting'][] = $item;
+                } elseif ($status === 'arrived') {
+                    $grouped['arrived'][] = $item;
+                } elseif ($status === 'draft') {
+                    $grouped['draft'][] = $item;
+                } else {
+                    $grouped['booked'][] = $item;
+                }
+            }
+
+            // Sort by queue position or token number
+            foreach (['waiting', 'arrived', 'draft', 'booked'] as $key) {
+                usort($grouped[$key], function($a, $b) {
+                    if ($a['queuePosition'] !== $b['queuePosition']) {
+                        return $a['queuePosition'] <=> $b['queuePosition'];
+                    }
+                    return $a['tokenNumber'] <=> $b['tokenNumber'];
+                });
+            }
+
+            $encryptedResponse = $this->encrypt_aes_for_js(json_encode($grouped), $AES_KEY);
+
+            echo json_encode([
+                "success" => true,
+                "data" => $encryptedResponse,
+                "rowData" => $grouped
+            ]);
+            
+        } catch (Exception $e) {
+            echo json_encode([
+                "success" => false,
+                "message" => "Authorization failed: " . $e->getMessage()
+            ]);
+        }
+    }
+
     /**
      * @OA\Get(
      *     path="/HSHospitalsController/getDoctorsList",

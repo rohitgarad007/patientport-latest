@@ -60,6 +60,21 @@ $route['master_laboratories_update']				= 'SALaboratoriesController/UpdateLabora
 $route['master_laboratories_change_status']			= 'SALaboratoriesController/changeLaboratoryStatus';
 $route['master_laboratories_delete']				= 'SALaboratoriesController/DeleteLaboratory';
 
+$route['ai_manage_list']							= 'AIManageController/ai_manage_list';
+$route['ai_manage_add']								= 'AIManageController/ai_manage_add';
+$route['ai_manage_update']							= 'AIManageController/ai_manage_update';
+$route['ai_manage_status']							= 'AIManageController/ai_manage_status';
+$route['ai_manage_delete']							= 'AIManageController/ai_manage_delete';
+
+$route['ai_prescription_list']						= 'AIPrescriptionController/ai_prescription_list';
+$route['ai_prescription_add']						= 'AIPrescriptionController/ai_prescription_add';
+$route['ai_prescription_update']					= 'AIPrescriptionController/ai_prescription_update';
+$route['ai_prescription_delete']					= 'AIPrescriptionController/ai_prescription_delete';
+$route['ai_prescription_set_default']				= 'AIPrescriptionController/ai_prescription_set_default';
+
+
+
+
 
 // Laboratory Staff Routes
 $route['master_laboratories_staff_list']			= 'SALaboratoriesController/ManageLaboratoryStaffList';
@@ -277,6 +292,8 @@ $route['hs_employee_otp_2fa_toggle'] = 'HSHospitalsController/toggleEmployee2FA'
 $route['hs_save_screen'] = 'HSHospitalsController/saveScreen';
 $route['hs_screens_list'] = 'HSHospitalsController/getScreensList';
 $route['hs_screens_appointments'] = 'HSHospitalsController/getScreenPreviewAppointments';
+$route['hs_screen_appointments_grouped'] = 'HSHospitalsController/getScreenAppointmentsGrouped';
+$route['hs_screen_appointments_grouped'] = 'HSHospitalsController/getScreenAppointmentsGrouped';
 $route['hs_token_dashboard_stats'] = 'HSHospitalsController/getTokenDashboardStats';
 
 $route['save_screen_settings'] = 'ReceptionController/save_screen_settings';

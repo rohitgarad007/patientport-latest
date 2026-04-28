@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Cookies from "js-cookie";
 import {
   Calendar,
@@ -33,7 +33,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { getTodayAppointments, fetchDoctorList } from '@/services/SfstaffUseService';
+import { connectStaffAppointmentsSocket, fetchDoctorList, getTodayAppointments } from '@/services/SfstaffUseService';
 
 // Mock Data
 /*const appointmentsMock = [
@@ -104,12 +104,52 @@ const StatusBadge = ({ status }: { status: string }) => {
   );
 };
 
+type StaffTodayAppointment = {
+  id: string | number;
+  patient_name?: string;
+  patient_dob?: string;
+  patient_gender?: string;
+  doctor_image?: string;
+  doctor_name?: string;
+  created_at?: string;
+  start_time?: string;
+  type?: string;
+  status?: string;
+};
+
+type DashboardDoctor = {
+  name: string;
+  specialty: string;
+  status: string;
+  color: string;
+  initials: string;
+  patients: number;
+  next: string;
+  profile_image?: string;
+};
+
+type CurrentUser = {
+  name?: string;
+};
+
+const asRecord = (value: unknown): Record<string, unknown> => {
+  if (value && typeof value === "object") return value as Record<string, unknown>;
+  return {};
+};
+
 export default function StaffDashboard() {
-  const [appointments, setAppointments] = useState<any[]>([]);
-  const [doctors, setDoctors] = useState<any[]>([]);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [appointments, setAppointments] = useState<StaffTodayAppointment[]>([]);
+  const [doctors, setDoctors] = useState<DashboardDoctor[]>([]);
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("all");
+
+  const refreshAppointments = useCallback(async () => {
+    const apptResponse = await getTodayAppointments();
+    if (apptResponse.success && Array.isArray(apptResponse.data)) {
+      setAppointments(apptResponse.data as StaffTodayAppointment[]);
+    }
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -117,36 +157,46 @@ export default function StaffDashboard() {
         // Get User Info
         const userInfo = Cookies.get("userInfo");
         if (userInfo) {
-            setCurrentUser(JSON.parse(userInfo));
+            const parsed: unknown = JSON.parse(userInfo);
+            const u = asRecord(parsed);
+            setCurrentUser({ name: typeof u["name"] === "string" ? u["name"] : undefined });
         }
 
-        // Fetch Appointments
-        const apptResponse = await getTodayAppointments();
-        if (apptResponse.success && Array.isArray(apptResponse.data)) {
-          setAppointments(apptResponse.data);
-        }
+        await refreshAppointments();
 
         // Fetch Doctors
         // We pass a dummy ID because the controller uses the token to identify the user/hospital
         const docResponse = await fetchDoctorList("current");
         if (docResponse.success && Array.isArray(docResponse.data)) {
            // Map backend data to frontend structure
-           const mappedDoctors = docResponse.data.map((doc: any) => {
+           const mappedDoctors: DashboardDoctor[] = (docResponse.data as unknown[]).map((docUnknown) => {
+              const doc = asRecord(docUnknown);
+              const name = String(doc["name"] ?? "Unknown");
+              const statusRaw = doc["status"];
+
               let status = "Offline";
               let color = "bg-gray-100 text-gray-700";
-              
-              if (doc.status === "1" || doc.status === "Available" || doc.status === 1 || doc.status === "Active") {
-                   status = "Available";
-                   color = "bg-emerald-100 text-emerald-700";
-               }
+
+              if (statusRaw === "1" || statusRaw === "Available" || statusRaw === 1 || statusRaw === "Active") {
+                status = "Available";
+                color = "bg-emerald-100 text-emerald-700";
+              }
 
               return {
-                  ...doc,
-                  status: status,
-                  color: color,
-                  initials: doc.name.split(' ').map((n:string) => n[0]).join('').substring(0, 2).toUpperCase(),
-                  patients: doc.patients_today || 0,
-                  next: doc.next_appointment ? formatTime(doc.next_appointment) : "N/A"
+                name,
+                specialty: String(doc["specialty"] ?? ""),
+                status,
+                color,
+                initials: name
+                  .split(" ")
+                  .filter(Boolean)
+                  .map((n) => n[0])
+                  .join("")
+                  .substring(0, 2)
+                  .toUpperCase(),
+                patients: Number(doc["patients_today"] ?? 0) || 0,
+                next: doc["next_appointment"] ? formatTime(String(doc["next_appointment"])) : "N/A",
+                profile_image: typeof doc["profile_image"] === "string" ? doc["profile_image"] : undefined,
               };
            });
            setDoctors(mappedDoctors);
@@ -160,7 +210,38 @@ export default function StaffDashboard() {
     };
 
     fetchData();
-  }, []);
+  }, [refreshAppointments]);
+
+  useEffect(() => {
+    let closed = false;
+    let socket: { close: () => void } | null = null;
+    let refreshTimer: number | null = null;
+
+    const scheduleRefresh = () => {
+      if (refreshTimer) window.clearTimeout(refreshTimer);
+      refreshTimer = window.setTimeout(() => {
+        if (closed) return;
+        void refreshAppointments();
+      }, 250);
+    };
+
+    (async () => {
+      socket = await connectStaffAppointmentsSocket({
+        onMessage: (message) => {
+          if (closed) return;
+          if (message?.event === "staff_appointments_changed") {
+            scheduleRefresh();
+          }
+        },
+      }).catch(() => null);
+    })();
+
+    return () => {
+      closed = true;
+      if (refreshTimer) window.clearTimeout(refreshTimer);
+      socket?.close();
+    };
+  }, [refreshAppointments]);
 
   const calculateAge = (dob: string) => {
     if (!dob) return "N/A";
@@ -170,12 +251,20 @@ export default function StaffDashboard() {
     return Math.abs(ageDate.getUTCFullYear() - 1970);
   };
 
-  const formatTime = (time: string) => {
-    if (!time) return "";
-    // time is "HH:mm:ss"
-    const [hours, minutes] = time.split(':');
+  const formatTime = (value: string) => {
+    if (!value) return "";
+    const raw = String(value);
+    const timePart = raw.includes(" ")
+      ? raw.split(" ")[1] ?? ""
+      : raw.includes("T")
+        ? raw.split("T")[1] ?? ""
+        : raw;
+    const clean = timePart.replace("Z", "");
+    const [hours, minutes] = clean.split(":");
+    if (!hours || !minutes) return "";
     const h = parseInt(hours, 10);
-    const ampm = h >= 12 ? 'PM' : 'AM';
+    if (!Number.isFinite(h)) return "";
+    const ampm = h >= 12 ? "PM" : "AM";
     const h12 = h % 12 || 12;
     return `${h12}:${minutes} ${ampm}`;
   };
@@ -288,7 +377,7 @@ export default function StaffDashboard() {
                             <span className="text-sm">{apt.doctor_name}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-gray-600">{formatTime(apt.start_time)}</TableCell>
+                        <TableCell className="text-gray-600">{formatTime(apt.created_at || apt.start_time)}</TableCell>
                         <TableCell className="text-gray-600">-</TableCell>
                         <TableCell className="text-gray-600">
                           <Badge variant="outline" className="font-normal bg-gray-50">

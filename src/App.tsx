@@ -52,6 +52,11 @@ import SuperLabStaffPage from "./pages/SuperLabStaffPage";
 import SuperLabTestMaster from "@/components/superLab/SuperLabTestMaster";
 import SuperLabStaffForLab from "./pages/SuperLabStaffForLab";
 
+
+import ManageOpenAI from "./pages/superadmin/ManageOpenAI";
+import ManageAIPrescription from "./pages/superadmin/ManageAIPrescription";
+
+
 import { LaboratoryLoginForm } from "./components/auth/LaboratoryLoginForm";
 import LaboratoryProtectedRoute from "./components/auth/LaboratoryProtectedRoute";
 import { LaboratoryLayout } from "@/components/layout/LaboratoryLayout";
@@ -132,6 +137,8 @@ import CompletedPatientsList from "@/components/doctors/patient/CompletedPatient
 
 
 import DoctorPatientTreatment from "@/components/doctors/patient/DoctorPatientTreatment";
+import DoctorAITreatmentPage from "@/components/doctors/patient/DoctorAITreatmentPage";
+
 import DoctorMedicationSuggList from "@/pages/DoctorMedicationSuggList";
 import DoctorMedicationAddSugg from "@/pages/DoctorMedicationAddSugg";
 import DoctorProfilePage from "@/pages/DoctorProfile";
@@ -316,6 +323,9 @@ const App = () => {
               <Route path="/super-staff"   element={<SuperAdminLayout><SuperStaffPage /></SuperAdminLayout>} />
               <Route path="/super-notifications"   element={<SuperAdminLayout><SuperNotificationsPage /></SuperAdminLayout>} />
               <Route path="/super-settings"   element={<SuperAdminLayout><SuperSettingsPage /></SuperAdminLayout>} />
+
+              <Route path="/super-manage-open-ai"   element={<SuperAdminLayout><ManageOpenAI /></SuperAdminLayout>} />
+              <Route path="/super-ai-prescription-suggestions"   element={<SuperAdminLayout><ManageAIPrescription /></SuperAdminLayout>} />
              
               <Route path="/super-laboratories" element={<SuperAdminLayout><SuperLaboratoryPage /></SuperAdminLayout>} />
               <Route path="/super-lab-staff" element={<SuperAdminLayout><SuperLabStaffPage /></SuperAdminLayout>} />
@@ -409,6 +419,8 @@ const App = () => {
               <Route path="/doctor-profile" element={<DoctorLayout><DoctorProfilePage /></DoctorLayout>} />
 
               <Route path="/doctor-treatment" element={<DoctorLayout><DoctorPatientTreatment /></DoctorLayout>} />
+              <Route path="/doctor-ai-treatment" element={<DoctorLayout><DoctorAITreatmentPage /></DoctorLayout>} />
+
               <Route path="/doctor-medication-sugg" element={<DoctorLayout><DoctorMedicationSuggList /></DoctorLayout>} />
               <Route path="/doctor-manage-receipts" element={<DoctorLayout><DoctorManageReceipts /></DoctorLayout>} />
               <Route path="/doctor-receipts-content" element={<DoctorLayout><DoctorManageReceiptsContent /></DoctorLayout>} />

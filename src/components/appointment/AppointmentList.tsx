@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -30,13 +30,29 @@ import {
   Settings,
 } from 'lucide-react';
 // Services
-import { fetchDoctorList, fetchAppointmentsByDate, updateAppointmentStatus, updateQueuePositions } from '@/services/SfstaffUseService';
+import {
+  connectStaffAppointmentsSocket,
+  fetchDoctorList,
+  fetchAppointmentsByDate,
+  updateAppointmentStatus,
+  updateQueuePositions,
+} from '@/services/SfstaffUseService';
 import { Appointment, Doctor } from '@/types/appointment';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { format, parse } from 'date-fns';
 
+const getTodayStr = () => {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+
 export default function AppointmentList() {
+  const today = getTodayStr();
+
   const formatDisplayDateTime = (raw?: string) => {
     if (!raw) return '';
     let dt: Date | null = null;
@@ -62,14 +78,51 @@ export default function AppointmentList() {
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [insertAfter, setInsertAfter] = useState<number>(2);
 
-  // Today in YYYY-MM-DD
-  const today = useMemo(() => {
-    const d = new Date();
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-  }, []);
+  const mapRowsToAppointments = useCallback(
+    (items: any[], doctor: Doctor, dateStr: string): Appointment[] => {
+      return items.map((r: any) => ({
+        id: String(r.id ?? r.appointment_uid ?? ''),
+        tokenNumber: Number(r.tokenNumber ?? r.token_no ?? 0),
+        patient: {
+          id: String(r?.patient?.id ?? ''),
+          name: String(r?.patient?.name ?? ''),
+          phone: String(r?.patient?.phone ?? ''),
+          age: Number(r?.patient?.age ?? 0),
+        },
+        doctor,
+        date: String(r.date ?? dateStr),
+        timeSlot: {
+          id: String(r?.timeSlot?.id ?? ''),
+          startTime: String(r?.timeSlot?.startTime ?? ''),
+          endTime: String(r?.timeSlot?.endTime ?? ''),
+          totalTokens: Number(r?.timeSlot?.totalTokens ?? 0),
+          bookedTokens: Number(r?.timeSlot?.bookedTokens ?? 0),
+        },
+        status: (r.status as Appointment['status']) ?? 'booked',
+        arrivalTime: r.arrivalTime,
+        consultationStartTime: r.consultationStartTime,
+        completedTime: r.completedTime,
+        queuePosition: r.queuePosition,
+      }));
+    },
+    []
+  );
+
+  const refreshAppointments = useCallback(
+    async (opts?: { doctor?: Doctor | null; silent?: boolean }) => {
+      const doctor = opts?.doctor ?? selectedDoctor;
+      if (!doctor) return;
+      const res = await fetchAppointmentsByDate(doctor.id, today);
+      if (res.success) {
+        const items = Array.isArray(res.data) ? res.data : [];
+        setAppointments(mapRowsToAppointments(items, doctor, today));
+        return;
+      }
+      if (!opts?.silent) toast.error(res.message ?? 'Failed to load appointments');
+      setAppointments([]);
+    },
+    [mapRowsToAppointments, selectedDoctor, today]
+  );
 
   // Load doctors on mount
   useEffect(() => {
@@ -94,42 +147,39 @@ export default function AppointmentList() {
 
   // Load current day appointments when doctor changes
   useEffect(() => {
+    void refreshAppointments();
+  }, [refreshAppointments]);
+
+  useEffect(() => {
+    let closed = false;
+    let socket: { close: () => void } | null = null;
+    let refreshTimer: number | null = null;
+
+    const scheduleRefresh = () => {
+      if (refreshTimer) window.clearTimeout(refreshTimer);
+      refreshTimer = window.setTimeout(() => {
+        if (closed) return;
+        void refreshAppointments({ silent: true });
+      }, 250);
+    };
+
     (async () => {
-      if (!selectedDoctor) return;
-      const res = await fetchAppointmentsByDate(selectedDoctor.id, today);
-      if (res.success) {
-        const items = Array.isArray(res.data) ? res.data : [];
-        const mapped: Appointment[] = items.map((r: any) => ({
-          id: String(r.id ?? r.appointment_uid ?? ''),
-          tokenNumber: Number(r.tokenNumber ?? r.token_no ?? 0),
-          patient: {
-            id: String(r?.patient?.id ?? ''),
-            name: String(r?.patient?.name ?? ''),
-            phone: String(r?.patient?.phone ?? ''),
-            age: Number(r?.patient?.age ?? 0),
-          },
-          doctor: selectedDoctor,
-          date: String(r.date ?? today),
-          timeSlot: {
-            id: String(r?.timeSlot?.id ?? ''),
-            startTime: String(r?.timeSlot?.startTime ?? ''),
-            endTime: String(r?.timeSlot?.endTime ?? ''),
-            totalTokens: Number(r?.timeSlot?.totalTokens ?? 0),
-            bookedTokens: Number(r?.timeSlot?.bookedTokens ?? 0),
-          },
-          status: (r.status as Appointment['status']) ?? 'booked',
-          arrivalTime: r.arrivalTime,
-          consultationStartTime: r.consultationStartTime,
-          completedTime: r.completedTime,
-          queuePosition: r.queuePosition,
-        }));
-        setAppointments(mapped);
-      } else {
-        toast.error(res.message ?? 'Failed to load appointments');
-        setAppointments([]);
-      }
+      socket = await connectStaffAppointmentsSocket({
+        onMessage: (message) => {
+          if (closed) return;
+          if (message?.event === 'staff_appointments_changed') {
+            scheduleRefresh();
+          }
+        },
+      }).catch(() => null);
     })();
-  }, [selectedDoctor, today]);
+
+    return () => {
+      closed = true;
+      if (refreshTimer) window.clearTimeout(refreshTimer);
+      socket?.close();
+    };
+  }, [refreshAppointments]);
 
   const todayAppointments = appointments.filter((apt) => 
     selectedDoctor ? apt.doctor.id === selectedDoctor.id && apt.date === today : false
@@ -153,36 +203,7 @@ export default function AppointmentList() {
       status: 'arrived',
     });
     if (res.success) {
-      // Refresh the list to reflect persisted state
-      const refreshed = await fetchAppointmentsByDate(selectedDoctor.id, today);
-      if (refreshed.success) {
-        const items = Array.isArray(refreshed.data) ? refreshed.data : [];
-        const mapped: Appointment[] = items.map((r: any) => ({
-          id: String(r.id ?? r.appointment_uid ?? ''),
-          tokenNumber: Number(r.tokenNumber ?? r.token_no ?? 0),
-          patient: {
-            id: String(r?.patient?.id ?? ''),
-            name: String(r?.patient?.name ?? ''),
-            phone: String(r?.patient?.phone ?? ''),
-            age: Number(r?.patient?.age ?? 0),
-          },
-          doctor: selectedDoctor,
-          date: String(r.date ?? today),
-          timeSlot: {
-            id: String(r?.timeSlot?.id ?? ''),
-            startTime: String(r?.timeSlot?.startTime ?? ''),
-            endTime: String(r?.timeSlot?.endTime ?? ''),
-            totalTokens: Number(r?.timeSlot?.totalTokens ?? 0),
-            bookedTokens: Number(r?.timeSlot?.bookedTokens ?? 0),
-          },
-          status: (r.status as Appointment['status']) ?? 'booked',
-          arrivalTime: r.arrivalTime,
-          consultationStartTime: r.consultationStartTime,
-          completedTime: r.completedTime,
-          queuePosition: r.queuePosition,
-        }));
-        setAppointments(mapped);
-      }
+      await refreshAppointments({ silent: true });
       toast.success('Patient marked as arrived');
     } else {
       toast.error(res.message || 'Failed to mark arrived');
@@ -199,35 +220,7 @@ export default function AppointmentList() {
       status: 'waiting',
     });
     if (res.success) {
-      const refreshed = await fetchAppointmentsByDate(selectedDoctor.id, today);
-      if (refreshed.success) {
-        const items = Array.isArray(refreshed.data) ? refreshed.data : [];
-        const mapped: Appointment[] = items.map((r: any) => ({
-          id: String(r.id ?? r.appointment_uid ?? ''),
-          tokenNumber: Number(r.tokenNumber ?? r.token_no ?? 0),
-          patient: {
-            id: String(r?.patient?.id ?? ''),
-            name: String(r?.patient?.name ?? ''),
-            phone: String(r?.patient?.phone ?? ''),
-            age: Number(r?.patient?.age ?? 0),
-          },
-          doctor: selectedDoctor,
-          date: String(r.date ?? today),
-          timeSlot: {
-            id: String(r?.timeSlot?.id ?? ''),
-            startTime: String(r?.timeSlot?.startTime ?? ''),
-            endTime: String(r?.timeSlot?.endTime ?? ''),
-            totalTokens: Number(r?.timeSlot?.totalTokens ?? 0),
-            bookedTokens: Number(r?.timeSlot?.bookedTokens ?? 0),
-          },
-          status: (r.status as Appointment['status']) ?? 'booked',
-          arrivalTime: r.arrivalTime,
-          consultationStartTime: r.consultationStartTime,
-          completedTime: r.completedTime,
-          queuePosition: r.queuePosition,
-        }));
-        setAppointments(mapped);
-      }
+      await refreshAppointments({ silent: true });
       toast.success('Moved to waiting');
     } else {
       toast.error(res.message || 'Failed to move to waiting');
@@ -243,35 +236,7 @@ export default function AppointmentList() {
       status: 'active',
     });
     if (res.success) {
-      const refreshed = await fetchAppointmentsByDate(selectedDoctor.id, today);
-      if (refreshed.success) {
-        const items = Array.isArray(refreshed.data) ? refreshed.data : [];
-        const mapped: Appointment[] = items.map((r: any) => ({
-          id: String(r.id ?? r.appointment_uid ?? ''),
-          tokenNumber: Number(r.tokenNumber ?? r.token_no ?? 0),
-          patient: {
-            id: String(r?.patient?.id ?? ''),
-            name: String(r?.patient?.name ?? ''),
-            phone: String(r?.patient?.phone ?? ''),
-            age: Number(r?.patient?.age ?? 0),
-          },
-          doctor: selectedDoctor,
-          date: String(r.date ?? today),
-          timeSlot: {
-            id: String(r?.timeSlot?.id ?? ''),
-            startTime: String(r?.timeSlot?.startTime ?? ''),
-            endTime: String(r?.timeSlot?.endTime ?? ''),
-            totalTokens: Number(r?.timeSlot?.totalTokens ?? 0),
-            bookedTokens: Number(r?.timeSlot?.bookedTokens ?? 0),
-          },
-          status: (r.status as Appointment['status']) ?? 'booked',
-          arrivalTime: r.arrivalTime,
-          consultationStartTime: r.consultationStartTime,
-          completedTime: r.completedTime,
-          queuePosition: r.queuePosition,
-        }));
-        setAppointments(mapped);
-      }
+      await refreshAppointments({ silent: true });
       toast.success('Consultation started');
     } else {
       toast.error(res.message || 'Failed to start consultation');
@@ -287,35 +252,7 @@ export default function AppointmentList() {
       status: 'completed',
     });
     if (res.success) {
-      const refreshed = await fetchAppointmentsByDate(selectedDoctor.id, today);
-      if (refreshed.success) {
-        const items = Array.isArray(refreshed.data) ? refreshed.data : [];
-        const mapped: Appointment[] = items.map((r: any) => ({
-          id: String(r.id ?? r.appointment_uid ?? ''),
-          tokenNumber: Number(r.tokenNumber ?? r.token_no ?? 0),
-          patient: {
-            id: String(r?.patient?.id ?? ''),
-            name: String(r?.patient?.name ?? ''),
-            phone: String(r?.patient?.phone ?? ''),
-            age: Number(r?.patient?.age ?? 0),
-          },
-          doctor: selectedDoctor,
-          date: String(r.date ?? today),
-          timeSlot: {
-            id: String(r?.timeSlot?.id ?? ''),
-            startTime: String(r?.timeSlot?.startTime ?? ''),
-            endTime: String(r?.timeSlot?.endTime ?? ''),
-            totalTokens: Number(r?.timeSlot?.totalTokens ?? 0),
-            bookedTokens: Number(r?.timeSlot?.bookedTokens ?? 0),
-          },
-          status: (r.status as Appointment['status']) ?? 'booked',
-          arrivalTime: r.arrivalTime,
-          consultationStartTime: r.consultationStartTime,
-          completedTime: r.completedTime,
-          queuePosition: r.queuePosition,
-        }));
-        setAppointments(mapped);
-      }
+      await refreshAppointments({ silent: true });
       toast.success('Consultation completed');
     } else {
       toast.error(res.message || 'Failed to complete consultation');

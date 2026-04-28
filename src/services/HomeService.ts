@@ -339,6 +339,7 @@ export interface BookAppointmentResponse {
   appointment_id?: number;
   appointment_uid?: string;
   token_no?: number;
+  created_at?: string;
   max_appointments?: number;
   book_slot?: number;
   available_count?: number;

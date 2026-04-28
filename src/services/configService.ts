@@ -45,6 +45,8 @@ class ConfigService {
         AES_SECRET_KEY: import.meta.env.VITE_AES_SECRET_KEY || '',
         API_URL: normalizeBaseUrl(env.VITE_API_URL || 'http://localhost/patientport-latest/api'),
         Live_URL: normalizeBaseUrl(env.VITE_LIVE_URL || 'http://localhost/patientport-latest'),
+        //API_URL: normalizeBaseUrl(import.meta.env.VITE_API_URL || 'https://umahospital.obwebsite.in/api'),
+        //Live_URL: normalizeBaseUrl(import.meta.env.VITE_LIVE_URL || 'https://umahospital.obwebsite.in'),
       };
     }
 

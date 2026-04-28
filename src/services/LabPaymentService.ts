@@ -20,7 +20,7 @@ const getAuthHeaders = async () => {
 
 export const fetchPaymentHistory = async (orderId: number) => {
   const { apiUrl, headers } = await getAuthHeaders();
-  const res = await fetch(`${apiUrl}lb_payment_history`, {
+  const res = await fetch(`${apiUrl}/lb_payment_history`, {
     method: "POST",
     headers,
     body: JSON.stringify({ order_id: orderId }),
@@ -49,7 +49,7 @@ export const addPayment = async (orderId: number, amount: number, paymentMethod:
   
   const encryptedPayload = encryptAESForPHP(payload, AES_KEY);
   
-  const res = await fetch(`${apiUrl}lb_add_payment`, {
+  const res = await fetch(`${apiUrl}/lb_add_payment`, {
     method: "POST",
     headers,
     body: JSON.stringify({ encrypted_payload: encryptedPayload }),
@@ -61,7 +61,7 @@ export const addPayment = async (orderId: number, amount: number, paymentMethod:
 
 export const fetchBillingData = async (page = 1, limit = 100, search = "", status = "all") => {
   const { apiUrl, headers } = await getAuthHeaders();
-  const res = await fetch(`${apiUrl}lb_billing_data`, {
+  const res = await fetch(`${apiUrl}/lb_billing_data`, {
     method: "POST",
     headers,
     body: JSON.stringify({ page, limit, search, status }),

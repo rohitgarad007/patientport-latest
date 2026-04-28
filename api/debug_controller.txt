@@ -54,3 +54,45 @@ Verifying token...
 Raw input length: 368
 Data decrypted successfully. OrderID: 82
 Insert success. ID: 27
+collectSample called at 2026-04-11 10:15:50
+Attempting to get auth header
+Token received: YES
+Verifying token...
+Raw input length: 388
+Data decrypted successfully. OrderID: 143
+Insert success. ID: 28
+collectSample called at 2026-04-11 10:16:09
+Attempting to get auth header
+Token received: YES
+Verifying token...
+Raw input length: 368
+Data decrypted successfully. OrderID: 143
+Insert success. ID: 29
+collectSample called at 2026-04-11 11:25:34
+Attempting to get auth header
+Token received: YES
+Verifying token...
+Raw input length: 408
+Data decrypted successfully. OrderID: 144
+Insert success. ID: 30
+collectSample called at 2026-04-11 11:26:17
+Attempting to get auth header
+Token received: YES
+Verifying token...
+Raw input length: 368
+Data decrypted successfully. OrderID: 144
+Insert success. ID: 31
+collectSample called at 2026-04-14 23:16:15
+Attempting to get auth header
+Token received: YES
+Verifying token...
+Raw input length: 408
+Data decrypted successfully. OrderID: 149
+Insert success. ID: 32
+collectSample called at 2026-04-14 23:16:29
+Attempting to get auth header
+Token received: YES
+Verifying token...
+Raw input length: 344
+Data decrypted successfully. OrderID: 149
+Insert success. ID: 33
